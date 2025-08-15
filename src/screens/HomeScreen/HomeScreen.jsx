@@ -1,8 +1,9 @@
 import { View, Text } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const HomeScreen = () => {
   const [loading, setLoading] = useState(false);
+
   return (
     <View>
       <Text>HomeScreen</Text>
