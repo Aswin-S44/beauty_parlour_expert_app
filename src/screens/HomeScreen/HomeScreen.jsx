@@ -10,8 +10,10 @@ import {
 import React from 'react';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Card from '../../components/Card/Card';
+import { useNavigation } from '@react-navigation/native';
 
 const HomeScreen = ({ navigation }) => {
+  const navigation1 = useNavigation();
   const services = [
     {
       id: 1,
@@ -118,7 +120,14 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.featuredContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {featuredSection.map((feature, index) => (
-              <View>
+              <TouchableOpacity
+                key={index}
+                onPress={() =>
+                  navigation.navigate('ParlourDetails', {
+                    parlourData: feature,
+                  })
+                }
+              >
                 <Card
                   image={feature.image}
                   title={feature.serviceName}
@@ -126,7 +135,7 @@ const HomeScreen = ({ navigation }) => {
                   rating={feature.rating}
                   status={feature.status}
                 />
-              </View>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
@@ -136,7 +145,7 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.featuredContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {featuredSection.map((feature, index) => (
-              <View>
+              <View key={index}>
                 <Card
                   image={feature.image}
                   title={feature.serviceName}

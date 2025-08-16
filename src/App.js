@@ -3,6 +3,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import HomeScreen from './screens/HomeScreen/HomeScreen';
@@ -10,28 +11,47 @@ import ProfileScreen from './screens/ProfileScreen/ProfileScreen';
 import AppointmentScreen from './screens/AppointmentScreen/AppointmentScreen';
 import { primaryColor } from './constants/colors';
 import CustomDrawerContent from './components/CustomDrawerContent/CustomDrawerContent';
+import ParlourDetails from './screens/ParlourDetails/ParlourDetails';
+import BookingScreen from './screens/BookingScreen/BookingScreen';
+import BookingSummaryScreen from './screens/BookingSummaryScreen/BookingSummaryScreen';
 
 const Tab = createMaterialBottomTabNavigator();
 const Drawer = createDrawerNavigator();
+const Stack = createStackNavigator();
+
+function HomeStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="HomeMain" component={HomeScreen} />
+      <Stack.Screen name="ParlourDetails" component={ParlourDetails} />
+      <Stack.Screen name="AppointmentScreen" component={AppointmentScreen} />
+      <Stack.Screen name="BookingScreen" component={BookingScreen} />
+      <Stack.Screen
+        name="BookingSummaryScreen"
+        component={BookingSummaryScreen}
+      />
+    </Stack.Navigator>
+  );
+}
 
 function TabNavigator() {
   return (
     <Tab.Navigator
       initialRouteName="Home"
-      barStyle={{ backgroundColor: primaryColor }}
+      barStyle={{ backgroundColor: '#fff' }}
       activeColor="#ffffff"
       inactiveColor="#cccccc"
     >
       <Tab.Screen
         name="Home"
-        component={HomeScreen}
+        component={HomeStack}
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ focused, color }) => (
             <Ionicons
               name="home"
               size={focused ? 26 : 20}
-              color={focused ? '#fff' : color}
+              color={focused ? primaryColor : color}
             />
           ),
         }}
@@ -45,7 +65,7 @@ function TabNavigator() {
             <Icon
               name="calendar"
               size={focused ? 26 : 20}
-              color={focused ? '#fff' : color}
+              color={focused ? primaryColor : color}
             />
           ),
         }}
@@ -59,7 +79,7 @@ function TabNavigator() {
             <Ionicons
               name="person-circle-outline"
               size={focused ? 26 : 20}
-              color={focused ? '#fff' : color}
+              color={focused ? primaryColor : color}
             />
           ),
         }}
