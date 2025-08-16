@@ -6,40 +6,81 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  StatusBar,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { primaryColor } from '../../constants/colors';
 import Reviews from '../../components/Reviews/Reviews';
+import { primaryColor } from '../../constants/colors';
 
 const ParlourDetails = ({ route, navigation }) => {
   const { parlourData } = route.params;
   const [activeTab, setActiveTab] = React.useState('About');
-  console.log('================');
+
+  const renderStars = rating => {
+    const stars = [];
+    const filledStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+
+    for (let i = 0; i < filledStars; i++) {
+      stars.push(<Ionicons key={i} name="star" size={20} color="#FFA500" />);
+    }
+
+    if (hasHalfStar) {
+      stars.push(
+        <Ionicons
+          key="half"
+          name="star-half-sharp"
+          size={20}
+          color="#FFA500"
+        />,
+      );
+    }
+
+    const emptyStars = 5 - stars.length;
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(
+        <Ionicons
+          key={`empty-${i}`}
+          name="star-outline"
+          size={20}
+          color="#FFFFFF"
+        />,
+      );
+    }
+
+    return stars;
+  };
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <StatusBar barStyle="light-content" />
       <View style={styles.imageContainer}>
         <Image source={parlourData.image} style={styles.image} />
         <View style={styles.overlay} />
+
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="chevron-back" size={24} color="#fff" />
+          <Text style={styles.backButtonText}>Back</Text>
+        </TouchableOpacity>
+
         <View style={styles.headerContent}>
-          <View>
+          <View style={styles.headerLeft}>
             <Text style={styles.title}>{parlourData.serviceName}</Text>
+            <Text style={styles.locationText}>{parlourData.location}</Text>
             <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={16} color="#FFD700" />
-              <Text style={styles.ratingText}>{parlourData.rating}</Text>
-            </View>
-            <View style={styles.locationContainer}>
-              <Ionicons name="location-sharp" size={16} color="#fff" />
-              <Text style={styles.locationText}>{parlourData.location}</Text>
+              {renderStars(parlourData.rating)}
             </View>
           </View>
+          <TouchableOpacity
+            style={styles.bookButton}
+            onPress={() => navigation.navigate('AppointmentScreen')}
+          >
+            <Text style={styles.bookButtonText}>Book Now</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.bookButton}
-          onPress={() => navigation.navigate('AppointmentScreen')}
-        >
-          <Text style={styles.bookButtonText}>Book Now</Text>
-        </TouchableOpacity>
       </View>
 
       <View style={styles.tabContainer}>
@@ -47,25 +88,53 @@ const ParlourDetails = ({ route, navigation }) => {
           style={[styles.tab, activeTab === 'About' && styles.activeTab]}
           onPress={() => setActiveTab('About')}
         >
-          <Text style={styles.tabText}>About</Text>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'About' && styles.activeTabText,
+            ]}
+          >
+            About
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'Service' && styles.activeTab]}
           onPress={() => setActiveTab('Service')}
         >
-          <Text style={styles.tabText}>Service</Text>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'Service' && styles.activeTabText,
+            ]}
+          >
+            Service
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'Gallery' && styles.activeTab]}
           onPress={() => setActiveTab('Gallery')}
         >
-          <Text style={styles.tabText}>Gallery</Text>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'Gallery' && styles.activeTabText,
+            ]}
+          >
+            Gallery
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'Review' && styles.activeTab]}
           onPress={() => setActiveTab('Review')}
         >
-          <Text style={styles.tabText}>Review</Text>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'Review' && styles.activeTabText,
+            ]}
+          >
+            Review
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -73,28 +142,19 @@ const ParlourDetails = ({ route, navigation }) => {
         <View style={styles.content}>
           <Text style={styles.subtitle}>Why Choose Us</Text>
           <Text style={styles.description}>
-            Contrary to popular belief, Lorem Ipsum is not simply random text.
-            It has roots in a piece of classical Latin literature from 45 BC.
+            Contrary to popular belief, Lorem Inosimplyrandom and text. It has
+            roots in a piece of classical Latin liteture 45 BC, making it over
+            2000 years old.
           </Text>
           <View style={styles.bulletPoint}>
-            <Icon
-              name="circle"
-              size={8}
-              color="#000"
-              style={styles.bulletIcon}
-            />
+            <View style={styles.bulletIcon} />
             <Text style={styles.bulletText}>
               Distracted by the readable content of a page when looking at its
               layout.
             </Text>
           </View>
           <View style={styles.bulletPoint}>
-            <Icon
-              name="circle"
-              size={8}
-              color="#000"
-              style={styles.bulletIcon}
-            />
+            <View style={styles.bulletIcon} />
             <Text style={styles.bulletText}>
               Distracted by the readable content of a page when looking at its
               layout.
@@ -103,28 +163,19 @@ const ParlourDetails = ({ route, navigation }) => {
 
           <Text style={styles.subtitle}>Our Mission and Vision</Text>
           <Text style={styles.description}>
-            Contrary to popular belief, Lorem Ipsum is not simply random text.
-            It has roots in a piece of classical Latin literature from 45 BC.
+            Contrary to popular belief, Loreipsnosimplyrandom car text. It has
+            roots a piece of classical Latin liteture 45 BC, making it over 2000
+            years old.
           </Text>
           <View style={styles.bulletPoint}>
-            <Icon
-              name="circle"
-              size={8}
-              color="#000"
-              style={styles.bulletIcon}
-            />
+            <View style={styles.bulletIcon} />
             <Text style={styles.bulletText}>
               Distracted by the readable content of a page when looking at its
               layout.
             </Text>
           </View>
           <View style={styles.bulletPoint}>
-            <Icon
-              name="circle"
-              size={8}
-              color="#000"
-              style={styles.bulletIcon}
-            />
+            <View style={styles.bulletIcon} />
             <Text style={styles.bulletText}>
               Distracted by the readable content of a page when looking at its
               layout.
@@ -132,21 +183,15 @@ const ParlourDetails = ({ route, navigation }) => {
           </View>
         </View>
       )}
-      {console.log('active tab : ', activeTab)}
+
       {activeTab === 'Service' && (
         <View style={styles.content}>
-          {/* {parlourData.services?.map((service, index) => (
-            <View key={index} style={styles.serviceItem}>
-              <Text style={styles.serviceName}>hello aswins</Text>
-              <Text style={styles.servicePrice}>${service.price}</Text>
-            </View>
-          ))} */}
-          <Text>helloaswins</Text>
+          <Text>Service Information Goes Here</Text>
         </View>
       )}
 
       {activeTab === 'Review' && (
-        <View>
+        <View style={styles.content}>
           <Reviews />
         </View>
       )}
@@ -160,8 +205,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   imageContainer: {
-    height: 250,
+    height: 300,
     position: 'relative',
+    justifyContent: 'flex-end',
   },
   image: {
     width: '100%',
@@ -171,114 +217,112 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
-  headerContent: {
+  backButton: {
     position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 5,
-  },
-  ratingContainer: {
+    top: 50,
+    left: 15,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 5,
   },
-  ratingText: {
-    fontSize: 16,
+  backButtonText: {
     color: '#fff',
+    fontSize: 18,
     marginLeft: 5,
   },
-  locationContainer: {
+  headerContent: {
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    padding: 20,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 26,
+    color: '#fff',
+    marginBottom: 4,
   },
   locationText: {
     fontSize: 16,
     color: '#fff',
-    marginLeft: 5,
+    marginBottom: 8,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bookButton: {
+    backgroundColor: primaryColor,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginLeft: 10,
+  },
+  bookButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
   },
   tabContainer: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    backgroundColor: '#000',
   },
   tab: {
     flex: 1,
-    padding: 15,
+    paddingVertical: 15,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#000',
+    backgroundColor: primaryColor,
   },
   tabText: {
     fontSize: 16,
     fontWeight: '500',
+    color: '#fff',
+  },
+  activeTabText: {
+    fontWeight: 'bold',
   },
   content: {
     padding: 20,
-    paddingBottom: 80,
   },
   subtitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 15,
+    color: '#333',
+    marginBottom: 10,
     marginTop: 10,
   },
   description: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 24,
+    fontSize: 15,
+    color: '#555',
+    lineHeight: 22,
     marginBottom: 15,
   },
   bulletPoint: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   bulletIcon: {
-    marginRight: 10,
-    marginTop: 5,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: primaryColor,
+    marginRight: 12,
+    marginTop: 6,
   },
   bulletText: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: 15,
+    color: '#555',
     flex: 1,
-  },
-  serviceItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  serviceName: {
-    fontSize: 16,
-  },
-  servicePrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  bookButton: {
-    position: 'absolute',
-    bottom: 20,
-    left: 200,
-    right: 20,
-    backgroundColor: primaryColor,
-    padding: 5,
-    borderRadius: 8,
-    alignItems: 'center',
-    width: '100',
-  },
-  bookButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    lineHeight: 22,
   },
 });
 
