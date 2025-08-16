@@ -21,12 +21,12 @@ import SignInScreen from './screens/SignInScreen/SignInScreen';
 import SignUpScreen from './screens/SignUpScreen/SignUpScreen';
 
 import { primaryColor } from './constants/colors';
+import ChangePasswordScreen from './screens/ChangePasswordScreen/ChangePasswordScreen';
 
 const Tab = createMaterialBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
 
-// --- Main App Navigation (After Sign In) ---
 function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -111,11 +111,9 @@ function AppDrawer() {
   );
 }
 
-// --- Main App Entry Point ---
 export default function App() {
   const [isSignedIn, setIsSignedIn] = useState(false);
 
-  // This authContext allows us to change the state from a nested screen
   const authContext = useMemo(
     () => ({
       signIn: () => setIsSignedIn(true),
@@ -142,6 +140,10 @@ export default function App() {
                 name="SignUp"
                 component={SignUpScreen}
                 initialParams={{ signIn: authContext.signIn }}
+              />
+              <Stack.Screen
+                name="ChangePasswordScreen"
+                component={ChangePasswordScreen}
               />
             </>
           )}
