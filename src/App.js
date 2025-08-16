@@ -96,7 +96,11 @@ export default function App() {
           drawerContent={props => <CustomDrawerContent {...props} />}
           drawerStyle={{ width: 300 }}
         >
-          <Drawer.Screen name="Main" component={TabNavigator} />
+          <Drawer.Screen
+            name="Main"
+            component={TabNavigator}
+            options={{ headerShown: false }}
+          />
         </Drawer.Navigator>
       </NavigationContainer>
     </GestureHandlerRootView>

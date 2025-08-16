@@ -5,37 +5,39 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
+  TextInput,
+  StatusBar,
 } from 'react-native';
 import React from 'react';
-import Icon from 'react-native-vector-icons/FontAwesome';
+
+import EvilIcons from 'react-native-vector-icons/EvilIcons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import Card from '../../components/Card/Card';
-import { useNavigation } from '@react-navigation/native';
+import { primaryColor, secondaryColor } from '../../constants/colors';
 
 const HomeScreen = ({ navigation }) => {
-  const navigation1 = useNavigation();
   const services = [
     {
       id: 1,
-      name: 'Hair',
+      name: 'HairCare',
       icon: 'spa',
       image: require('../../assets/images/category/1.png'),
     },
     {
       id: 2,
-      name: 'Facial',
+      name: 'Makeover',
       icon: 'smile-o',
       image: require('../../assets/images/category/2.png'),
     },
     {
       id: 3,
-      name: 'Makeup',
+      name: 'Skin Care',
       icon: 'female',
       image: require('../../assets/images/category/3.png'),
     },
     {
       id: 4,
-      name: 'Haircut',
+      name: 'Facial',
       icon: 'scissors',
       image: require('../../assets/images/category/4.png'),
     },
@@ -77,27 +79,79 @@ const HomeScreen = ({ navigation }) => {
   ];
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Banner */}
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <StatusBar
+        backgroundColor="transparent"
+        translucent={true}
+        barStyle="light-content"
+      />
+
       <View style={styles.bannerContainer}>
         <Image
           source={require('../../../images/home_bg.png')}
           style={styles.bannerImage}
         />
+
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.openDrawer()}
+            style={styles.hamburgerIconContainer}
+          >
+            <View style={[styles.hamburgerLine, { width: 30 }]} />
+            <View style={[styles.hamburgerLine, { width: 25 }]} />
+            <View style={[styles.hamburgerLine, { width: 30 }]} />
+          </TouchableOpacity>
+          <View>
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#fff',
+                width: 35,
+                height: 35,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+              }}
+            >
+              <Ionicons
+                name="notifications-outline"
+                size={25}
+                color={primaryColor}
+              />
+              <View style={styles.badgeContainer}>
+                <Text style={styles.badgeText}>02</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <View style={styles.bannerTextContainer}>
           <Text style={styles.bannerTitle}>Beauty Parlour</Text>
           <Text style={styles.bannerSubtitle}>Beauty Parlour Booking App</Text>
         </View>
+
+        <View style={styles.searchContainer}>
+          <View style={styles.searchBar}>
+            <TextInput
+              placeholder="Spa, Facial, Makeup"
+              style={styles.searchInput}
+              placeholderTextColor="#888"
+            />
+            <EvilIcons
+              name="search"
+              size={32}
+              color="#888"
+              style={styles.searchIcon}
+            />
+          </View>
+        </View>
       </View>
 
-      {/* Services */}
       <View style={styles.section}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.servicesContainer}>
             {services.map(service => (
-              <View>
+              <View key={service.id}>
                 <TouchableOpacity
-                  key={service.id}
                   style={styles.serviceCard}
                   onPress={() =>
                     navigation.navigate('Appointment', {
@@ -114,9 +168,8 @@ const HomeScreen = ({ navigation }) => {
         </ScrollView>
       </View>
 
-      {/* Featured Services */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Featured Services</Text>
+        <Text style={styles.sectionTitle}>Popular Beauty Parlour</Text>
         <View style={styles.featuredContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {featuredSection.map((feature, index) => (
@@ -162,9 +215,6 @@ const HomeScreen = ({ navigation }) => {
   );
 };
 
-const { width } = Dimensions.get('window');
-const primaryColor = '#E6A3DD'; // Replace with your primary color
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -172,13 +222,39 @@ const styles = StyleSheet.create({
   },
   bannerContainer: {
     position: 'relative',
-    height: 200,
-    marginBottom: 20,
+    height: 280,
+    marginBottom: 40,
   },
   bannerImage: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+  },
+  header: {
+    position: 'absolute',
+    top: 40,
+    left: 15,
+    right: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  badgeContainer: {
+    position: 'absolute',
+    right: -6,
+    top: -3,
+    backgroundColor: primaryColor,
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   smallImage: {
     height: 30,
@@ -186,20 +262,47 @@ const styles = StyleSheet.create({
   },
   bannerTextContainer: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    // backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 15,
+    top: 140,
+    left: 23,
+    right: 15,
   },
   bannerTitle: {
     color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 26,
+    fontWeight: '400',
   },
   bannerSubtitle: {
     color: '#fff',
     fontSize: 16,
+  },
+  searchContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    height: 50,
+    width: '85%',
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
   },
   section: {
     paddingHorizontal: 15,
@@ -207,23 +310,24 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: 500,
     marginBottom: 15,
     color: '#333',
+    left: 10,
   },
   servicesContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between', // distributes space between cards
-    paddingHorizontal: 10, // add some horizontal padding
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
   },
 
   serviceCard: {
-    width: 72, // fixed width for all cards
+    width: 72,
     alignItems: 'center',
-    marginRight: 10, // spacing between cards
+    marginRight: 10,
     padding: 10,
     height: 72,
-    backgroundColor: primaryColor,
+    backgroundColor: secondaryColor,
     borderRadius: 50,
     justifyContent: 'center',
   },
@@ -233,34 +337,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     color: '#333',
-    fontWeight: 600,
+    fontWeight: '500',
   },
   featuredContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
   },
-  featuredCard: {
-    width: '48%',
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-    overflow: 'hidden',
+  hamburgerIconContainer: {
+    padding: 5,
   },
-  featuredImage: {
-    width: '100%',
-    height: 120,
-    resizeMode: 'cover',
-  },
-  featuredTitle: {
-    padding: 10,
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  featuredPrice: {
-    padding: 10,
-    paddingTop: 0,
-    fontSize: 16,
-    color: primaryColor,
+  hamburgerLine: {
+    height: 3,
+    backgroundColor: '#fff',
+    borderRadius: 2,
+    marginVertical: 3,
   },
 });
 

@@ -1,19 +1,24 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 const Card = ({ image, title, location, rating, status }) => {
   return (
     <View style={styles.card}>
-      <Image source={image} style={styles.cardImage} />
-      <View style={styles.badgesContainer}>
-        <View style={[styles.badge, { backgroundColor: '#8E44AD' }]}>
-          <Text style={styles.badgeText}>{rating} ★</Text>
-        </View>
-        <View style={[styles.badge, { backgroundColor: '#F2CBEE' }]}>
-          <Text style={styles.badgeText}>{status}</Text>
+      <View style={styles.imageContainer}>
+        <Image source={image} style={styles.cardImage} />
+        <View style={styles.badgesContainer}>
+          <View style={styles.ratingBadge}>
+            <Icon name="star" size={14} color="#fff" />
+            <Text style={styles.ratingBadgeText}>{rating}</Text>
+          </View>
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusBadgeText}>{status}</Text>
+          </View>
         </View>
       </View>
-      <View style={styles.cardDetails}>
+
+      <View style={styles.detailsContainer}>
         <Text style={styles.cardTitle}>{title}</Text>
         <Text style={styles.cardLocation}>{location}</Text>
       </View>
@@ -23,45 +28,71 @@ const Card = ({ image, title, location, rating, status }) => {
 
 const styles = StyleSheet.create({
   card: {
-    width: 200,
-    borderRadius: 15,
+    width: 220,
+    borderRadius: 12,
     backgroundColor: '#fff',
     margin: 10,
-    overflow: 'hidden',
-    height: 230,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.23,
+    shadowRadius: 2.62,
+  },
+  imageContainer: {
+    position: 'relative',
   },
   cardImage: {
     width: '100%',
-    height: 160,
+    height: 150,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
   },
   badgesContainer: {
     position: 'absolute',
-    top: 10,
-    left: 10,
+    bottom: 12,
+    left: 12,
     flexDirection: 'row',
   },
-  badge: {
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    marginRight: 5,
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#8E44AD',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginRight: 6,
   },
-  badgeText: {
+  ratingBadgeText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
+    marginLeft: 5,
+  },
+  statusBadge: {
+    backgroundColor: '#F3E5F5',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    justifyContent: 'center',
+  },
+  statusBadgeText: {
+    color: '#8E44AD',
+    fontSize: 14,
+    fontWeight: 500,
+  },
+  detailsContainer: {
+    padding: 15,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: '400',
-    marginTop: 8,
-    marginHorizontal: 10,
+    fontSize: 18,
+    fontWeight: 500,
+    color: '#333',
+    marginBottom: 4,
   },
   cardLocation: {
     fontSize: 14,
     color: '#777',
-    marginBottom: 10,
-    marginHorizontal: 10,
   },
 });
 
