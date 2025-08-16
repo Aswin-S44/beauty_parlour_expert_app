@@ -1,52 +1,73 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import {
-  DrawerContentScrollView,
-  DrawerItemList,
-} from '@react-navigation/drawer';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import { DrawerContentScrollView } from '@react-navigation/drawer';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { primaryColor } from '../../constants/colors';
+
+const DrawerItem = ({ icon, label, onPress }) => (
+  <TouchableOpacity onPress={onPress} style={styles.drawerItem}>
+    <View style={styles.iconContainer}>{icon}</View>
+    <Text style={styles.drawerItemText}>{label}</Text>
+  </TouchableOpacity>
+);
 
 const CustomDrawerContent = props => {
   return (
     <View style={styles.container}>
       <DrawerContentScrollView {...props}>
-        <View style={styles.drawerHeader}>
-          {/* <Image
-            source={require('../assets/beauty-parlour-logo.png')} // Replace with your logo
-            style={styles.logo}
-          /> */}
-          <Text style={styles.title}>Beauty Parlour</Text>
-          <Text style={styles.subtitle}>Booking App</Text>
+        <View style={styles.profileContainer}>
+          <Image
+            source={require('../../assets/images/users/1.png')}
+            style={styles.avatar}
+          />
+          <View>
+            <Text style={styles.userName}>Jesika Sabrina</Text>
+            <Text style={styles.userPhone}>5936-685-214</Text>
+          </View>
         </View>
-
-        <DrawerItemList {...props} />
 
         <View style={styles.drawerSection}>
-          <TouchableOpacity style={styles.drawerItem}>
-            <Icon name="home" size={20} color="#333" />
-            <Text style={styles.drawerItemText}>Home</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.drawerItem}>
-            <Icon name="calendar" size={20} color="#333" />
-            <Text style={styles.drawerItemText}>Appointments</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.drawerItem}>
-            <Icon name="user" size={20} color="#333" />
-            <Text style={styles.drawerItemText}>Profile</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.drawerItem}>
-            <Icon name="cog" size={20} color="#333" />
-            <Text style={styles.drawerItemText}>Settings</Text>
-          </TouchableOpacity>
+          {/* <DrawerItem
+            label="Add Payment Method"
+            icon={
+              <Ionicons name="card-outline" size={24} color={primaryColor} />
+            }
+            onPress={() => {}}
+          /> */}
+          <DrawerItem
+            label="Change Password"
+            icon={
+              <Ionicons name="sync-outline" size={24} color={primaryColor} />
+            }
+            onPress={() => props.navigation.navigate('ChangePasswordScreen')}
+          />
+          <DrawerItem
+            label="Help & Support"
+            icon={
+              <Ionicons
+                name="help-buoy-outline"
+                size={24}
+                color={primaryColor}
+              />
+            }
+            onPress={() => {
+              props.navigation.navigate('HelpSupportScreen');
+            }}
+          />
+          <DrawerItem
+            label="Sign Out"
+            icon={
+              <MaterialCommunityIcons
+                name="logout"
+                size={24}
+                color={primaryColor}
+              />
+            }
+            onPress={() => {}}
+          />
         </View>
       </DrawerContentScrollView>
-
-      <View style={styles.bottomDrawerSection}>
-        <TouchableOpacity style={styles.drawerItem}>
-          <Icon name="sign-out" size={20} color="#333" />
-          <Text style={styles.drawerItemText}>Sign Out</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 };
@@ -54,27 +75,30 @@ const CustomDrawerContent = props => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: primaryColor,
   },
-  drawerHeader: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+  profileContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
+    padding: 20,
+    marginTop: 30,
+    marginBottom: 20,
   },
-  logo: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: 10,
+  avatar: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    marginRight: 15,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
+  userName: {
+    fontSize: 20,
+    fontWeight: '400',
+    color: '#fff',
   },
-  subtitle: {
+  userPhone: {
     fontSize: 16,
-    color: '#666',
+    color: '#E0E0E0',
+    marginTop: 4,
   },
   drawerSection: {
     marginTop: 15,
@@ -82,18 +106,22 @@ const styles = StyleSheet.create({
   drawerItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
-    paddingLeft: 20,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 20,
   },
   drawerItemText: {
     fontSize: 16,
-    marginLeft: 15,
-    color: '#333',
-  },
-  bottomDrawerSection: {
-    marginBottom: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
+    color: '#fff',
+    fontWeight: '300',
   },
 });
 

@@ -22,6 +22,10 @@ import SignUpScreen from './screens/SignUpScreen/SignUpScreen';
 
 import { primaryColor } from './constants/colors';
 import ChangePasswordScreen from './screens/ChangePasswordScreen/ChangePasswordScreen';
+import HelpSupportScreen from './screens/HelpSupportScreen/HelpSupportScreen';
+import NearByShopsList from './screens/NearByShopsList/NearByShopsList';
+import BeautyExpertDetailsScreen from './screens/BeautyExpertDetailsScreen/BeautyExpertDetailsScreen';
+import OTPVerificationScreen from './screens/OTPVerificationScreen/OTPVerificationScreen';
 
 const Tab = createMaterialBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -37,6 +41,11 @@ function HomeStack() {
       <Stack.Screen
         name="BookingSummaryScreen"
         component={BookingSummaryScreen}
+      />
+
+      <Stack.Screen
+        name="BeautyExpertDetailsScreen"
+        component={BeautyExpertDetailsScreen}
       />
     </Stack.Navigator>
   );
@@ -58,6 +67,21 @@ function TabNavigator() {
           tabBarIcon: ({ focused, color }) => (
             <Ionicons
               name="home"
+              size={focused ? 26 : 20}
+              color={focused ? primaryColor : color}
+            />
+          ),
+        }}
+      />
+
+      <Tab.Screen
+        name="Shops"
+        component={NearByShopsList}
+        options={{
+          tabBarLabel: 'Shops',
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons
+              name="location"
               size={focused ? 26 : 20}
               color={focused ? primaryColor : color}
             />
@@ -111,6 +135,19 @@ function AppDrawer() {
   );
 }
 
+function AppDrawerStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="AppDrawer" component={AppDrawer} />
+      <Stack.Screen
+        name="ChangePasswordScreen"
+        component={ChangePasswordScreen}
+      />
+      <Stack.Screen name="HelpSupportScreen" component={HelpSupportScreen} />
+    </Stack.Navigator>
+  );
+}
+
 export default function App() {
   const [isSignedIn, setIsSignedIn] = useState(false);
 
@@ -127,7 +164,8 @@ export default function App() {
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           {isSignedIn ? (
-            <Stack.Screen name="AppDrawer" component={AppDrawer} />
+            // <Stack.Screen name="AppDrawer" component={AppDrawer} />
+            <Stack.Screen name="AppDrawerStack" component={AppDrawerStack} />
           ) : (
             <>
               <Stack.Screen name="Welcome" component={WelcomeScreen} />
@@ -144,6 +182,10 @@ export default function App() {
               <Stack.Screen
                 name="ChangePasswordScreen"
                 component={ChangePasswordScreen}
+              />
+              <Stack.Screen
+                name="OTPVerificationScreen"
+                component={OTPVerificationScreen}
               />
             </>
           )}

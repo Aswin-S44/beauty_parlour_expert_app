@@ -95,7 +95,7 @@ const BookingScreen = ({ navigation }) => {
               <TouchableOpacity
                 key={expert.id}
                 style={styles.expertCard}
-                onPress={() => setSelectedExpert(expert.id)}
+                onPress={() => navigation.navigate('BeautyExpertDetailsScreen')}
               >
                 <View style={styles.avatarContainer}>
                   <Image source={expert.image} style={styles.avatar} />
