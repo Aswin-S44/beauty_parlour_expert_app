@@ -1,221 +1,376 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  StyleSheet,
+  StatusBar,
+} from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { bookedColor, lightPurple, primaryColor } from '../../constants/colors';
+
+const expertsData = [
+  {
+    id: 1,
+    name: 'Robat Jonson',
+    image: require('../../assets/images/users/1.png'),
+  },
+  {
+    id: 2,
+    name: 'Markal hums',
+    image: require('../../assets/images/users/2.png'),
+  },
+  {
+    id: 3,
+    name: 'Lifsa Zuli',
+    image: require('../../assets/images/users/3.png'),
+  },
+  {
+    id: 4,
+    name: 'Washin Tomas',
+    image: require('../../assets/images/users/4.png'),
+  },
+];
+
+const timeSlots = [
+  '8:00 am',
+  '9:00 am',
+  '10:00 am',
+  '11:00 am',
+  '12:00 pm',
+  '1:00 pm',
+  '2:00 pm',
+  '3:00 pm',
+  '4:00 pm',
+  '5:00 pm',
+  '6:00 pm',
+  '7:00 pm',
+  '8:00 pm',
+  '9:00 pm',
+];
+
+const bookedSlots = ['10:00 am', '4:00 pm', '6:00 pm'];
+
+const servicesData = [
+  { id: 1, name: 'Style Hair Cut', qty: '01', price: '$25' },
+  { id: 2, name: 'Spa', qty: '01', price: '$100' },
+  { id: 3, name: 'Skin Treatment', qty: '01', price: '$200' },
+];
 
 const BookingScreen = ({ navigation }) => {
+  const [selectedExpert, setSelectedExpert] = useState(1);
   const [selectedTime, setSelectedTime] = useState(null);
 
-  const experts = [
-    { id: 1, name: 'Robat Jonson', image: 'https://via.placeholder.com/80' },
-    { id: 2, name: 'Markal hums', image: 'https://via.placeholder.com/80' },
-    { id: 3, name: 'Lifsa Zuli', image: 'https://via.placeholder.com/80' },
-    { id: 4, name: 'Washin Tomas', image: 'https://via.placeholder.com/80' },
-  ];
-
-  const times = [
-    { time: '8:00 am', booked: false },
-    { time: '9:00 am', booked: false },
-    { time: '10:00 am', booked: true },
-    { time: '11:00 am', booked: false },
-    { time: '12:00 pm', booked: false },
-    { time: '1:00 pm', booked: false },
-    { time: '2:00 pm', booked: false },
-    { time: '3:00 pm', booked: false },
-    { time: '4:00 pm', booked: true },
-    { time: '5:00 pm', booked: false },
-    { time: '6:00 pm', booked: true },
-    { time: '7:00 pm', booked: false },
-    { time: '8:00 pm', booked: false },
-    { time: '9:00 pm', booked: false },
-  ];
-
-  const services = [
-    { id: 1, name: 'Style Hair Cut', qty: '01', price: '$25' },
-    { id: 2, name: 'Spa', qty: '01', price: '$100' },
-    { id: 3, name: 'Skin Treatment', qty: '01', price: '$200' },
-  ];
-
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      {/* Header */}
-      <View
-        style={{
-          backgroundColor: '#8E24AA',
-          height: 100,
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 15,
-        }}
-      >
-        <View style={{ flex: 1, alignItems: 'center' }}>
-          <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700' }}>
-            Appointment
-          </Text>
-        </View>
-      </View>
+    <View style={styles.outerContainer}>
+      <StatusBar backgroundColor={primaryColor} barStyle="light-content" />
 
-      <View style={{ flex: 1, padding: 20 }}>
-        <ScrollView
-          contentContainerStyle={{ paddingBottom: 40 }}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Experts */}
-          <Text style={{ fontSize: 16, fontWeight: '600', marginBottom: 15 }}>
-            Choose Your Beauty Expert
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {experts.map(expert => (
-              <View
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Ionicons name="chevron-back" size={24} color="#fff" />
+        <Text style={styles.backButtonText}>Back</Text>
+      </TouchableOpacity>
+
+      <View style={styles.container}>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Text style={styles.mainTitle}>Appointment</Text>
+
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Choose Your Beauty Expert</Text>
+            <View style={styles.navIcons}>
+              <Ionicons name="chevron-back" size={20} color="#888" />
+              <Ionicons name="chevron-forward" size={20} color="#333" />
+            </View>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.expertScroll}
+          >
+            {expertsData.map(expert => (
+              <TouchableOpacity
                 key={expert.id}
-                style={{ alignItems: 'center', marginRight: 20 }}
+                style={styles.expertCard}
+                onPress={() => setSelectedExpert(expert.id)}
               >
-                <Image
-                  source={{ uri: expert.image }}
-                  style={{
-                    width: 70,
-                    height: 70,
-                    borderRadius: 35,
-                    marginBottom: 5,
-                  }}
-                />
-                <Text>{expert.name}</Text>
-              </View>
+                <View style={styles.avatarContainer}>
+                  <Image source={expert.image} style={styles.avatar} />
+                  {selectedExpert === expert.id && (
+                    <View style={styles.avatarOverlay} />
+                  )}
+                </View>
+                <Text style={styles.expertName}>{expert.name}</Text>
+              </TouchableOpacity>
             ))}
           </ScrollView>
 
-          {/* Date Picker */}
-          <Text style={{ fontSize: 16, fontWeight: '600', marginVertical: 15 }}>
-            Select Date
-          </Text>
-          <TouchableOpacity
-            style={{
-              borderWidth: 1,
-              borderColor: '#ccc',
-              padding: 15,
-              borderRadius: 10,
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{ color: '#555' }}>25 August 2020</Text>
-            <Icon name="calendar-today" size={20} color="#555" />
+          <Text style={styles.sectionTitle}>Select Date</Text>
+          <TouchableOpacity style={styles.datePicker}>
+            <Text style={styles.dateText}>25 August 2020</Text>
+            <Ionicons name="calendar-outline" size={22} color="#888" />
           </TouchableOpacity>
 
-          {/* Time Slots */}
-          <Text style={{ fontSize: 16, fontWeight: '600', marginVertical: 15 }}>
-            Select Time Slot
-          </Text>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginBottom: 10,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginRight: 20,
-              }}
-            >
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Select Time Slot</Text>
+            <View style={styles.legendContainer}>
               <View
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: 6,
-                  backgroundColor: '#8E24AA',
-                  marginRight: 5,
-                }}
+                style={[styles.legendDot, { backgroundColor: primaryColor }]}
               />
-              <Text>Available</Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={styles.legendText}>Available</Text>
               <View
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: 6,
-                  backgroundColor: '#D1C4E9',
-                  marginRight: 5,
-                }}
+                style={[styles.legendDot, { backgroundColor: lightPurple }]}
               />
-              <Text>Booked</Text>
+              <Text style={styles.legendText}>Booked</Text>
             </View>
           </View>
-
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {times.map(slot => (
-              <TouchableOpacity
-                key={slot.time}
-                onPress={() => !slot.booked && setSelectedTime(slot.time)}
-                style={{
-                  paddingVertical: 10,
-                  paddingHorizontal: 14,
-                  borderRadius: 8,
-                  margin: 5,
-                  backgroundColor: slot.booked
-                    ? '#D1C4E9'
-                    : selectedTime === slot.time
-                    ? '#8E24AA'
-                    : '#F3E5F5',
-                }}
-              >
-                <Text
-                  style={{
-                    color: slot.booked
-                      ? '#555'
-                      : selectedTime === slot.time
-                      ? '#fff'
-                      : '#4A148C',
-                  }}
+          <View style={styles.timeSlotsContainer}>
+            {timeSlots.map(time => {
+              const isBooked = bookedSlots.includes(time);
+              const isSelected = selectedTime === time;
+              return (
+                <TouchableOpacity
+                  key={time}
+                  disabled={isBooked}
+                  onPress={() => setSelectedTime(time)}
+                  style={[
+                    styles.timeSlot,
+                    isBooked && styles.timeSlotBooked,
+                    isSelected && styles.timeSlotSelected,
+                  ]}
                 >
-                  {slot.time}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.timeSlotText,
+                      isBooked && styles.timeSlotTextBooked,
+                      isSelected && styles.timeSlotTextSelected,
+                    ]}
+                  >
+                    {time}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
-          {/* Service Amount */}
-          <Text style={{ fontSize: 16, fontWeight: '600', marginVertical: 15 }}>
-            Service Amount
-          </Text>
-          <View
-            style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 10 }}
-          >
-            <View
-              style={{
-                flexDirection: 'row',
-                padding: 12,
-                backgroundColor: '#f8f8f8',
-              }}
-            >
-              <Text style={{ flex: 1, fontWeight: '600' }}>Service</Text>
-              <Text style={{ width: 80, fontWeight: '600' }}>Quantity</Text>
-              <Text style={{ width: 60, fontWeight: '600' }}>Price</Text>
-            </View>
-            {services.map(service => (
-              <View
-                key={service.id}
-                style={{ flexDirection: 'row', padding: 12 }}
+          <Text style={styles.sectionTitle}>Service Amount</Text>
+          <View style={styles.table}>
+            <View style={[styles.tableRow, styles.tableHeader]}>
+              <Text
+                style={[styles.tableCell, styles.tableHeaderText, { flex: 2 }]}
               >
-                <Text style={{ flex: 1 }}>{service.name}</Text>
-                <Text style={{ width: 80 }}>{service.qty}</Text>
-                <Text style={{ width: 60 }}>{service.price}</Text>
+                Service
+              </Text>
+              <Text style={[styles.tableCell, styles.tableHeaderText]}>
+                Quantity
+              </Text>
+              <Text
+                style={[
+                  styles.tableCell,
+                  styles.tableHeaderText,
+                  { textAlign: 'right' },
+                ]}
+              >
+                Price
+              </Text>
+            </View>
+            {servicesData.map(service => (
+              <View key={service.id} style={styles.tableRow}>
+                <Text style={[styles.tableCell, { flex: 2 }]}>
+                  {service.name}
+                </Text>
+                <Text style={styles.tableCell}>{service.qty}</Text>
+                <Text style={[styles.tableCell, { textAlign: 'right' }]}>
+                  {service.price}
+                </Text>
               </View>
             ))}
           </View>
-          <TouchableOpacity
-            style={{ paddingBottom: 50 }}
-            onPress={() => navigation.navigate('BookingSummaryScreen')}
-          >
-            <Text>Next</Text>
-          </TouchableOpacity>
         </ScrollView>
+        <TouchableOpacity
+          style={styles.nextButton}
+          onPress={() => navigation.navigate('BookingSummaryScreen')}
+        >
+          <Text style={styles.nextButtonText}>NEXT</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  outerContainer: {
+    flex: 1,
+    backgroundColor: primaryColor,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 55,
+    left: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  backButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    marginLeft: 5,
+  },
+  container: {
+    flex: 1,
+    marginTop: 100,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    paddingHorizontal: 25,
+  },
+  mainTitle: {
+    fontSize: 26,
+    fontWeight: 400,
+    color: '#333',
+    textAlign: 'center',
+    marginTop: 25,
+    marginBottom: 25,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#333',
+  },
+  navIcons: {
+    flexDirection: 'row',
+  },
+  expertScroll: {
+    paddingBottom: 25,
+  },
+  expertCard: {
+    alignItems: 'center',
+    marginRight: 20,
+  },
+  avatarContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    marginBottom: 8,
+  },
+  avatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 35,
+  },
+  avatarOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(142, 68, 173, 0.6)',
+    borderRadius: 35,
+  },
+  expertName: {
+    fontSize: 14,
+    color: '#555',
+  },
+  datePicker: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 25,
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#555',
+  },
+  legendContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 6,
+    marginLeft: 10,
+  },
+  legendText: {
+    fontSize: 14,
+    color: '#888',
+  },
+  timeSlotsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 25,
+  },
+  timeSlot: {
+    width: '23%',
+    backgroundColor: lightPurple,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  timeSlotSelected: {
+    backgroundColor: primaryColor,
+  },
+  timeSlotBooked: {
+    backgroundColor: bookedColor,
+  },
+  timeSlotText: {
+    color: primaryColor,
+    fontWeight: '600',
+  },
+  timeSlotTextSelected: {
+    color: '#fff',
+  },
+  timeSlotTextBooked: {
+    color: '#999',
+  },
+  table: {
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  tableRow: {
+    flexDirection: 'row',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  tableHeader: {
+    backgroundColor: '#FAFAFA',
+  },
+  tableCell: {
+    flex: 1,
+    fontSize: 15,
+    color: '#555',
+  },
+  tableHeaderText: {
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  nextButton: {
+    backgroundColor: primaryColor,
+    padding: 18,
+    borderRadius: 15,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  nextButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+});
 
 export default BookingScreen;
