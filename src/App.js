@@ -15,17 +15,18 @@ import ParlourDetails from './screens/ParlourDetails/ParlourDetails';
 import BookingScreen from './screens/BookingScreen/BookingScreen';
 import BookingSummaryScreen from './screens/BookingSummaryScreen/BookingSummaryScreen';
 import AppointmentScreen from './screens/AppointmentScreen/AppointmentScreen';
-
-import WelcomeScreen from './screens/WelcomeScreen/WelcomeScreen';
-import SignInScreen from './screens/SignInScreen/SignInScreen';
-import SignUpScreen from './screens/SignUpScreen/SignUpScreen';
-
-import { primaryColor } from './constants/colors';
 import ChangePasswordScreen from './screens/ChangePasswordScreen/ChangePasswordScreen';
 import HelpSupportScreen from './screens/HelpSupportScreen/HelpSupportScreen';
 import NearByShopsList from './screens/NearByShopsList/NearByShopsList';
 import BeautyExpertDetailsScreen from './screens/BeautyExpertDetailsScreen/BeautyExpertDetailsScreen';
 import OTPVerificationScreen from './screens/OTPVerificationScreen/OTPVerificationScreen';
+import SplashScreen from './screens/SplashScreen/SplashScreen';
+import OnboardingScreen from './screens/OnboardingScreen/OnboardingScreen';
+import WelcomeScreen from './screens/WelcomeScreen/WelcomeScreen';
+import SignInScreen from './screens/SignInScreen/SignInScreen';
+import SignUpScreen from './screens/SignUpScreen/SignUpScreen';
+
+import { primaryColor } from './constants/colors';
 
 const Tab = createMaterialBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -42,7 +43,6 @@ function HomeStack() {
         name="BookingSummaryScreen"
         component={BookingSummaryScreen}
       />
-
       <Stack.Screen
         name="BeautyExpertDetailsScreen"
         component={BeautyExpertDetailsScreen}
@@ -73,7 +73,6 @@ function TabNavigator() {
           ),
         }}
       />
-
       <Tab.Screen
         name="Shops"
         component={NearByShopsList}
@@ -135,7 +134,7 @@ function AppDrawer() {
   );
 }
 
-function AppDrawerStack() {
+function MainAppStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="AppDrawer" component={AppDrawer} />
@@ -164,10 +163,11 @@ export default function App() {
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           {isSignedIn ? (
-            // <Stack.Screen name="AppDrawer" component={AppDrawer} />
-            <Stack.Screen name="AppDrawerStack" component={AppDrawerStack} />
+            <Stack.Screen name="MainAppStack" component={MainAppStack} />
           ) : (
             <>
+              <Stack.Screen name="Splash" component={SplashScreen} />
+              <Stack.Screen name="Onboarding" component={OnboardingScreen} />
               <Stack.Screen name="Welcome" component={WelcomeScreen} />
               <Stack.Screen
                 name="SignIn"
@@ -178,10 +178,6 @@ export default function App() {
                 name="SignUp"
                 component={SignUpScreen}
                 initialParams={{ signIn: authContext.signIn }}
-              />
-              <Stack.Screen
-                name="ChangePasswordScreen"
-                component={ChangePasswordScreen}
               />
               <Stack.Screen
                 name="OTPVerificationScreen"
