@@ -14,6 +14,7 @@ import CustomDrawerContent from './components/CustomDrawerContent/CustomDrawerCo
 import ParlourDetails from './screens/ParlourDetails/ParlourDetails';
 import BookingScreen from './screens/BookingScreen/BookingScreen';
 import BookingSummaryScreen from './screens/BookingSummaryScreen/BookingSummaryScreen';
+import AllAppointments from './screens/AllAppointments/AllAppointments';
 
 const Tab = createMaterialBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -58,7 +59,7 @@ function TabNavigator() {
       />
       <Tab.Screen
         name="Appointment"
-        component={AppointmentScreen}
+        component={AllAppointments}
         options={{
           tabBarLabel: 'Appointments',
           tabBarIcon: ({ focused, color }) => (
