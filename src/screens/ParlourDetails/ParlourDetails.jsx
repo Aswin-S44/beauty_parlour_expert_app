@@ -11,6 +11,8 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Reviews from '../../components/Reviews/Reviews';
 import { primaryColor } from '../../constants/colors';
+import ServiceSection from '../../sections/ServiceSection/ServiceSection';
+import GallerySection from '../../sections/GallerySection/GallerySection';
 
 const ParlourDetails = ({ route, navigation }) => {
   const { parlourData } = route.params;
@@ -186,7 +188,13 @@ const ParlourDetails = ({ route, navigation }) => {
 
       {activeTab === 'Service' && (
         <View style={styles.content}>
-          <Text>Service Information Goes Here</Text>
+          <ServiceSection />
+        </View>
+      )}
+
+      {activeTab === 'Gallery' && (
+        <View style={styles.content}>
+          <GallerySection />
         </View>
       )}
 

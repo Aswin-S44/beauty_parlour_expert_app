@@ -1,153 +1,243 @@
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import React from 'react';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import { View, Text, StyleSheet, Image, FlatList } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+
+const reviewsData = [
+  {
+    id: '1',
+    name: 'Jonson Wiliam',
+    time: '1 day ago',
+    rating: 4.5,
+    comment:
+      'Contrary to popular besimp and world class lyrandom text. It has roots',
+    image: require('../../assets/images/user.png'),
+  },
+  {
+    id: '2',
+    name: 'Shikha Das',
+    time: '3 month ago',
+    rating: 4,
+    comment:
+      'Contrary to popular besimp and world class lyrandom text. It has roots',
+    image: require('../../assets/images/user.png'),
+  },
+  {
+    id: '3',
+    name: 'Fiza Kubila',
+    time: '2 month ago',
+    rating: 3,
+    comment:
+      'Contrary to popular besimp and world class lyrandom text. It has roots',
+    image: require('../../assets/images/user.png'),
+  },
+];
+
+const primaryColor = '#8E44AD';
+const starColor = '#FFC107';
+
+const StarRating = ({ rating, size = 16 }) => {
+  const stars = [];
+  const filledStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 !== 0;
+
+  for (let i = 0; i < filledStars; i++) {
+    stars.push(
+      <Ionicons
+        key={`star-filled-${i}`}
+        name="star"
+        size={size}
+        color={starColor}
+      />,
+    );
+  }
+
+  if (hasHalfStar) {
+    stars.push(
+      <Ionicons
+        key="star-half"
+        name="star-half-sharp"
+        size={size}
+        color={starColor}
+      />,
+    );
+  }
+
+  const emptyStars = 5 - stars.length;
+  for (let i = 0; i < emptyStars; i++) {
+    stars.push(
+      <Ionicons
+        key={`star-empty-${i}`}
+        name="star-outline"
+        size={size}
+        color="#D3D3D3"
+      />,
+    );
+  }
+
+  return <View style={styles.starContainer}>{stars}</View>;
+};
+
+const ProgressBar = ({ label, percentage }) => (
+  <View style={styles.progressContainer}>
+    <Text style={styles.progressLabel}>{label}</Text>
+    <View style={styles.progressBarBackground}>
+      <View style={[styles.progressBarFill, { width: `${percentage}%` }]} />
+    </View>
+  </View>
+);
+
+const ReviewItem = ({ item }) => (
+  <View style={styles.reviewItemContainer}>
+    <Image source={item.image} style={styles.avatar} />
+    <View style={styles.reviewContent}>
+      <View style={styles.reviewHeader}>
+        <Text style={styles.reviewerName}>{item.name}</Text>
+      </View>
+      <View style={styles.ratingRow}>
+        <Text style={styles.reviewTime}>{item.time}</Text>
+        <StarRating rating={item.rating} />
+      </View>
+      <Text style={styles.reviewComment}>{item.comment}</Text>
+    </View>
+  </View>
+);
 
 const Reviews = () => {
-  const reviews = [
-    {
-      name: 'Jonson Wiliam',
-      time: '1 day ago',
-      rating: 4,
-      comment:
-        'Contrary to popular besimp and world class lyrandom text. It has roots',
-    },
-    {
-      name: 'Shikha Das',
-      time: '3 month ago',
-      rating: 4,
-      comment:
-        'Contrary to popular besimp and world class lyrandom text. It has roots',
-    },
-    {
-      name: 'Fiza Kubila',
-      time: '2 month ago',
-      rating: 4,
-      comment:
-        'Contrary to popular besimp and world class lyrandom text. It has roots',
-    },
-  ];
-
-  const renderStars = rating => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <Icon
-          key={i}
-          name={i <= rating ? 'star' : 'star-o'}
-          size={16}
-          color={i <= rating ? '#FFD700' : '#CCCCCC'}
-        />,
-      );
-    }
-    return stars;
-  };
-
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.overallRating}>
-        <Text style={styles.overallText}>4.9 Overall Rating</Text>
-        <View style={styles.starsContainer}>
-          {renderStars(5)}
-          <Text style={styles.ratingCount}>(120)</Text>
+    <View style={styles.container}>
+      <FlatList
+        data={reviewsData}
+        renderItem={({ item }) => <ReviewItem item={item} />}
+        keyExtractor={item => item.id}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+      />
+      <View style={styles.overallRatingContainer}>
+        <View style={styles.overallHeader}>
+          <Text style={styles.overallRatingNumber}>4.9</Text>
+          <View>
+            <Text style={styles.overallRatingTitle}>Overall Rating</Text>
+            <View style={styles.overallStarsRow}>
+              <StarRating rating={4.9} size={18} />
+              <Text style={styles.reviewCountText}>(120) Good (5)</Text>
+            </View>
+          </View>
         </View>
-        <View style={styles.ratingBreakdown}>
-          <View style={styles.ratingItem}>
-            <Text style={styles.ratingLabel}>Good</Text>
-            <Text style={styles.ratingValue}>(5)</Text>
-          </View>
-          <View style={styles.ratingItem}>
-            <Text style={styles.ratingLabel}>Service</Text>
-          </View>
-          <View style={styles.ratingItem}>
-            <Text style={styles.ratingLabel}>Price</Text>
-          </View>
+        <View style={styles.progressSection}>
+          <ProgressBar label="Service" percentage={90} />
+          <ProgressBar label="Price" percentage={75} />
         </View>
-        <Text style={styles.reviewCount}>17 of 70</Text>
       </View>
-
-      {reviews.map((review, index) => (
-        <View key={index} style={styles.reviewCard}>
-          <View style={styles.reviewHeader}>
-            <Text style={styles.reviewerName}>{review.name}</Text>
-            <Text style={styles.reviewTime}>{review.time}</Text>
-          </View>
-          <View style={styles.reviewStars}>{renderStars(review.rating)}</View>
-          <Text style={styles.reviewComment}>{review.comment}</Text>
-        </View>
-      ))}
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: '#fff',
     padding: 20,
   },
-  overallRating: {
-    marginBottom: 20,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  overallText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  starsContainer: {
+  reviewItemContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 16,
   },
-  ratingCount: {
-    marginLeft: 10,
-    color: '#666',
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 15,
   },
-  ratingBreakdown: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  ratingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  ratingLabel: {
-    color: '#666',
-  },
-  ratingValue: {
-    marginLeft: 5,
-    color: '#666',
-  },
-  reviewCount: {
-    color: '#666',
-  },
-  reviewCard: {
-    marginBottom: 20,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+  reviewContent: {
+    flex: 1,
   },
   reviewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 5,
+    alignItems: 'center',
   },
   reviewerName: {
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
   },
   reviewTime: {
-    color: '#666',
+    fontSize: 13,
+    color: '#888',
+    marginRight: 10,
   },
-  reviewStars: {
+  starContainer: {
     flexDirection: 'row',
-    marginBottom: 10,
   },
   reviewComment: {
-    color: '#666',
-    lineHeight: 20,
+    fontSize: 15,
+    color: '#555',
+    marginTop: 6,
+    lineHeight: 22,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#F0F0F0',
+    marginVertical: 16,
+  },
+  overallRatingContainer: {
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  overallHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  overallRatingNumber: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#333',
+    marginRight: 15,
+  },
+  overallRatingTitle: {
+    fontSize: 18,
+    color: '#333',
+    fontWeight: '500',
+  },
+  overallStarsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  reviewCountText: {
+    fontSize: 14,
+    color: '#888',
+    marginLeft: 8,
+  },
+  progressSection: {
+    marginTop: 20,
+  },
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  progressLabel: {
+    fontSize: 16,
+    color: '#555',
+    width: 70,
+  },
+  progressBarBackground: {
+    flex: 1,
+    height: 8,
+    backgroundColor: '#EAEAEA',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: primaryColor,
+    borderRadius: 4,
   },
 });
 
