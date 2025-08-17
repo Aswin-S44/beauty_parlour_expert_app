@@ -120,12 +120,23 @@ const SignUpScreen = ({ navigation, route }) => {
             />
             <Text style={styles.termsText}>
               I accept the{' '}
-              <Text style={styles.termsLink}>policy and privacy</Text>
+              <TouchableOpacity
+                style={{}}
+                onPress={() => {
+                  navigation.navigate('PrivacyPolicyScreen');
+                }}
+              >
+                {' '}
+                <Text style={styles.termsLink}>policy and privacy</Text>
+              </TouchableOpacity>
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.createButton} onPress={signIn}>
-            <Text style={styles.createButtonText}>CREATE ACCOUNT</Text>
+          <TouchableOpacity
+            style={styles.createButton}
+            onPress={() => navigation.navigate('AddGeneralInformationScreen')}
+          >
+            <Text style={styles.createButtonText}>NEXT</Text>
           </TouchableOpacity>
 
           <View style={styles.signInContainer}>

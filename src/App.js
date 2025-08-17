@@ -34,6 +34,8 @@ import ExpertsScreen from './screens/ExpertsScreen/ExpertsScreen';
 import AddExpertScreeen from './screens/AddExpertScreeen/AddExpertScreeen';
 import AllOffersScreen from './screens/AllOffersScreen/AllOffersScreen';
 import AddOffersScreen from './screens/AddOffersScreen/AddOffersScreen';
+import AddGeneralInformationScreen from './screens/AddGeneralInformationScreen/AddGeneralInformationScreen';
+import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen/PrivacyPolicyScreen';
 
 const Tab = createMaterialBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -195,6 +197,14 @@ export default function App() {
               <Stack.Screen
                 name="OTPVerificationScreen"
                 component={OTPVerificationScreen}
+              />
+              <Stack.Screen
+                name="AddGeneralInformationScreen"
+                component={AddGeneralInformationScreen}
+              />
+              <Stack.Screen
+                name="PrivacyPolicyScreen"
+                component={PrivacyPolicyScreen}
               />
             </>
           )}
