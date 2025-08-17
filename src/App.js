@@ -27,6 +27,13 @@ import SignInScreen from './screens/SignInScreen/SignInScreen';
 import SignUpScreen from './screens/SignUpScreen/SignUpScreen';
 
 import { primaryColor } from './constants/colors';
+import AppointmentRequestsScreen from './screens/AppointmentRequestsScreen/AppointmentRequestsScreen';
+import AllServicesScreen from './screens/AllServicesScreen/AllServicesScreen';
+import AddServicesScreen from './screens/AddServicesScreen/AddServicesScreen';
+import ExpertsScreen from './screens/ExpertsScreen/ExpertsScreen';
+import AddExpertScreeen from './screens/AddExpertScreeen/AddExpertScreeen';
+import AllOffersScreen from './screens/AllOffersScreen/AllOffersScreen';
+import AddOffersScreen from './screens/AddOffersScreen/AddOffersScreen';
 
 const Tab = createMaterialBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -74,13 +81,13 @@ function TabNavigator() {
         }}
       />
       <Tab.Screen
-        name="Shops"
-        component={NearByShopsList}
+        name="Request"
+        component={AppointmentRequestsScreen}
         options={{
           tabBarLabel: 'Shops',
           tabBarIcon: ({ focused, color }) => (
             <Ionicons
-              name="location"
+              name="chatbox-ellipses-sharp"
               size={focused ? 26 : 20}
               color={focused ? primaryColor : color}
             />
@@ -143,6 +150,12 @@ function MainAppStack() {
         component={ChangePasswordScreen}
       />
       <Stack.Screen name="HelpSupportScreen" component={HelpSupportScreen} />
+      <Stack.Screen name="AllServicesScreen" component={AllServicesScreen} />
+      <Stack.Screen name="AddServicesScreen" component={AddServicesScreen} />
+      <Stack.Screen name="ExpertsScreen" component={ExpertsScreen} />
+      <Stack.Screen name="AddExpertScreeen" component={AddExpertScreeen} />
+      <Stack.Screen name="AllOffersScreen" component={AllOffersScreen} />
+      <Stack.Screen name="AddOffersScreen" component={AddOffersScreen} />
     </Stack.Navigator>
   );
 }

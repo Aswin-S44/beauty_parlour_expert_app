@@ -18,7 +18,7 @@ const WelcomeScreen = ({ navigation }) => {
         source={require('../../assets/images/splash_logo.png')}
         style={styles.welcomeImage}
       />
-      <Text style={styles.title}>Beauty Parlour Booking App</Text>
+      <Text style={styles.title}>Beauty Expert App</Text>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity
@@ -41,7 +41,7 @@ const WelcomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: lightPurple,
+    backgroundColor: primaryColor,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,

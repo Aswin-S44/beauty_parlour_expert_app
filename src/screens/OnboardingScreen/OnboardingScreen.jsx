@@ -16,19 +16,19 @@ const { width, height } = Dimensions.get('window');
 const slides = [
   {
     key: '1',
-    title: 'Experienced in Beautifying',
+    title: 'Easy to find Customer',
     text: 'Aenean leoigula porttitor eu,consequat vitae eleifend acenimliquam lorem ante dapibus in viverra quis feugiat',
     image: require('../../assets/images/old/onboard/1.png'),
   },
   {
     key: '2',
-    title: 'Rewarded Services',
+    title: 'Branding for your Parlour',
     text: 'Aenean leoigula porttitor eu,consequat vitae eleifend acenimliquam lorem ante dapibus in viverra quis feugiat',
     image: require('../../assets/images/old/onboard/2.png'),
   },
   {
     key: '3',
-    title: 'Trained & Skillful Staffs',
+    title: 'Get customer Feedback',
     text: 'Aenean leoigula porttitor eu,consequat vitae eleifend acenimliquam lorem ante dapibus in viverra quis feugiat',
     image: require('../../assets/images/old/onboard/3.png'),
   },

@@ -16,67 +16,16 @@ import Card from '../../components/Card/Card';
 import { primaryColor, secondaryColor } from '../../constants/colors';
 
 const HomeScreen = ({ navigation }) => {
-  const services = [
-    {
-      id: 1,
-      name: 'HairCare',
-      icon: 'spa',
-      image: require('../../assets/images/category/1.png'),
-    },
-    {
-      id: 2,
-      name: 'Makeover',
-      icon: 'smile-o',
-      image: require('../../assets/images/category/2.png'),
-    },
-    {
-      id: 3,
-      name: 'Skin Care',
-      icon: 'female',
-      image: require('../../assets/images/category/3.png'),
-    },
-    {
-      id: 4,
-      name: 'Facial',
-      icon: 'scissors',
-      image: require('../../assets/images/category/4.png'),
-    },
+  const weeklyData = [
+    { day: 'SAT', value: 2200, color: '#4A5568' },
+    { day: 'SUN', value: 1500, color: '#E53E3E' },
+    { day: 'MON', value: 2300, color: '#48BB78' },
+    { day: 'TUE', value: 1300, color: '#F6E05E' },
+    { day: 'WED', value: 1800, color: '#4299E1' },
+    { day: 'THU', value: 1700, color: '#ED64A6' },
+    { day: 'FRI', value: 2500, color: '#9F7AEA' },
   ];
-
-  const featuredSection = [
-    {
-      id: 1,
-      serviceName: 'Live Style Parlour',
-      image: require('../../assets/images/bg.png'),
-      location: 'Captown City',
-      rating: 4.0,
-      status: 'Open',
-    },
-    {
-      id: 2,
-      serviceName: 'Kigfisher Pro',
-      image: require('../../assets/images/services/6.png'),
-      location: 'Captown City',
-      rating: 4.0,
-      status: 'Open',
-    },
-    {
-      id: 3,
-      serviceName: 'Landon Town',
-      image: require('../../assets/images/services/5.png'),
-      location: 'Captown City',
-      rating: 4.0,
-      status: 'Open',
-    },
-    {
-      id: 4,
-      serviceName: 'Live Style Parlour',
-      image: require('../../assets/images/services/4.png'),
-      location: 'Captown City',
-      rating: 4.0,
-      status: 'Open',
-    },
-  ];
+  const maxValue = 2500;
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -88,7 +37,7 @@ const HomeScreen = ({ navigation }) => {
 
       <View style={styles.bannerContainer}>
         <Image
-          source={require('../../../images/home_bg.png')}
+          source={require('../../assets/images/home_bg-1.png')}
           style={styles.bannerImage}
         />
 
@@ -97,9 +46,9 @@ const HomeScreen = ({ navigation }) => {
             onPress={() => navigation.openDrawer()}
             style={styles.hamburgerIconContainer}
           >
-            <View style={[styles.hamburgerLine, { width: 30 }]} />
             <View style={[styles.hamburgerLine, { width: 25 }]} />
-            <View style={[styles.hamburgerLine, { width: 30 }]} />
+            <View style={[styles.hamburgerLine, { width: 20 }]} />
+            <View style={[styles.hamburgerLine, { width: 25 }]} />
           </TouchableOpacity>
           <View>
             <TouchableOpacity
@@ -109,7 +58,7 @@ const HomeScreen = ({ navigation }) => {
                 height: 35,
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: '50%',
+                borderRadius: 50,
               }}
             >
               <Ionicons
@@ -126,89 +75,50 @@ const HomeScreen = ({ navigation }) => {
 
         <View style={styles.bannerTextContainer}>
           <Text style={styles.bannerTitle}>Beauty Parlour</Text>
-          <Text style={styles.bannerSubtitle}>Beauty Parlour Booking App</Text>
-        </View>
-
-        <View style={styles.searchContainer}>
-          <View style={styles.searchBar}>
-            <TextInput
-              placeholder="Spa, Facial, Makeup"
-              style={styles.searchInput}
-              placeholderTextColor="#888"
-            />
-            <EvilIcons
-              name="search"
-              size={32}
-              color="#888"
-              style={styles.searchIcon}
-            />
-          </View>
+          <Text style={styles.bannerSubtitle}>Beauty Expert App</Text>
         </View>
       </View>
 
-      <View style={styles.section}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={styles.servicesContainer}>
-            {services.map(service => (
-              <View key={service.id}>
-                <TouchableOpacity
-                  style={styles.serviceCard}
-                  onPress={() =>
-                    navigation.navigate('Appointment', {
-                      service: service.name,
-                    })
-                  }
-                >
-                  <Image source={service.image} style={styles.smallImage} />
-                </TouchableOpacity>
-                <Text style={styles.serviceName}>{service.name}</Text>
+      <View style={styles.mainContent}>
+        <View style={styles.card}>
+          <View style={styles.weeklyEarnHeader}>
+            <Text style={styles.cardTitle}>WEEKLY EARN</Text>
+            <Text style={styles.yAxisLabel}>2,500</Text>
+          </View>
+          <View style={styles.chartContainer}>
+            {weeklyData.map((item, index) => (
+              <View key={index} style={styles.barWrapper}>
+                <View
+                  style={[
+                    styles.bar,
+                    {
+                      height: `${(item.value / maxValue) * 100}%`,
+                      backgroundColor: item.color,
+                    },
+                  ]}
+                />
+                <Text style={styles.xAxisLabel}>{item.day}</Text>
               </View>
             ))}
           </View>
-        </ScrollView>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Popular Beauty Parlour</Text>
-        <View style={styles.featuredContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {featuredSection.map((feature, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() =>
-                  navigation.navigate('ParlourDetails', {
-                    parlourData: feature,
-                  })
-                }
-              >
-                <Card
-                  image={feature.image}
-                  title={feature.serviceName}
-                  location={feature.location}
-                  rating={feature.rating}
-                  status={feature.status}
-                />
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <Text style={[styles.yAxisLabel, { alignSelf: 'flex-start' }]}>
+            0
+          </Text>
         </View>
-      </View>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Popular Categories</Text>
-        <View style={styles.featuredContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {featuredSection.map((feature, index) => (
-              <View key={index}>
-                <Card
-                  image={feature.image}
-                  title={feature.serviceName}
-                  location={feature.location}
-                  rating={feature.rating}
-                  status={feature.status}
-                />
-              </View>
-            ))}
-          </ScrollView>
+
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Text style={styles.statTitle}>Total Services</Text>
+            <Text style={[styles.statNumber, { color: '#3182CE' }]}>2723</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statTitle}>Pending Services</Text>
+            <Text style={[styles.statNumber, { color: '#DD6B20' }]}>523</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statTitle}>Completed Services</Text>
+            <Text style={[styles.statNumber, { color: '#38A169' }]}>1524</Text>
+          </View>
         </View>
       </View>
     </ScrollView>
@@ -218,12 +128,10 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F7FAFC',
   },
   bannerContainer: {
-    position: 'relative',
-    height: 280,
-    marginBottom: 40,
+    height: 250,
   },
   bannerImage: {
     width: '100%',
@@ -232,18 +140,27 @@ const styles = StyleSheet.create({
   },
   header: {
     position: 'absolute',
-    top: 40,
-    left: 15,
-    right: 15,
+    top: 50,
+    left: 20,
+    right: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     zIndex: 1,
   },
+  hamburgerIconContainer: {
+    padding: 5,
+  },
+  hamburgerLine: {
+    height: 3,
+    backgroundColor: '#fff',
+    borderRadius: 2,
+    marginVertical: 2,
+  },
   badgeContainer: {
     position: 'absolute',
-    right: -6,
-    top: -3,
+    right: -5,
+    top: -5,
     backgroundColor: primaryColor,
     borderRadius: 8,
     width: 16,
@@ -256,100 +173,103 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
-  smallImage: {
-    height: 30,
-    width: 30,
-  },
   bannerTextContainer: {
     position: 'absolute',
-    top: 140,
-    left: 23,
-    right: 15,
+    bottom: 30,
+    left: 20,
   },
   bannerTitle: {
     color: '#fff',
-    fontSize: 26,
-    fontWeight: '400',
+    fontSize: 28,
+    fontWeight: 'bold',
   },
   bannerSubtitle: {
     color: '#fff',
     fontSize: 16,
   },
-  searchContainer: {
-    position: 'absolute',
-    bottom: 20,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
+  mainContent: {
+    paddingHorizontal: 15,
+    marginTop: 40,
   },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  card: {
     backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    elevation: 5,
+    borderRadius: 12,
+    padding: 20,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
-    shadowRadius: 2,
-    height: 50,
-    width: '85%',
-  },
-  searchIcon: {
-    marginRight: 10,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#333',
-  },
-  section: {
-    paddingHorizontal: 15,
+    shadowRadius: 1.41,
     marginBottom: 20,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 500,
-    marginBottom: 15,
-    color: '#333',
-    left: 10,
-  },
-  servicesContainer: {
+  weeklyEarnHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
-  },
-
-  serviceCard: {
-    width: 72,
     alignItems: 'center',
-    marginRight: 10,
-    padding: 10,
-    height: 72,
-    backgroundColor: secondaryColor,
-    borderRadius: 50,
-    justifyContent: 'center',
+    marginBottom: 10,
   },
-
-  serviceName: {
-    marginTop: 8,
+  cardTitle: {
     fontSize: 14,
-    textAlign: 'center',
-    color: '#333',
-    fontWeight: '500',
+    fontWeight: 'bold',
+    color: '#A0AEC0',
   },
-  featuredContainer: {
+  yAxisLabel: {
+    fontSize: 12,
+    color: '#A0AEC0',
+  },
+  chartContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    height: 150,
+    borderLeftWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingLeft: 10,
+    paddingTop: 10,
   },
-  hamburgerIconContainer: {
-    padding: 5,
+  barWrapper: {
+    flex: 1,
+    alignItems: 'center',
   },
-  hamburgerLine: {
-    height: 3,
+  bar: {
+    width: '60%',
+    borderRadius: 5,
+  },
+  xAxisLabel: {
+    marginTop: 5,
+    fontSize: 12,
+    color: '#718096',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  statCard: {
     backgroundColor: '#fff',
-    borderRadius: 2,
-    marginVertical: 3,
+    borderRadius: 12,
+    padding: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    marginHorizontal: 5,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    minHeight: 120,
+  },
+  statTitle: {
+    fontSize: 14,
+    color: '#718096',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  statNumber: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginTop: 8,
   },
 });
 

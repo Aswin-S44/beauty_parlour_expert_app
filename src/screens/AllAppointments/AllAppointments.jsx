@@ -1,122 +1,90 @@
-import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  StatusBar,
   FlatList,
   Image,
+  StatusBar,
 } from 'react-native';
+import React from 'react';
 
-const primaryColor = '#8E44AD';
+const AllAppointments = () => {
+  const appointments = [
+    {
+      id: '1',
+      name: 'Fahima Khan',
+      date: '2 Feb 2021, 12:00 pm',
+      amount: 120,
+      status: 'Running',
+      imageUrl: 'https://i.imgur.com/6t4k2j6.png',
+    },
+    {
+      id: '2',
+      name: 'Mariya Tuba',
+      date: '1 Feb 2021, 05:00 pm',
+      amount: 250,
+      status: 'Running',
+      imageUrl: 'https://i.imgur.com/xgA31iK.png',
+    },
+    {
+      id: '3',
+      name: 'Sakina Joshifa',
+      date: '22 Jan 2021, 04.30 pm',
+      amount: 99,
+      status: 'Completed',
+      imageUrl: 'https://i.imgur.com/S5ai1Jg.png',
+    },
+    {
+      id: '4',
+      name: 'Lifaniya Mujo',
+      date: '21 Jan 2021, 09:15 am',
+      amount: 130,
+      status: 'Completed',
+      imageUrl: 'https://i.imgur.com/i4j1k7G.png',
+    },
+    {
+      id: '5',
+      name: 'Wakina Tashiya',
+      date: '15 Jan 2021, 12:05 am',
+      amount: 50,
+      status: 'Completed',
+      imageUrl: 'https://i.imgur.com/gDaIp0D.png',
+    },
+  ];
 
-const historyData = [
-  {
-    id: '1',
-    name: 'Sofiyan Lit',
-    specialty: 'Spa Specialist',
-    description: '25 Dec 2020,\n08:00pm\nAmount $250',
-    status: 'Pending',
-    image: require('../../assets/images/users/1.png'),
-  },
-  {
-    id: '2',
-    name: 'Nadiya Khan',
-    specialty: 'Hair Specialist',
-    description: '27 Dec 2020,\n10:00pm\nAmount $350',
-    status: 'Completed',
-    image: require('../../assets/images/users/2.png'),
-  },
-  {
-    id: '3',
-    name: 'Kusino Zaal',
-    specialty: 'Skin Specialist',
-    description: '10 Nov 2020,\n08:00pm\nAmount $170',
-    status: 'Confirmed',
-    image: require('../../assets/images/users/3.png'),
-  },
-  {
-    id: '4',
-    name: 'Lifa Mitali',
-    specialty: 'Cut Specialist',
-    description: '07 Nov 2020,\n09:00pm\nAmount $250',
-    status: 'Canceled',
-    image: require('../../assets/images/users/4.png'),
-  },
-];
-
-const getStatusStyles = status => {
-  switch (status) {
-    case 'Pending':
-      return {
-        container: { backgroundColor: '#F3E5F5' },
-        text: { color: '#8E44AD' },
-      };
-    case 'Completed':
-      return {
-        container: { backgroundColor: '#E1BEE7' },
-        text: { color: '#6A1B9A' },
-      };
-    case 'Confirmed':
-      return {
-        container: { backgroundColor: '#9C27B0' },
-        text: { color: '#FFFFFF' },
-      };
-    case 'Canceled':
-      return {
-        container: { backgroundColor: '#F1F1F1' },
-        text: { color: '#9E9E9E' },
-      };
-    default:
-      return {};
-  }
-};
-
-const HistoryItem = ({ item }) => {
-  const statusStyles = getStatusStyles(item.status);
-
-  return (
+  const renderAppointment = ({ item }) => (
     <View style={styles.itemContainer}>
-      <View style={styles.expertColumn}>
-        <Image source={item.image} style={styles.avatar} />
-        <View>
-          <Text style={styles.expertName}>{item.name}</Text>
-          <Text style={styles.expertSpecialty}>{item.specialty}</Text>
-        </View>
+      <Image source={{ uri: item.imageUrl }} style={styles.avatar} />
+      <View style={styles.itemDetails}>
+        <Text style={styles.itemName}>{item.name}</Text>
+        <Text style={styles.itemDate}>{item.date}</Text>
+        <Text style={styles.itemAmountText}>Amount {item.amount}</Text>
       </View>
-      <View style={styles.descriptionColumn}>
-        <Text style={styles.descriptionText}>{item.description}</Text>
-      </View>
-      <View style={styles.statusColumn}>
-        <View style={[styles.statusBadge, statusStyles.container]}>
-          <Text style={[styles.statusText, statusStyles.text]}>
-            {item.status}
-          </Text>
-        </View>
+      <View style={styles.itemStatus}>
+        <Text style={styles.itemPrice}>${item.amount}</Text>
+        <Text style={styles.itemStatusText}>{item.status}</Text>
       </View>
     </View>
   );
-};
 
-const AllAppointments = () => {
   return (
-    <View style={styles.outerContainer}>
-      <StatusBar backgroundColor={primaryColor} barStyle="light-content" />
-      <View style={styles.container}>
-        <Text style={styles.mainTitle}>Appointment History</Text>
-        <View style={styles.headerRow}>
-          <Text style={[styles.headerText, { flex: 1.5 }]}>Beauty Expert</Text>
-          <Text style={[styles.headerText, { flex: 1.2 }]}>Description</Text>
-          <Text style={[styles.headerText, { flex: 0.8, textAlign: 'right' }]}>
-            Status
-          </Text>
-        </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.header}>
+        <Image
+          source={require('../../assets/images/home_bg-1.png')}
+          style={styles.headerImage}
+        />
+        <View style={styles.overlay} />
+      </View>
+
+      <View style={styles.contentContainer}>
+        <Text style={styles.title}>Appointment History</Text>
         <FlatList
-          data={historyData}
-          renderItem={({ item }) => <HistoryItem item={item} />}
+          data={appointments}
+          renderItem={renderAppointment}
           keyExtractor={item => item.id}
           showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
         />
       </View>
     </View>
@@ -124,87 +92,81 @@ const AllAppointments = () => {
 };
 
 const styles = StyleSheet.create({
-  outerContainer: {
-    flex: 1,
-    backgroundColor: primaryColor,
-  },
   container: {
     flex: 1,
-    marginTop: 80,
     backgroundColor: '#fff',
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
-    paddingHorizontal: 25,
   },
-  mainTitle: {
-    fontSize: 26,
-    fontWeight: '400',
-    color: '#333',
-    textAlign: 'center',
-    marginVertical: 25,
+  header: {
+    height: 180,
+    width: '100%',
   },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: '#FAFAFA',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 10,
+  headerImage: {
+    width: '100%',
+    height: '100%',
   },
-  headerText: {
-    fontSize: 15,
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(128, 0, 128, 0.5)',
+  },
+  contentContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    marginTop: -30,
+    paddingTop: 10,
+  },
+  title: {
+    fontSize: 24,
     fontWeight: '500',
-    color: '#111',
+    textAlign: 'center',
+    marginVertical: 20,
+    color: '#333',
   },
   itemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 20,
     paddingVertical: 15,
-  },
-  expertColumn: {
-    flex: 1.5,
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
   avatar: {
-    width: 45,
-    height: 45,
-    borderRadius: 22.5,
-    marginRight: 10,
+    width: 55,
+    height: 55,
+    borderRadius: 27.5,
   },
-  expertName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
+  itemDetails: {
+    flex: 1,
+    marginLeft: 15,
   },
-  expertSpecialty: {
+  itemName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000',
+  },
+  itemDate: {
     fontSize: 13,
-    color: '#777',
+    color: '#888',
+    marginTop: 2,
   },
-  descriptionColumn: {
-    flex: 1.2,
+  itemAmountText: {
+    fontSize: 13,
+    color: '#888',
+    marginTop: 2,
   },
-  descriptionText: {
-    fontSize: 12,
-    color: '#555',
-    lineHeight: 20,
-  },
-  statusColumn: {
-    flex: 0.8,
+  itemStatus: {
     alignItems: 'flex-end',
   },
-  statusBadge: {
-    borderRadius: 15,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  statusText: {
-    fontSize: 10,
+  itemPrice: {
+    fontSize: 16,
     fontWeight: '500',
+    color: '#000',
   },
-  separator: {
-    height: 1,
-    backgroundColor: '#F0F0F0',
+  itemStatusText: {
+    fontSize: 13,
+    color: '#888',
+    marginTop: 2,
   },
 });
 

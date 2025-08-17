@@ -1,157 +1,196 @@
-import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  StatusBar,
   Image,
-  TouchableOpacity,
   ScrollView,
+  StatusBar,
 } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import { primaryColor, starColor } from '../../constants/colors';
+import React from 'react';
+import Icon from 'react-native-vector-icons/Ionicons';
+import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
+import { primaryColor } from '../../constants/colors';
 
-const StarRating = ({ rating, count }) => {
-  const stars = Array(5).fill(0);
+const ProfileScreen = () => {
   return (
-    <View style={styles.starRatingContainer}>
-      {stars.map((_, index) => (
-        <Ionicons key={index} name="star" size={18} color={starColor} />
-      ))}
-      <Text style={styles.ratingText}>
-        {' '}
-        {rating} ({count})
-      </Text>
-    </View>
-  );
-};
-
-const ProfileMenuItem = ({ iconName, label, onPress }) => (
-  <TouchableOpacity style={styles.menuItem} onPress={onPress}>
-    <View style={styles.menuItemIconContainer}>
-      <Ionicons name={iconName} size={24} color="#555" />
-    </View>
-    <Text style={styles.menuItemText}>{label}</Text>
-    <Ionicons name="chevron-forward" size={22} color="#BDBDBD" />
-  </TouchableOpacity>
-);
-
-const ProfileScreen = ({ navigation }) => {
-  return (
-    <View style={styles.outerContainer}>
-      <StatusBar backgroundColor={primaryColor} barStyle="light-content" />
-
-      <View style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <Text style={styles.mainTitle}>Profile</Text>
-
-          <View style={styles.profileSection}>
-            <Image
-              source={require('../../assets/images/users/1.png')}
-              style={styles.avatar}
-            />
-            <Text style={styles.userName}>Jesika Sabrina</Text>
-            <Text style={styles.userSpecialty}>Spa & Skin Treatment</Text>
-            <StarRating rating={5} count={120} />
-          </View>
-
-          <View style={styles.menuSection}>
-            <ProfileMenuItem iconName="settings-outline" label="Settings" />
-            <ProfileMenuItem iconName="cut-outline" label="My Services" />
-            <ProfileMenuItem iconName="receipt-outline" label="My Coupon" />
-            <ProfileMenuItem
-              iconName="person-outline"
-              label="Support Request"
-            />
-          </View>
-        </ScrollView>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.header}>
+        <Image
+          source={require('../../assets/images/home_bg-1.png')}
+          style={styles.headerImage}
+        />
+        <View style={styles.overlay} />
       </View>
+
+      <ScrollView
+        style={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.profileInfo}>
+          <Text style={styles.name}>Jesika Sabrina</Text>
+          <Image
+            source={require('../../assets/images/home_bg-1.png')}
+            style={styles.avatar}
+          />
+          <Text style={styles.title}>CEO, Beauty Girls Parlour</Text>
+          <View style={styles.ratingContainer}>
+            <FontAwesomeIcon name="star" size={20} color="#FFD700" />
+            <FontAwesomeIcon name="star" size={20} color="#FFD700" />
+            <FontAwesomeIcon name="star" size={20} color="#FFD700" />
+            <FontAwesomeIcon name="star" size={20} color="#FFD700" />
+            <FontAwesomeIcon name="star" size={20} color="#FFD700" />
+            <Text style={styles.ratingText}> 5 (130)</Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>About</Text>
+          <Text style={styles.sectionText}>
+            Aenean leoiqula porttitor eu,consequat vitae eleifend acenimliquam
+            lorem ante dapibus in viverra quis feugiat
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Opening Hours</Text>
+          <View style={styles.hoursRow}>
+            <Text style={styles.sectionText}>Mon - Wed</Text>
+            <Text style={styles.sectionText}>8:00 am - 12:00 pm</Text>
+          </View>
+          <View style={styles.hoursRow}>
+            <Text style={styles.sectionText}>Fri - Sat</Text>
+            <Text style={styles.sectionText}>10:00 am - 11:00 pm</Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Address</Text>
+          <View style={styles.addressContainer}>
+            <View style={styles.addressRow}>
+              <Icon name="location-sharp" size={20} color={primaryColor} />
+              <Text style={styles.addressText}>
+                58 Street - al dulha london - USA
+              </Text>
+            </View>
+            <View style={styles.addressRow}>
+              <Icon
+                name="navigate-circle-outline"
+                size={20}
+                color={primaryColor}
+              />
+              <Text style={styles.addressText}>5 KM</Text>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  outerContainer: {
-    flex: 1,
-    backgroundColor: primaryColor,
-  },
   container: {
     flex: 1,
-    marginTop: 80,
     backgroundColor: '#fff',
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
-    paddingHorizontal: 25,
   },
-  mainTitle: {
-    fontSize: 28,
-    fontWeight: '400',
-    color: '#333',
-    textAlign: 'center',
-    marginTop: 25,
-    marginBottom: 20,
+  header: {
+    height: 150,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
   },
-  profileSection: {
+  headerImage: {
+    width: '100%',
+    height: '100%',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(128, 0, 128, 0.5)',
+  },
+  contentContainer: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    marginTop: 120,
+  },
+  profileInfo: {
     alignItems: 'center',
-    marginBottom: 30,
+    paddingHorizontal: 30,
+    paddingTop: 20,
+    paddingBottom: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    margin: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    marginTop: 30,
+  },
+  name: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
   },
   avatar: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    marginBottom: 15,
+    marginBottom: 10,
   },
-  userName: {
-    fontSize: 22,
-    fontWeight: '500',
-    color: '#333',
-  },
-  userSpecialty: {
+  title: {
     fontSize: 16,
-    color: '#777',
-    marginVertical: 4,
+    color: '#666',
+    marginBottom: 10,
   },
-  starRatingContainer: {
+  ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
   },
   ratingText: {
-    fontSize: 15,
-    color: '#777',
     marginLeft: 5,
+    fontSize: 16,
+    color: '#666',
   },
-  menuSection: {
-    width: '100%',
+  section: {
+    marginTop: 10,
+    paddingHorizontal: 30,
+    marginBottom: 10,
   },
-  menuItem: {
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  sectionText: {
+    fontSize: 15,
+    color: '#666',
+    lineHeight: 22,
+  },
+  hoursRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+  addressContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  addressRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FAFAFA',
-    borderRadius: 15,
-    padding: 15,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  menuItemIconContainer: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  menuItemText: {
     flex: 1,
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
+  },
+  addressText: {
+    fontSize: 15,
+    color: '#666',
+    marginLeft: 10,
+    flexShrink: 1,
   },
 });
 
