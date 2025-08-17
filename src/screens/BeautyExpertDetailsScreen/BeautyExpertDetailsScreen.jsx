@@ -9,9 +9,7 @@ import {
   Image,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-
-const primaryColor = '#8E44AD';
-const starColor = '#FFC107';
+import { primaryColor, starColor } from '../../constants/colors';
 
 const StarRating = ({ rating, count }) => {
   const stars = [];

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, FlatList } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { primaryColor, starColor } from '../../constants/colors';
 
 const reviewsData = [
   {
@@ -31,9 +32,6 @@ const reviewsData = [
     image: require('../../assets/images/user.png'),
   },
 ];
-
-const primaryColor = '#8E44AD';
-const starColor = '#FFC107';
 
 const StarRating = ({ rating, size = 16 }) => {
   const stars = [];

@@ -8,9 +8,7 @@ import {
   StatusBar,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
-
-const primaryColor = '#8E44AD';
-const lightPurple = '#A569BD';
+import { lightPurple, primaryColor } from '../../constants/colors';
 
 const WelcomeScreen = ({ navigation }) => {
   return (

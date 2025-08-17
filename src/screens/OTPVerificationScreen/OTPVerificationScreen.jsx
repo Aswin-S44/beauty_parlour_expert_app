@@ -10,8 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-
-const primaryColor = '#8E44AD';
+import { primaryColor } from '../../constants/colors';
 
 const OTPVerificationScreen = ({ navigation }) => {
   const firstInput = useRef();
