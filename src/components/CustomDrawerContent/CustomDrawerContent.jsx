@@ -52,11 +52,6 @@ const CustomDrawerContent = props => {
 
         <View style={styles.drawerSection}>
           <DrawerItem
-            label="My Wallet"
-            iconName="wallet-outline"
-            onPress={() => {}}
-          />
-          <DrawerItem
             label="Services"
             iconSet="Material"
             iconName="add-business"
@@ -71,12 +66,7 @@ const CustomDrawerContent = props => {
               props.navigation.navigate('ExpertsScreen');
             }}
           />
-          {/* <DrawerItem
-            label="Add Coupon"
-            iconSet="MaterialCommunity"
-            iconName="plus-box-outline"
-            onPress={() => {}}
-          /> */}
+
           <DrawerItem
             label="Add Service Offer"
             iconSet="MaterialCommunity"

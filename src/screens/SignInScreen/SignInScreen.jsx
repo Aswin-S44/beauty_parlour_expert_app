@@ -8,26 +8,81 @@ import {
   TextInput,
   ScrollView,
   Modal,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { primaryColor } from '../../constants/colors';
-import { login } from '../../apis/auth';
+import { login, resetPassword } from '../../apis/auth';
 
-const SignInScreen = ({ navigation, route }) => {
-  // const { signIn } = route.params;
+const SignInScreen = ({ navigation }) => {
   const [rememberMe, setRememberMe] = useState(false);
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [isForgotModalVisible, setIsForgotModalVisible] = useState(false);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotEmailError, setForgotEmailError] = useState('');
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const validateFields = () => {
+    let isValid = true;
+    if (!email) {
+      setEmailError('Email is required.');
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError('Email address is invalid.');
+      isValid = false;
+    } else {
+      setEmailError('');
+    }
+
+    if (!password) {
+      setPasswordError('Password is required.');
+      isValid = false;
+    } else {
+      setPasswordError('');
+    }
+
+    return isValid;
+  };
+
   const handleLogin = async () => {
+    if (!validateFields()) {
+      return;
+    }
+    setIsLoading(true);
     try {
       await login(email, password);
-      alert('Login successful!');
     } catch (error) {
-      alert(error.message);
+      Alert.alert('Login Failed', error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!forgotEmail) {
+      setForgotEmailError('Email is required to reset password.');
+      return;
+    }
+    setForgotEmailError('');
+    try {
+      await resetPassword(forgotEmail);
+      Alert.alert(
+        'Check Your Email',
+        'A password reset link has been sent to your email address.',
+      );
+      setIsForgotModalVisible(false);
+      setForgotEmail('');
+    } catch (error) {
+      Alert.alert('Error', error.message);
     }
   };
 
@@ -63,12 +118,17 @@ const SignInScreen = ({ navigation, route }) => {
                   placeholderTextColor="#888"
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  value={forgotEmail}
+                  onChangeText={setForgotEmail}
                 />
               </View>
+              {forgotEmailError ? (
+                <Text style={styles.errorText}>{forgotEmailError}</Text>
+              ) : null}
             </View>
             <TouchableOpacity
               style={styles.modalButton}
-              onPress={() => setIsForgotModalVisible(false)}
+              onPress={handlePasswordReset}
             >
               <Text style={styles.modalButtonText}>SEND CODE</Text>
             </TouchableOpacity>
@@ -104,9 +164,15 @@ const SignInScreen = ({ navigation, route }) => {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={text => {
+                  setEmail(text);
+                  if (emailError) validateFields();
+                }}
               />
             </View>
+            {emailError ? (
+              <Text style={styles.errorText}>{emailError}</Text>
+            ) : null}
           </View>
 
           <View style={styles.inputGroup}>
@@ -124,7 +190,10 @@ const SignInScreen = ({ navigation, route }) => {
                 placeholderTextColor="#888"
                 secureTextEntry={secureTextEntry}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={text => {
+                  setPassword(text);
+                  if (passwordError) validateFields();
+                }}
               />
               <TouchableOpacity
                 onPress={() => setSecureTextEntry(!secureTextEntry)}
@@ -136,6 +205,9 @@ const SignInScreen = ({ navigation, route }) => {
                 />
               </TouchableOpacity>
             </View>
+            {passwordError ? (
+              <Text style={styles.errorText}>{passwordError}</Text>
+            ) : null}
           </View>
 
           <View style={styles.optionsContainer}>
@@ -155,8 +227,16 @@ const SignInScreen = ({ navigation, route }) => {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.signInButton} onPress={handleLogin}>
-            <Text style={styles.signInButtonText}>SIGN IN ACCOUNT</Text>
+          <TouchableOpacity
+            style={[styles.signInButton, isLoading && styles.disabledButton]}
+            onPress={handleLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.signInButtonText}>SIGN IN ACCOUNT</Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.signUpContainer}>
@@ -231,6 +311,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 5,
+    marginLeft: 5,
+  },
   optionsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -257,6 +343,9 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
     marginBottom: 30,
+  },
+  disabledButton: {
+    backgroundColor: '#A9A9A9',
   },
   signInButtonText: {
     color: '#fff',
