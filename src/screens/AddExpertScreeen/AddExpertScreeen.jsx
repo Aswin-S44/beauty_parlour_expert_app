@@ -8,84 +8,121 @@ import {
   ScrollView,
   StatusBar,
   Alert,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import React, { useContext, useState } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { launchImageLibrary } from 'react-native-image-picker';
+import DropDownPicker from 'react-native-dropdown-picker';
 import { AuthContext } from '../../context/AuthContext';
 import { addBeautyExpert } from '../../apis/services';
-import { Modal } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
 
-const AddExpertScreen = () => {
+const AddExpertScreen = ({ navigation }) => {
   const [expertName, setExpertName] = useState('');
-  const [specialist, setSpecialist] = useState('');
+  const [specialist, setSpecialist] = useState(null);
   const [about, setAbout] = useState('');
   const [address, setAddress] = useState('');
   const [imageUri, setImageUri] = useState(null);
-  const { user } = useContext(AuthContext);
   const [isModalVisible, setModalVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const { user } = useContext(AuthContext);
+
   const [open, setOpen] = useState(false);
+  const [specialistOptions, setSpecialistOptions] = useState([
+    { label: 'Hair Cut', value: 'hair_cut' },
+    { label: 'Hair Styling', value: 'hair_styling' },
+    { label: 'Hair Coloring', value: 'hair_coloring' },
+    { label: 'Facial', value: 'facial' },
+    { label: 'Manicure', value: 'manicure' },
+    { label: 'Pedicure', value: 'pedicure' },
+    { label: 'Makeup', value: 'makeup' },
+    { label: 'Bridal Makeup', value: 'bridal_makeup' },
+    { label: 'Waxing', value: 'waxing' },
+    { label: 'Threading', value: 'threading' },
+    { label: 'Spa Treatment', value: 'spa' },
+    { label: 'Massage', value: 'massage' },
+    { label: 'Skin Treatment', value: 'skin_treatment' },
+    { label: 'Nail Art', value: 'nail_art' },
+  ]);
+
+  const validate = () => {
+    const newErrors = {};
+    if (!expertName.trim()) newErrors.expertName = 'Expert name is required.';
+    if (!specialist) newErrors.specialist = 'A specialty is required.';
+    if (!address.trim()) newErrors.address = 'Address is required.';
+    if (!imageUri) newErrors.image = 'An image is required.';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const selectImage = () => {
     launchImageLibrary({ mediaType: 'photo' }, response => {
       if (response.didCancel) {
-        console.log('User cancelled image picker');
+        return;
       } else if (response.errorCode) {
-        console.log('ImagePicker Error: ', response.errorMessage);
+        Alert.alert('ImagePicker Error', response.errorMessage);
       } else {
         const uri = response.assets?.[0]?.uri;
-        console.log('uri-----------', uri);
-        setImageUri(uri);
+        if (uri) {
+          setImageUri(uri);
+          if (errors.image) {
+            setErrors(prev => ({ ...prev, image: null }));
+          }
+        }
       }
     });
   };
 
   const handleAddBeautyExpert = async () => {
-    if (!expertName || !specialist || !address) {
-      Alert.alert('Error', 'Please fill all the fields');
+    if (!validate()) {
       return;
     }
-
-    const expertData = {
-      expertName,
-      specialist,
-      about,
-      address,
-    };
-
-    const result = await addBeautyExpert(user.uid, expertData, imageUri); // Replace 'your-shop-id' with the actual shop ID
-    if (result) {
-      setModalVisible(true);
+    setIsLoading(true);
+    try {
+      const expertData = {
+        expertName,
+        specialist,
+        about,
+        address,
+      };
+      const result = await addBeautyExpert(user.uid, expertData, imageUri);
+      if (result) {
+        setModalVisible(true);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to add expert. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleCloseModal = () => {
     setModalVisible(false);
     setExpertName('');
-    setSpecialist('');
+    setSpecialist(null);
     setAbout('');
     setAddress('');
     setImageUri(null);
+    setErrors({});
+    navigation.goBack();
   };
-
-  const [specialistOptions, setSpecialistOptions] = useState([
-    { label: 'Dr. Stephen Strange', value: 'dr_strange' },
-    { label: 'Dr. Bruce Banner', value: 'dr_banner' },
-    { label: 'Dr. Henry Pym', value: 'dr_pym' },
-    { label: 'Dr. Jane Foster', value: 'dr_foster' },
-  ]);
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       <View style={styles.header}>
         <Image
-          source={{ uri: 'https://i.imgur.com/VPROSjQ.png' }}
+          source={require('../../assets/images/home_bg-1.png')}
           style={styles.headerImage}
         />
         <View style={styles.overlay} />
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Icon name="chevron-back" size={24} color="#fff" />
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
@@ -94,6 +131,7 @@ const AddExpertScreen = () => {
       <ScrollView
         style={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.title}>Add Beauty Expert</Text>
 
@@ -102,8 +140,15 @@ const AddExpertScreen = () => {
           <TextInput
             style={styles.input}
             value={expertName}
-            onChangeText={setExpertName}
+            onChangeText={text => {
+              setExpertName(text);
+              if (errors.expertName)
+                setErrors(prev => ({ ...prev, expertName: null }));
+            }}
           />
+          {errors.expertName && (
+            <Text style={styles.errorText}>{errors.expertName}</Text>
+          )}
 
           <Text style={styles.label}>Specialist</Text>
           <DropDownPicker
@@ -112,17 +157,24 @@ const AddExpertScreen = () => {
             items={specialistOptions}
             setOpen={setOpen}
             setValue={setSpecialist}
+            onSelectItem={() => {
+              if (errors.specialist)
+                setErrors(prev => ({ ...prev, specialist: null }));
+            }}
             setItems={setSpecialistOptions}
-            // --- KEY FEATURES ---
-            searchable={true} // Enables the search functionality
-            addCustomItem={true} // Allows adding items that are not in the list
-            // --- STYLING & PLACEHOLDER ---
+            searchable={true}
+            addCustomItem={true}
             placeholder="Select or search for a specialist"
             searchPlaceholder="Search..."
-            style={styles.pickerContainer}
+            style={[styles.pickerStyle, { marginBottom: 20 }]}
             dropDownContainerStyle={styles.dropDownContainer}
             textStyle={styles.pickerText}
+            zIndex={3000}
+            zIndexInverse={1000}
           />
+          {errors.specialist && (
+            <Text style={styles.errorText}>{errors.specialist}</Text>
+          )}
 
           <Text style={styles.label}>About</Text>
           <TextInput
@@ -136,33 +188,54 @@ const AddExpertScreen = () => {
           <TextInput
             style={[styles.input, styles.textArea]}
             value={address}
-            onChangeText={setAddress}
+            onChangeText={text => {
+              setAddress(text);
+              if (errors.address)
+                setErrors(prev => ({ ...prev, address: null }));
+            }}
             multiline
           />
+          {errors.address && (
+            <Text style={styles.errorText}>{errors.address}</Text>
+          )}
 
           <View style={styles.uploadLabelContainer}>
             <Text style={styles.label}>Upload Image</Text>
             <Text style={styles.subLabel}>(Mix image size 90x90)</Text>
           </View>
-          {console.log('imageUri---------', imageUri)}
           <TouchableOpacity style={styles.uploadBox} onPress={selectImage}>
             {imageUri ? (
-              <Image source={{ uri: imageUri }} style={styles.uploadedImage} />
+              <>
+                <Image
+                  source={{ uri: imageUri }}
+                  style={styles.uploadedImage}
+                />
+                <TouchableOpacity
+                  style={styles.deleteIcon}
+                  onPress={() => setImageUri(null)}
+                >
+                  <Icon name="close-circle" size={24} color="#333" />
+                </TouchableOpacity>
+              </>
             ) : (
               <Icon name="image-outline" size={40} color="#ccc" />
             )}
           </TouchableOpacity>
-          {/* <TouchableOpacity style={styles.uploadBox}>
-            <Icon name="image-outline" size={50} color="#ccc" />
-          </TouchableOpacity> */}
+          {errors.image && <Text style={styles.errorText}>{errors.image}</Text>}
         </View>
         <TouchableOpacity
-          style={styles.saveButton}
+          style={[styles.saveButton, isLoading && styles.disabledButton]}
           onPress={handleAddBeautyExpert}
+          disabled={isLoading}
         >
-          <Text style={styles.saveButtonText}>ADD EXPERT +</Text>
+          {isLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.saveButtonText}>ADD EXPERT +</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
+
       <Modal
         transparent={true}
         visible={isModalVisible}
@@ -175,7 +248,7 @@ const AddExpertScreen = () => {
               <Icon name="checkmark" size={40} color="#fff" />
             </View>
             <Text style={styles.modalText}>
-              Successfully Add{'\n'}Your New Service
+              Successfully Added{'\n'}New Beauty Expert
             </Text>
             <TouchableOpacity
               style={styles.okButton}
@@ -259,21 +332,20 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: 'top',
   },
-  pickerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  pickerStyle: {
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    marginBottom: 20,
   },
   pickerText: {
     fontSize: 16,
     color: '#333',
+  },
+  dropDownContainer: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
   uploadLabelContainer: {
     flexDirection: 'row',
@@ -293,7 +365,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fafafa',
-    marginBottom: 30,
+    marginBottom: 5,
   },
   saveButton: {
     backgroundColor: '#8e44ad',
@@ -302,6 +374,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 25,
     marginBottom: 30,
+    marginTop: 25,
+  },
+  disabledButton: {
+    backgroundColor: '#c7a4d6',
   },
   saveButtonText: {
     color: '#fff',
@@ -312,6 +388,61 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 8,
+  },
+  deleteIcon: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 12,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: 'white',
+    borderRadius: 15,
+    padding: 20,
+    alignItems: 'center',
+  },
+  successIconContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#8e44ad',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 25,
+  },
+  modalText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  okButton: {
+    backgroundColor: '#8e44ad',
+    paddingVertical: 15,
+    width: '100%',
+    alignItems: 'center',
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  okButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: -15,
+    marginBottom: 10,
   },
 });
 

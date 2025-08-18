@@ -6,65 +6,84 @@ import {
   FlatList,
   TouchableOpacity,
   StatusBar,
+  Modal,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import React, { useContext, useEffect, useState } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { AuthContext } from '../../context/AuthContext';
 import { getBeautyExperts } from '../../apis/services';
-
-const expertsData = [
-  {
-    id: '1',
-    name: 'Jesika Sona',
-    specialty: 'Spa & Skin Specialist',
-    added: 'Added 2month ago',
-    imageUrl: 'https://i.imgur.com/S5ai1Jg.png',
-  },
-  {
-    id: '2',
-    name: 'Fariya Khan',
-    specialty: 'Skin Specialist',
-    added: 'Added 3month ago',
-    imageUrl: 'https://i.imgur.com/i4j1k7G.png',
-  },
-  {
-    id: '3',
-    name: 'Lusiya Buma',
-    specialty: 'Hair Cut Specialist',
-    added: 'Added 4month ago',
-    imageUrl: 'https://i.imgur.com/gDaIp0D.png',
-  },
-  {
-    id: '4',
-    name: 'Jesika Sona',
-    specialty: 'Skin Specialist',
-    added: 'Added 6month ago',
-    imageUrl: 'https://i.imgur.com/6t4k2j6.png',
-  },
-];
+import { formatDateTime } from '../../utils/utils';
 
 const ExpertsScreen = ({ navigation }) => {
   const [experts, setExperts] = useState([]);
-  const [loading, setLoading] = useState(false);
-
+  const [loading, setLoading] = useState(true);
+  const [isMenuVisible, setMenuVisible] = useState(false);
+  const [selectedExpert, setSelectedExpert] = useState(null);
   const { user } = useContext(AuthContext);
 
-  useEffect(() => {
-    if (user) {
-      console.log('hello aswins');
+  const fetchExperts = async () => {
+    try {
       setLoading(true);
-      const fetchService = async () => {
+      if (user) {
         const res = await getBeautyExperts(user.uid);
-        setLoading(false);
-
-        if (res && res.length > 0) {
-          setExperts(res);
-        }
-      };
-      fetchService();
+        setExperts(res || []);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Could not fetch experts.');
+    } finally {
+      setLoading(false);
     }
-  }, [user]);
+  };
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchExperts();
+    });
+    return unsubscribe;
+  }, [navigation, user]);
+
+  const openMenu = item => {
+    setSelectedExpert(item);
+    setMenuVisible(true);
+  };
+
+  const closeMenu = () => {
+    setMenuVisible(false);
+    setSelectedExpert(null);
+  };
+
+  const handleEdit = () => {
+    if (selectedExpert) {
+      // navigation.navigate('EditExpertScreen', { expert: selectedExpert });
+      console.log('Editing:', selectedExpert);
+    }
+    closeMenu();
+  };
+
+  const handleDelete = () => {
+    if (selectedExpert) {
+      Alert.alert(
+        'Delete Expert',
+        `Are you sure you want to delete ${selectedExpert.expertName}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            onPress: () => {
+              // Call your delete API here
+              console.log('Deleting:', selectedExpert);
+              setExperts(prev => prev.filter(e => e.id !== selectedExpert.id));
+            },
+            style: 'destructive',
+          },
+        ],
+      );
+    }
+    closeMenu();
+  };
 
   const renderExpertItem = ({ item }) => (
     <View style={styles.card}>
@@ -72,25 +91,48 @@ const ExpertsScreen = ({ navigation }) => {
       <View style={styles.cardContent}>
         <Text style={styles.expertName}>{item.expertName}</Text>
         <Text style={styles.expertSpecialty}>{item.specialist}</Text>
-        <Text style={styles.expertAdded}>test date</Text>
+        <Text style={styles.expertAdded}>Added 2 months ago</Text>
       </View>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => openMenu(item)}>
         <MaterialCommunityIcons name="dots-vertical" size={24} color="#888" />
       </TouchableOpacity>
     </View>
   );
 
+  const ListEmptyComponent = () => (
+    <View style={styles.emptyContainer}>
+      <Image
+        source={require('../../assets/images/no-services.jpg')}
+        style={styles.emptyImage}
+      />
+      <Text style={styles.emptyText}>No Experts Found</Text>
+      <Text style={styles.emptySubText}>
+        Add a new beauty expert to get started.
+      </Text>
+    </View>
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#8e44ad" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      {console.log('experts------------', experts)}
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="light-content" backgroundColor="#8e44ad" />
       <View style={styles.header}>
         <Image
-          source={{ uri: 'https://i.imgur.com/VPROSjQ.png' }}
+          source={require('../../assets/images/home_bg-1.png')}
           style={styles.headerImage}
         />
         <View style={styles.overlay} />
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Icon name="chevron-back" size={24} color="#fff" />
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
@@ -103,6 +145,7 @@ const ExpertsScreen = ({ navigation }) => {
           renderItem={renderExpertItem}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContainer}
+          ListEmptyComponent={ListEmptyComponent}
         />
       </View>
       <View style={styles.footer}>
@@ -113,6 +156,32 @@ const ExpertsScreen = ({ navigation }) => {
           <Text style={styles.addButtonText}>ADD NEW BEAUTY EXPERT +</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        transparent={true}
+        visible={isMenuVisible}
+        animationType="fade"
+        onRequestClose={closeMenu}
+      >
+        <TouchableOpacity
+          style={styles.modalBackdrop}
+          activeOpacity={1}
+          onPressOut={closeMenu}
+        >
+          <View style={styles.menuContainer}>
+            <TouchableOpacity style={styles.menuItem} onPress={handleEdit}>
+              <Icon name="pencil-outline" size={22} color="#555" />
+              <Text style={styles.menuItemText}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuItem} onPress={handleDelete}>
+              <Icon name="trash-outline" size={22} color="#ff3b30" />
+              <Text style={[styles.menuItemText, { color: '#ff3b30' }]}>
+                Delete
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -126,11 +195,13 @@ const styles = StyleSheet.create({
     height: 120,
     justifyContent: 'center',
     paddingTop: 20,
+    backgroundColor: '#8e44ad',
   },
   headerImage: {
     ...StyleSheet.absoluteFillObject,
     width: '100%',
     height: '100%',
+    opacity: 0.3,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -142,6 +213,7 @@ const styles = StyleSheet.create({
     left: 15,
     flexDirection: 'row',
     alignItems: 'center',
+    zIndex: 10,
   },
   backButtonText: {
     color: '#fff',
@@ -158,18 +230,19 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '500',
     textAlign: 'center',
     marginVertical: 20,
     color: '#333',
   },
   listContainer: {
     paddingHorizontal: 20,
+    flexGrow: 1,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#fff',
     borderRadius: 15,
     padding: 15,
     marginBottom: 15,
@@ -190,7 +263,7 @@ const styles = StyleSheet.create({
   },
   expertName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
     color: '#333',
   },
   expertSpecialty: {
@@ -206,6 +279,8 @@ const styles = StyleSheet.create({
   footer: {
     padding: 20,
     backgroundColor: 'white',
+    borderTopColor: '#f0f0f0',
+    borderTopWidth: 1,
   },
   addButton: {
     backgroundColor: '#8e44ad',
@@ -217,6 +292,57 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptyImage: {
+    width: 200,
+    height: 200,
+    resizeMode: 'contain',
+    marginBottom: 20,
+  },
+  emptyText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  menuContainer: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 30,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+  },
+  menuItemText: {
+    marginLeft: 15,
+    fontSize: 16,
+    color: '#333',
   },
 });
 
