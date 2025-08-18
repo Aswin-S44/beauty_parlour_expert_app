@@ -8,12 +8,13 @@ import {
   TextInput,
   StatusBar,
 } from 'react-native';
-import React from 'react';
+import React, { useContext } from 'react';
 
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Card from '../../components/Card/Card';
 import { primaryColor, secondaryColor } from '../../constants/colors';
+import { AuthContext } from '../../context/AuthContext';
 
 const HomeScreen = ({ navigation }) => {
   const weeklyData = [
@@ -26,6 +27,9 @@ const HomeScreen = ({ navigation }) => {
     { day: 'FRI', value: 2500, color: '#9F7AEA' },
   ];
   const maxValue = 2500;
+  console.log('hello aseins');
+  const { user, loading } = useContext(AuthContext);
+  console.log('USER-----------', user ? user?.uid : 'no user');
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>

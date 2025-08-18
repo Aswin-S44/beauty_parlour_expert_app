@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useContext } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
@@ -6,6 +6,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { ActivityIndicator, View } from 'react-native';
 
 import HomeScreen from './screens/HomeScreen/HomeScreen';
 import ProfileScreen from './screens/ProfileScreen/ProfileScreen';
@@ -21,12 +22,11 @@ import NearByShopsList from './screens/NearByShopsList/NearByShopsList';
 import BeautyExpertDetailsScreen from './screens/BeautyExpertDetailsScreen/BeautyExpertDetailsScreen';
 import OTPVerificationScreen from './screens/OTPVerificationScreen/OTPVerificationScreen';
 import SplashScreen from './screens/SplashScreen/SplashScreen';
+import SplashScreen1 from './screens/SplashScreen/SplashScreen1';
 import OnboardingScreen from './screens/OnboardingScreen/OnboardingScreen';
 import WelcomeScreen from './screens/WelcomeScreen/WelcomeScreen';
 import SignInScreen from './screens/SignInScreen/SignInScreen';
 import SignUpScreen from './screens/SignUpScreen/SignUpScreen';
-
-import { primaryColor } from './constants/colors';
 import AppointmentRequestsScreen from './screens/AppointmentRequestsScreen/AppointmentRequestsScreen';
 import AllServicesScreen from './screens/AllServicesScreen/AllServicesScreen';
 import AddServicesScreen from './screens/AddServicesScreen/AddServicesScreen';
@@ -36,6 +36,8 @@ import AllOffersScreen from './screens/AllOffersScreen/AllOffersScreen';
 import AddOffersScreen from './screens/AddOffersScreen/AddOffersScreen';
 import AddGeneralInformationScreen from './screens/AddGeneralInformationScreen/AddGeneralInformationScreen';
 import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen/PrivacyPolicyScreen';
+import { AuthContext } from './context/AuthContext';
+import { primaryColor } from './constants/colors';
 
 const Tab = createMaterialBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -162,53 +164,41 @@ function MainAppStack() {
   );
 }
 
-export default function App() {
-  const [isSignedIn, setIsSignedIn] = useState(false);
-
-  const authContext = useMemo(
-    () => ({
-      signIn: () => setIsSignedIn(true),
-      signOut: () => setIsSignedIn(false),
-    }),
-    [],
+function AuthStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Splash" component={SplashScreen} />
+      <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="SignIn" component={SignInScreen} />
+      <Stack.Screen name="SignUp" component={SignUpScreen} />
+      <Stack.Screen
+        name="OTPVerificationScreen"
+        component={OTPVerificationScreen}
+      />
+      <Stack.Screen
+        name="AddGeneralInformationScreen"
+        component={AddGeneralInformationScreen}
+      />
+      <Stack.Screen
+        name="PrivacyPolicyScreen"
+        component={PrivacyPolicyScreen}
+      />
+    </Stack.Navigator>
   );
+}
+
+export default function App() {
+  const { user, loading } = useContext(AuthContext);
+
+  if (loading) {
+    return <SplashScreen1 />;
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          {isSignedIn ? (
-            <Stack.Screen name="MainAppStack" component={MainAppStack} />
-          ) : (
-            <>
-              <Stack.Screen name="Splash" component={SplashScreen} />
-              <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-              <Stack.Screen name="Welcome" component={WelcomeScreen} />
-              <Stack.Screen
-                name="SignIn"
-                component={SignInScreen}
-                initialParams={{ signIn: authContext.signIn }}
-              />
-              <Stack.Screen
-                name="SignUp"
-                component={SignUpScreen}
-                initialParams={{ signIn: authContext.signIn }}
-              />
-              <Stack.Screen
-                name="OTPVerificationScreen"
-                component={OTPVerificationScreen}
-              />
-              <Stack.Screen
-                name="AddGeneralInformationScreen"
-                component={AddGeneralInformationScreen}
-              />
-              <Stack.Screen
-                name="PrivacyPolicyScreen"
-                component={PrivacyPolicyScreen}
-              />
-            </>
-          )}
-        </Stack.Navigator>
+        {user ? <MainAppStack /> : <AuthStack />}
       </NavigationContainer>
     </GestureHandlerRootView>
   );

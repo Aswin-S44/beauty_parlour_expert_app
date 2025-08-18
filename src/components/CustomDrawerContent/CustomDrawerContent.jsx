@@ -5,6 +5,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { primaryColor } from '../../constants/colors';
+import { logout } from '../../apis/auth';
 
 const DrawerItem = ({ iconName, iconSet, label, onPress }) => {
   const IconComponent =
@@ -25,6 +26,15 @@ const DrawerItem = ({ iconName, iconSet, label, onPress }) => {
       <Text style={styles.drawerItemText}>{label}</Text>
     </TouchableOpacity>
   );
+};
+
+const handleLogout = async navigation => {
+  try {
+    await logout();
+    navigation.replace('SignInScreen');
+  } catch (error) {
+    console.error(error);
+  }
 };
 
 const CustomDrawerContent = props => {
@@ -99,7 +109,7 @@ const CustomDrawerContent = props => {
             label="Sign Out"
             iconSet="MaterialCommunity"
             iconName="logout"
-            onPress={() => {}}
+            onPress={() => handleLogout(props.navigation)}
           />
         </View>
       </DrawerContentScrollView>

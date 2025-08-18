@@ -7,17 +7,74 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
+  Alert,
 } from 'react-native';
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { AuthContext } from '../../context/AuthContext';
+import { addBeautyExpert } from '../../apis/services';
+import { Modal } from 'react-native';
+import DropDownPicker from 'react-native-dropdown-picker';
 
 const AddExpertScreen = () => {
-  const [expertName, setExpertName] = useState('Josifan Nilu');
-  const [specialist, setSpecialist] = useState('Spa');
-  const [about, setAbout] = useState(
-    'Contrary to popular belief, Lorem Inosimplyran dom text. It has roots in a piece of classical Latin literature 45 BC, making it over 2000 years old.',
-  );
-  const [address, setAddress] = useState('58 Street- al dulha\nlondon - USA');
+  const [expertName, setExpertName] = useState('');
+  const [specialist, setSpecialist] = useState('');
+  const [about, setAbout] = useState('');
+  const [address, setAddress] = useState('');
+  const [imageUri, setImageUri] = useState(null);
+  const { user } = useContext(AuthContext);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const selectImage = () => {
+    launchImageLibrary({ mediaType: 'photo' }, response => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.errorCode) {
+        console.log('ImagePicker Error: ', response.errorMessage);
+      } else {
+        const uri = response.assets?.[0]?.uri;
+        console.log('uri-----------', uri);
+        setImageUri(uri);
+      }
+    });
+  };
+
+  const handleAddBeautyExpert = async () => {
+    if (!expertName || !specialist || !address) {
+      Alert.alert('Error', 'Please fill all the fields');
+      return;
+    }
+
+    const expertData = {
+      expertName,
+      specialist,
+      about,
+      address,
+    };
+
+    const result = await addBeautyExpert(user.uid, expertData, imageUri); // Replace 'your-shop-id' with the actual shop ID
+    if (result) {
+      setModalVisible(true);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setExpertName('');
+    setSpecialist('');
+    setAbout('');
+    setAddress('');
+    setImageUri(null);
+  };
+
+  const [specialistOptions, setSpecialistOptions] = useState([
+    { label: 'Dr. Stephen Strange', value: 'dr_strange' },
+    { label: 'Dr. Bruce Banner', value: 'dr_banner' },
+    { label: 'Dr. Henry Pym', value: 'dr_pym' },
+    { label: 'Dr. Jane Foster', value: 'dr_foster' },
+  ]);
 
   return (
     <View style={styles.container}>
@@ -49,10 +106,23 @@ const AddExpertScreen = () => {
           />
 
           <Text style={styles.label}>Specialist</Text>
-          <TouchableOpacity style={styles.pickerContainer}>
-            <Text style={styles.pickerText}>{specialist}</Text>
-            <Icon name="chevron-down" size={20} color="#888" />
-          </TouchableOpacity>
+          <DropDownPicker
+            open={open}
+            value={specialist}
+            items={specialistOptions}
+            setOpen={setOpen}
+            setValue={setSpecialist}
+            setItems={setSpecialistOptions}
+            // --- KEY FEATURES ---
+            searchable={true} // Enables the search functionality
+            addCustomItem={true} // Allows adding items that are not in the list
+            // --- STYLING & PLACEHOLDER ---
+            placeholder="Select or search for a specialist"
+            searchPlaceholder="Search..."
+            style={styles.pickerContainer}
+            dropDownContainerStyle={styles.dropDownContainer}
+            textStyle={styles.pickerText}
+          />
 
           <Text style={styles.label}>About</Text>
           <TextInput
@@ -74,14 +144,48 @@ const AddExpertScreen = () => {
             <Text style={styles.label}>Upload Image</Text>
             <Text style={styles.subLabel}>(Mix image size 90x90)</Text>
           </View>
-          <TouchableOpacity style={styles.uploadBox}>
-            <Icon name="image-outline" size={50} color="#ccc" />
+          {console.log('imageUri---------', imageUri)}
+          <TouchableOpacity style={styles.uploadBox} onPress={selectImage}>
+            {imageUri ? (
+              <Image source={{ uri: imageUri }} style={styles.uploadedImage} />
+            ) : (
+              <Icon name="image-outline" size={40} color="#ccc" />
+            )}
           </TouchableOpacity>
+          {/* <TouchableOpacity style={styles.uploadBox}>
+            <Icon name="image-outline" size={50} color="#ccc" />
+          </TouchableOpacity> */}
         </View>
-        <TouchableOpacity style={styles.saveButton}>
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={handleAddBeautyExpert}
+        >
           <Text style={styles.saveButtonText}>ADD EXPERT +</Text>
         </TouchableOpacity>
       </ScrollView>
+      <Modal
+        transparent={true}
+        visible={isModalVisible}
+        animationType="fade"
+        onRequestClose={handleCloseModal}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.successIconContainer}>
+              <Icon name="checkmark" size={40} color="#fff" />
+            </View>
+            <Text style={styles.modalText}>
+              Successfully Add{'\n'}Your New Service
+            </Text>
+            <TouchableOpacity
+              style={styles.okButton}
+              onPress={handleCloseModal}
+            >
+              <Text style={styles.okButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -203,6 +307,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  uploadedImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
   },
 });
 

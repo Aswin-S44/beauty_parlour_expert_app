@@ -12,12 +12,24 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { primaryColor } from '../../constants/colors';
+import { login } from '../../apis/auth';
 
 const SignInScreen = ({ navigation, route }) => {
-  const { signIn } = route.params;
+  // const { signIn } = route.params;
   const [rememberMe, setRememberMe] = useState(false);
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [isForgotModalVisible, setIsForgotModalVisible] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = async () => {
+    try {
+      await login(email, password);
+      alert('Login successful!');
+    } catch (error) {
+      alert(error.message);
+    }
+  };
 
   return (
     <View style={styles.outerContainer}>
@@ -91,6 +103,8 @@ const SignInScreen = ({ navigation, route }) => {
                 placeholderTextColor="#888"
                 keyboardType="email-address"
                 autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
               />
             </View>
           </View>
@@ -109,6 +123,8 @@ const SignInScreen = ({ navigation, route }) => {
                 placeholder="Type Password"
                 placeholderTextColor="#888"
                 secureTextEntry={secureTextEntry}
+                value={password}
+                onChangeText={setPassword}
               />
               <TouchableOpacity
                 onPress={() => setSecureTextEntry(!secureTextEntry)}
@@ -139,7 +155,7 @@ const SignInScreen = ({ navigation, route }) => {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.signInButton} onPress={signIn}>
+          <TouchableOpacity style={styles.signInButton} onPress={handleLogin}>
             <Text style={styles.signInButtonText}>SIGN IN ACCOUNT</Text>
           </TouchableOpacity>
 

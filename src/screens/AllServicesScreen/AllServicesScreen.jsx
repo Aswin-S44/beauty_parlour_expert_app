@@ -7,9 +7,11 @@ import {
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
-import React from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { getShopServices } from '../../apis/services';
+import { AuthContext } from '../../context/AuthContext';
 
 const servicesData = [
   {
@@ -45,12 +47,33 @@ const servicesData = [
 ];
 
 const AllServicesScreen = ({ navigation }) => {
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const { user } = useContext(AuthContext);
+
+  useEffect(() => {
+    if (user) {
+      console.log('hello aswins');
+      setLoading(true);
+      const fetchService = async () => {
+        const res = await getShopServices(user.uid);
+        setLoading(false);
+        console.log('services----------', res ? res : 'no res');
+        if (res && res.length > 0) {
+          setServices(res);
+        }
+      };
+      fetchService();
+    }
+  }, [user]);
+
   const renderServiceItem = ({ item }) => (
     <View style={styles.card}>
       <Image source={{ uri: item.imageUrl }} style={styles.serviceImage} />
       <View style={styles.cardContent}>
-        <Text style={styles.serviceName}>{item.name}</Text>
-        <Text style={styles.serviceAdded}>{item.added}</Text>
+        <Text style={styles.serviceName}>{item.serviceName}</Text>
+        <Text style={styles.serviceAdded}>{item.serviceName}</Text>
       </View>
       <TouchableOpacity>
         <MaterialCommunityIcons name="dots-vertical" size={24} color="#888" />
@@ -76,7 +99,7 @@ const AllServicesScreen = ({ navigation }) => {
       <View style={styles.contentContainer}>
         <Text style={styles.title}>Service List</Text>
         <FlatList
-          data={servicesData}
+          data={services}
           renderItem={renderServiceItem}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContainer}

@@ -7,9 +7,11 @@ import {
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
-import React from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { AuthContext } from '../../context/AuthContext';
+import { getBeautyExperts } from '../../apis/services';
 
 const expertsData = [
   {
@@ -43,13 +45,34 @@ const expertsData = [
 ];
 
 const ExpertsScreen = ({ navigation }) => {
+  const [experts, setExperts] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const { user } = useContext(AuthContext);
+
+  useEffect(() => {
+    if (user) {
+      console.log('hello aswins');
+      setLoading(true);
+      const fetchService = async () => {
+        const res = await getBeautyExperts(user.uid);
+        setLoading(false);
+
+        if (res && res.length > 0) {
+          setExperts(res);
+        }
+      };
+      fetchService();
+    }
+  }, [user]);
+
   const renderExpertItem = ({ item }) => (
     <View style={styles.card}>
       <Image source={{ uri: item.imageUrl }} style={styles.avatar} />
       <View style={styles.cardContent}>
-        <Text style={styles.expertName}>{item.name}</Text>
-        <Text style={styles.expertSpecialty}>{item.specialty}</Text>
-        <Text style={styles.expertAdded}>{item.added}</Text>
+        <Text style={styles.expertName}>{item.expertName}</Text>
+        <Text style={styles.expertSpecialty}>{item.specialist}</Text>
+        <Text style={styles.expertAdded}>test date</Text>
       </View>
       <TouchableOpacity>
         <MaterialCommunityIcons name="dots-vertical" size={24} color="#888" />
@@ -59,6 +82,7 @@ const ExpertsScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {console.log('experts------------', experts)}
       <StatusBar barStyle="light-content" />
       <View style={styles.header}>
         <Image
@@ -75,7 +99,7 @@ const ExpertsScreen = ({ navigation }) => {
       <View style={styles.contentContainer}>
         <Text style={styles.title}>Expert List</Text>
         <FlatList
-          data={expertsData}
+          data={experts}
           renderItem={renderExpertItem}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContainer}

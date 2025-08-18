@@ -8,22 +8,73 @@ import {
   ScrollView,
   StatusBar,
   Modal,
+  Alert,
 } from 'react-native';
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { Picker } from '@react-native-picker/picker';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { addServices } from '../../apis/services';
+import { AuthContext } from '../../context/AuthContext';
 
 const AddServicesScreen = () => {
   const [category, setCategory] = useState('Hair Cut');
   const [serviceName, setServiceName] = useState('Style Hair Cut');
-  const [servicePrice, setServicePrice] = useState('$25');
+  const [servicePrice, setServicePrice] = useState('25');
   const [isModalVisible, setModalVisible] = useState(false);
+  const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
+  const [imageUri, setImageUri] = useState(null);
+  const { user, loading } = useContext(AuthContext);
 
-  const handleSaveService = () => {
-    setModalVisible(true);
+  const predefinedCategories = ['Hair Cut', 'Hair Color', 'Facial', 'Makeup'];
+
+  const handleSaveService = async () => {
+    if (!serviceName || !servicePrice || !category) {
+      Alert.alert('Error', 'Please fill all the fields');
+      return;
+    }
+    const serviceData = {
+      category,
+      serviceName,
+      servicePrice: parseFloat(servicePrice),
+    };
+    console.log('serviceData----------', serviceData);
+    console.log('imageUri-------------', imageUri);
+
+    const result = await addServices(user.uid, serviceData, imageUri); // Replace 'your-shop-id' with the actual shop ID
+    if (result) {
+      setModalVisible(true);
+    }
   };
 
   const handleCloseModal = () => {
     setModalVisible(false);
+    setCategory('');
+    setServiceName('');
+    setServicePrice('');
+    setImageUri(null);
+  };
+
+  const handleAddCustomCategory = () => {
+    if (customCategory.trim() !== '') {
+      setCategory(customCategory);
+    }
+    setCategoryModalVisible(false);
+    setCustomCategory('');
+  };
+
+  const selectImage = () => {
+    launchImageLibrary({ mediaType: 'photo' }, response => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.errorCode) {
+        console.log('ImagePicker Error: ', response.errorMessage);
+      } else {
+        const uri = response.assets?.[0]?.uri;
+        setImageUri(uri);
+      }
+    });
   };
 
   return (
@@ -65,6 +116,31 @@ const AddServicesScreen = () => {
         </View>
       </Modal>
 
+      <Modal
+        transparent={true}
+        visible={isCategoryModalVisible}
+        animationType="fade"
+        onRequestClose={() => setCategoryModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>Add Custom Category</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter custom category"
+              value={customCategory}
+              onChangeText={setCustomCategory}
+            />
+            <TouchableOpacity
+              style={styles.okButton}
+              onPress={handleAddCustomCategory}
+            >
+              <Text style={styles.okButtonText}>Add</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <ScrollView
         style={styles.contentContainer}
         showsVerticalScrollIndicator={false}
@@ -74,8 +150,22 @@ const AddServicesScreen = () => {
         <View style={styles.form}>
           <Text style={styles.label}>Categories</Text>
           <View style={styles.pickerContainer}>
-            <Text style={styles.pickerText}>{category}</Text>
-            <Icon name="chevron-down" size={20} color="#888" />
+            <Picker
+              selectedValue={category}
+              style={{ flex: 1 }}
+              onValueChange={itemValue => {
+                if (itemValue === 'add_custom') {
+                  setCategoryModalVisible(true);
+                } else {
+                  setCategory(itemValue);
+                }
+              }}
+            >
+              {predefinedCategories.map(cat => (
+                <Picker.Item key={cat} label={cat} value={cat} />
+              ))}
+              <Picker.Item label="Add Custom Category" value="add_custom" />
+            </Picker>
           </View>
 
           <Text style={styles.label}>Service Name</Text>
@@ -97,8 +187,12 @@ const AddServicesScreen = () => {
             <Text style={styles.label}>Upload Image</Text>
             <Text style={styles.subLabel}>(Mix image size 80x80)</Text>
           </View>
-          <TouchableOpacity style={styles.uploadBox}>
-            <Icon name="image-outline" size={40} color="#ccc" />
+          <TouchableOpacity style={styles.uploadBox} onPress={selectImage}>
+            {imageUri ? (
+              <Image source={{ uri: imageUri }} style={styles.uploadedImage} />
+            ) : (
+              <Icon name="image-outline" size={40} color="#ccc" />
+            )}
           </TouchableOpacity>
         </View>
 
@@ -176,20 +270,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   pickerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
     marginBottom: 20,
-  },
-  pickerText: {
-    fontSize: 16,
-    color: '#333',
+    justifyContent: 'center',
   },
   uploadLabelContainer: {
     flexDirection: 'row',
@@ -210,6 +295,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fafafa',
     marginTop: 8,
     marginBottom: 30,
+  },
+  uploadedImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
   },
   saveButton: {
     backgroundColor: '#8e44ad',
@@ -234,9 +324,8 @@ const styles = StyleSheet.create({
     width: '80%',
     backgroundColor: 'white',
     borderRadius: 15,
-    paddingTop: 30,
+    padding: 20,
     alignItems: 'center',
-    overflow: 'hidden',
   },
   successIconContainer: {
     width: 70,
@@ -252,13 +341,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
   },
   okButton: {
     backgroundColor: '#8e44ad',
     paddingVertical: 15,
     width: '100%',
     alignItems: 'center',
+    borderRadius: 10,
+    marginTop: 10,
   },
   okButtonText: {
     color: '#fff',

@@ -11,12 +11,31 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { primaryColor } from '../../constants/colors';
+import { signup } from '../../apis/auth';
 
 const SignUpScreen = ({ navigation, route }) => {
-  const { signIn } = route.params;
+  // const { signIn } = route.params;
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [securePassword, setSecurePassword] = useState(true);
   const [secureConfirmPassword, setSecureConfirmPassword] = useState(true);
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSignup = async () => {
+    if (password !== confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+
+    try {
+      await signup(email, password);
+      alert('Account created!');
+    } catch (error) {
+      alert(error.message);
+    }
+  };
 
   return (
     <View style={styles.outerContainer}>
@@ -49,6 +68,8 @@ const SignUpScreen = ({ navigation, route }) => {
                 placeholderTextColor="#888"
                 keyboardType="email-address"
                 autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
               />
             </View>
           </View>
@@ -67,6 +88,8 @@ const SignUpScreen = ({ navigation, route }) => {
                 placeholder="Type Password"
                 placeholderTextColor="#888"
                 secureTextEntry={securePassword}
+                value={password}
+                onChangeText={setPassword}
               />
               <TouchableOpacity
                 onPress={() => setSecurePassword(!securePassword)}
@@ -94,6 +117,8 @@ const SignUpScreen = ({ navigation, route }) => {
                 placeholder="Type Password"
                 placeholderTextColor="#888"
                 secureTextEntry={secureConfirmPassword}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
               />
               <TouchableOpacity
                 onPress={() => setSecureConfirmPassword(!secureConfirmPassword)}
@@ -134,7 +159,8 @@ const SignUpScreen = ({ navigation, route }) => {
 
           <TouchableOpacity
             style={styles.createButton}
-            onPress={() => navigation.navigate('AddGeneralInformationScreen')}
+            // onPress={() => navigation.navigate('AddGeneralInformationScreen')}
+            onPress={handleSignup}
           >
             <Text style={styles.createButtonText}>NEXT</Text>
           </TouchableOpacity>
