@@ -9,72 +9,115 @@ import {
   StatusBar,
   Modal,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import React, { useContext, useState } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { Picker } from '@react-native-picker/picker';
 import { launchImageLibrary } from 'react-native-image-picker';
+import { Picker } from '@react-native-picker/picker';
 import { addServices } from '../../apis/services';
 import { AuthContext } from '../../context/AuthContext';
 
-const AddServicesScreen = () => {
-  const [category, setCategory] = useState('Hair Cut');
-  const [serviceName, setServiceName] = useState('Style Hair Cut');
-  const [servicePrice, setServicePrice] = useState('25');
-  const [isModalVisible, setModalVisible] = useState(false);
+const AddServicesScreen = ({ navigation }) => {
+  const [category, setCategory] = useState('');
+  const [serviceName, setServiceName] = useState('');
+  const [servicePrice, setServicePrice] = useState('');
+  const [imageUri, setImageUri] = useState(null);
+  const [isSuccessModalVisible, setSuccessModalVisible] = useState(false);
   const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
   const [customCategory, setCustomCategory] = useState('');
-  const [imageUri, setImageUri] = useState(null);
-  const { user, loading } = useContext(AuthContext);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  const predefinedCategories = ['Hair Cut', 'Hair Color', 'Facial', 'Makeup'];
+  const { user } = useContext(AuthContext);
+
+  const [predefinedCategories, setPredefinedCategories] = useState([
+    'Hair Cut',
+    'Hair Color',
+    'Facial',
+    'Makeup',
+  ]);
+
+  const validate = () => {
+    const newErrors = {};
+    if (!category.trim()) newErrors.category = 'Category is required.';
+    if (!serviceName.trim())
+      newErrors.serviceName = 'Service name is required.';
+    if (!servicePrice.trim()) {
+      newErrors.servicePrice = 'Service price is required.';
+    } else if (isNaN(servicePrice)) {
+      newErrors.servicePrice = 'Price must be a valid number.';
+    }
+    if (!imageUri) newErrors.image = 'An image is required.';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSaveService = async () => {
-    if (!serviceName || !servicePrice || !category) {
-      Alert.alert('Error', 'Please fill all the fields');
+    if (!validate()) {
       return;
     }
-    const serviceData = {
-      category,
-      serviceName,
-      servicePrice: parseFloat(servicePrice),
-    };
-    console.log('serviceData----------', serviceData);
-    console.log('imageUri-------------', imageUri);
+    setIsLoading(true);
+    try {
+      const serviceData = {
+        category,
+        serviceName,
+        servicePrice: parseFloat(servicePrice),
+      };
 
-    const result = await addServices(user.uid, serviceData, imageUri); // Replace 'your-shop-id' with the actual shop ID
-    if (result) {
-      setModalVisible(true);
+      const result = await addServices(user.uid, serviceData, imageUri);
+      if (result) {
+        setSuccessModalVisible(true);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save service. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleCloseModal = () => {
-    setModalVisible(false);
+  const handleCloseSuccessModal = () => {
+    setSuccessModalVisible(false);
     setCategory('');
     setServiceName('');
     setServicePrice('');
     setImageUri(null);
-  };
-
-  const handleAddCustomCategory = () => {
-    if (customCategory.trim() !== '') {
-      setCategory(customCategory);
-    }
-    setCategoryModalVisible(false);
-    setCustomCategory('');
+    setErrors({});
   };
 
   const selectImage = () => {
     launchImageLibrary({ mediaType: 'photo' }, response => {
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-      } else if (response.errorCode) {
-        console.log('ImagePicker Error: ', response.errorMessage);
-      } else {
-        const uri = response.assets?.[0]?.uri;
+      if (response.didCancel) return;
+      if (response.errorCode) {
+        Alert.alert('ImagePicker Error', response.errorMessage);
+        return;
+      }
+      const uri = response.assets?.[0]?.uri;
+      if (uri) {
         setImageUri(uri);
+        if (errors.image) {
+          setErrors(prev => ({ ...prev, image: null }));
+        }
       }
     });
+  };
+
+  const handleAddCustomCategory = () => {
+    const newCategory = customCategory.trim();
+    if (newCategory) {
+      if (!predefinedCategories.includes(newCategory)) {
+        setPredefinedCategories(prev => [newCategory, ...prev]);
+      }
+      setCategory(newCategory);
+      setCategoryModalVisible(false);
+      setCustomCategory('');
+      if (errors.category) {
+        setErrors(prev => ({ ...prev, category: null }));
+      }
+    } else {
+      Alert.alert('Invalid Category', 'Category name cannot be empty.');
+    }
   };
 
   return (
@@ -82,11 +125,14 @@ const AddServicesScreen = () => {
       <StatusBar barStyle="light-content" />
       <View style={styles.header}>
         <Image
-          source={{ uri: 'https://i.imgur.com/VPROSjQ.png' }}
+          source={require('../../assets/images/home_bg-1.png')}
           style={styles.headerImage}
         />
         <View style={styles.overlay} />
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Icon name="chevron-back" size={24} color="#fff" />
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
@@ -94,21 +140,21 @@ const AddServicesScreen = () => {
 
       <Modal
         transparent={true}
-        visible={isModalVisible}
+        visible={isSuccessModalVisible}
         animationType="fade"
-        onRequestClose={handleCloseModal}
+        onRequestClose={handleCloseSuccessModal}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalView}>
             <View style={styles.successIconContainer}>
               <Icon name="checkmark" size={40} color="#fff" />
             </View>
             <Text style={styles.modalText}>
-              Successfully Add{'\n'}Your New Service
+              Successfully Added{'\n'}Your New Service
             </Text>
             <TouchableOpacity
               style={styles.okButton}
-              onPress={handleCloseModal}
+              onPress={handleCloseSuccessModal}
             >
               <Text style={styles.okButtonText}>OK</Text>
             </TouchableOpacity>
@@ -122,21 +168,31 @@ const AddServicesScreen = () => {
         animationType="fade"
         onRequestClose={() => setCategoryModalVisible(false)}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalText}>Add Custom Category</Text>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>Add New Category</Text>
             <TextInput
-              style={styles.input}
-              placeholder="Enter custom category"
+              style={styles.modalInput}
+              placeholder="Enter category name"
               value={customCategory}
               onChangeText={setCustomCategory}
             />
-            <TouchableOpacity
-              style={styles.okButton}
-              onPress={handleAddCustomCategory}
-            >
-              <Text style={styles.okButtonText}>Add</Text>
-            </TouchableOpacity>
+            <View style={styles.modalButtonGroup}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setCategoryModalVisible(false)}
+              >
+                <Text style={[styles.modalButtonText, styles.cancelButtonText]}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.addButton]}
+                onPress={handleAddCustomCategory}
+              >
+                <Text style={styles.modalButtonText}>Add</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -144,60 +200,108 @@ const AddServicesScreen = () => {
       <ScrollView
         style={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.title}>Add Service</Text>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Categories</Text>
+          <Text style={styles.label}>Category</Text>
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={category}
-              style={{ flex: 1 }}
               onValueChange={itemValue => {
-                if (itemValue === 'add_custom') {
+                if (itemValue === 'add_new') {
                   setCategoryModalVisible(true);
-                } else {
+                } else if (itemValue) {
                   setCategory(itemValue);
+                  if (errors.category) {
+                    setErrors(prev => ({ ...prev, category: null }));
+                  }
                 }
               }}
+              style={styles.picker}
             >
+              <Picker.Item label="Select a category..." value="" />
               {predefinedCategories.map(cat => (
                 <Picker.Item key={cat} label={cat} value={cat} />
               ))}
-              <Picker.Item label="Add Custom Category" value="add_custom" />
+              <Picker.Item
+                label="Add a new category..."
+                value="add_new"
+                style={styles.addNewPickerItem}
+              />
             </Picker>
           </View>
+          {errors.category && (
+            <Text style={styles.errorText}>{errors.category}</Text>
+          )}
 
           <Text style={styles.label}>Service Name</Text>
           <TextInput
             style={styles.input}
             value={serviceName}
-            onChangeText={setServiceName}
+            onChangeText={text => {
+              setServiceName(text);
+              if (errors.serviceName) {
+                setErrors(prev => ({ ...prev, serviceName: null }));
+              }
+            }}
           />
+          {errors.serviceName && (
+            <Text style={styles.errorText}>{errors.serviceName}</Text>
+          )}
 
           <Text style={styles.label}>Service Price</Text>
           <TextInput
             style={styles.input}
             value={servicePrice}
-            onChangeText={setServicePrice}
+            onChangeText={text => {
+              setServicePrice(text);
+              if (errors.servicePrice) {
+                setErrors(prev => ({ ...prev, servicePrice: null }));
+              }
+            }}
             keyboardType="numeric"
           />
+          {errors.servicePrice && (
+            <Text style={styles.errorText}>{errors.servicePrice}</Text>
+          )}
 
           <View style={styles.uploadLabelContainer}>
             <Text style={styles.label}>Upload Image</Text>
-            <Text style={styles.subLabel}>(Mix image size 80x80)</Text>
+            <Text style={styles.subLabel}>(Max image size 80x80)</Text>
           </View>
           <TouchableOpacity style={styles.uploadBox} onPress={selectImage}>
             {imageUri ? (
-              <Image source={{ uri: imageUri }} style={styles.uploadedImage} />
+              <>
+                <Image
+                  source={{ uri: imageUri }}
+                  style={styles.uploadedImage}
+                />
+                <TouchableOpacity
+                  style={styles.deleteIcon}
+                  onPress={() => setImageUri(null)}
+                >
+                  <Icon name="close-circle" size={24} color="#333" />
+                </TouchableOpacity>
+              </>
             ) : (
               <Icon name="image-outline" size={40} color="#ccc" />
             )}
           </TouchableOpacity>
+          {errors.image && <Text style={styles.errorText}>{errors.image}</Text>}
         </View>
 
-        <TouchableOpacity style={styles.saveButton} onPress={handleSaveService}>
-          <Text style={styles.saveButtonText}>SAVE SERVICE +</Text>
+        <TouchableOpacity
+          style={[styles.saveButton, isLoading && styles.disabledButton]}
+          onPress={handleSaveService}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.saveButtonText}>SAVE SERVICE +</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -245,7 +349,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '500',
     textAlign: 'center',
     marginVertical: 20,
     color: '#333',
@@ -258,6 +362,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#333',
     marginBottom: 8,
+    marginTop: 10,
   },
   input: {
     backgroundColor: '#fff',
@@ -267,18 +372,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 12,
     fontSize: 16,
-    marginBottom: 20,
+    marginBottom: 5,
   },
   pickerContainer: {
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
-    marginBottom: 20,
+    marginBottom: 5,
     justifyContent: 'center',
+  },
+  picker: {
+    height: 50,
+    width: '100%',
+  },
+  addNewPickerItem: {
+    color: '#8e44ad',
+    backgroundColor: '#f0f0f0',
   },
   uploadLabelContainer: {
     flexDirection: 'row',
     alignItems: 'baseline',
+    marginTop: 10,
   },
   subLabel: {
     fontSize: 12,
@@ -294,12 +408,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#fafafa',
     marginTop: 8,
-    marginBottom: 30,
+    marginBottom: 5,
   },
   uploadedImage: {
     width: '100%',
     height: '100%',
     borderRadius: 8,
+  },
+  deleteIcon: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 12,
   },
   saveButton: {
     backgroundColor: '#8e44ad',
@@ -307,21 +428,24 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     marginHorizontal: 25,
-    marginBottom: 30,
+    marginVertical: 30,
+  },
+  disabledButton: {
+    backgroundColor: '#c7a4d6',
   },
   saveButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
-  modalContainer: {
+  modalBackdrop: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
-  modalContent: {
-    width: '80%',
+  modalView: {
+    width: '85%',
     backgroundColor: 'white',
     borderRadius: 15,
     padding: 20,
@@ -355,6 +479,52 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginBottom: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  modalInput: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 20,
+    fontSize: 16,
+  },
+  modalButtonGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#f0f0f0',
+    marginRight: 10,
+  },
+  cancelButtonText: {
+    color: '#333',
+  },
+  addButton: {
+    backgroundColor: '#8e44ad',
+    marginLeft: 10,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 
