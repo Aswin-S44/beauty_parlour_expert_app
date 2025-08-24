@@ -17,17 +17,20 @@ const BulletPoint = ({ text }) => (
   </View>
 );
 
-const PrivacyPolicyScreen = () => {
+const PrivacyPolicyScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       <View style={styles.header}>
         <Image
-          source={{ uri: 'https://i.imgur.com/VPROSjQ.png' }}
+          source={require('../../assets/images/home_bg-1.png')}
           style={styles.headerImage}
         />
         <View style={styles.overlay} />
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Icon name="chevron-back" size={24} color="#fff" />
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
