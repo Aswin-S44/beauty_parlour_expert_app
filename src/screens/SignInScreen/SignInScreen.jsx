@@ -56,10 +56,10 @@ const SignInScreen = ({ navigation }) => {
   const handleLogin = async () => {
     if (!validateFields()) {
       return;
-    }
+    } 
     setIsLoading(true);
     try {
-      await login(email, password);
+      await login(email, password); 
     } catch (error) {
       Alert.alert('Login Failed', error.message);
     } finally {

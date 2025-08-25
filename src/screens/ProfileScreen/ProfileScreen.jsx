@@ -5,13 +5,14 @@ import {
   Image,
   ScrollView,
   StatusBar,
+  TouchableOpacity,
 } from 'react-native';
 import React from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import { primaryColor } from '../../constants/colors';
 
-const ProfileScreen = () => {
+const ProfileScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -28,6 +29,12 @@ const ProfileScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.profileInfo}>
+          <TouchableOpacity
+            style={styles.editIcon}
+            onPress={() => navigation.navigate('EditProfileScreen')}
+          >
+            <FontAwesomeIcon name="pencil" size={22} color={primaryColor} />
+          </TouchableOpacity>
           <Text style={styles.name}>Jesika Sabrina</Text>
           <Image
             source={require('../../assets/images/home_bg-1.png')}
@@ -128,6 +135,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     marginTop: 30,
+  },
+  editIcon: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
   },
   name: {
     fontSize: 22,

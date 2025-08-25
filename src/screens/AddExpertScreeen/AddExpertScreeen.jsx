@@ -1,5 +1,5 @@
 import {
-  View,
+  View, 
   Text,
   StyleSheet,
   Image,

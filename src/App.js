@@ -38,6 +38,7 @@ import AddGeneralInformationScreen from './screens/AddGeneralInformationScreen/A
 import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen/PrivacyPolicyScreen';
 import { AuthContext } from './context/AuthContext';
 import { primaryColor } from './constants/colors';
+import EditProfileScreen from './screens/EditProfileScreen/EditProfileScreen';
 
 const Tab = createMaterialBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -160,6 +161,7 @@ function MainAppStack() {
       <Stack.Screen name="AddExpertScreeen" component={AddExpertScreeen} />
       <Stack.Screen name="AllOffersScreen" component={AllOffersScreen} />
       <Stack.Screen name="AddOffersScreen" component={AddOffersScreen} />
+      <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
     </Stack.Navigator>
   );
 }

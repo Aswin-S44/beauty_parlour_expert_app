@@ -22,6 +22,8 @@ export const signup = async (email, password) => {
       phone: '',
       email,
       createdAt: new Date(),
+      parlourName: '',
+      about: '',
     });
 
     return userCredential.user;
