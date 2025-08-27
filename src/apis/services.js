@@ -1,6 +1,15 @@
 // services.js
 
-import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import {
+  collection,
+  addDoc,
+  query,
+  where,
+  getDocs,
+  doc,
+  getDoc,
+  updateDoc,
+} from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 const CLOUDINARY_URL =
@@ -49,20 +58,16 @@ export const addServices = async (shopId, data, imageUri) => {
 };
 
 export const getShopServices = async shopId => {
-  console.log('shopId------------', shopId);
-
   try {
     const q = query(collection(db, 'services'), where('shopId', '==', shopId));
 
     const querySnapshot = await getDocs(q);
-    console.log('querySnapshot size-----------', querySnapshot.size);
 
     const services = [];
     querySnapshot.forEach(doc => {
       services.push({ id: doc.id, ...doc.data() });
     });
 
-    console.log('services fetched:', services);
     return services;
   } catch (error) {
     console.error('Error fetching services:', error);
@@ -112,8 +117,6 @@ export const addBeautyExpert = async (shopId, data, imageUri) => {
 };
 
 export const getBeautyExperts = async shopId => {
-  console.log('shopId------------', shopId);
-
   try {
     const q = query(
       collection(db, 'beauty_experts'),
@@ -121,7 +124,6 @@ export const getBeautyExperts = async shopId => {
     );
 
     const querySnapshot = await getDocs(q);
-    console.log('querySnapshot size-----------', querySnapshot.size);
 
     const experts = [];
     querySnapshot.forEach(doc => {
@@ -132,5 +134,90 @@ export const getBeautyExperts = async shopId => {
   } catch (error) {
     console.error('Error fetching experts:', error);
     return [];
+  }
+};
+
+export const getUserData = async uid => {
+  try {
+    const docRef = doc(db, 'shop-owners', uid);
+    const docSnap = await getDoc(docRef);
+    console.log('docSnap exists?', docSnap.exists());
+    if (docSnap.exists()) {
+      return docSnap.data();
+    }
+    return null;
+  } catch (e) {
+    console.log('Firestore error:', e);
+    return null;
+  }
+};
+
+export const updateUserData = async (uid, updateData) => {
+  if (updateData.profileImage) {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: updateData.profileImage,
+      type: 'image/jpeg',
+      name: 'upload.jpg',
+    });
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+    const response = await fetch(CLOUDINARY_URL, {
+      method: 'POST',
+      body: formData,
+    });
+    const responseData = await response.json();
+    if (responseData.secure_url) {
+      updateData.profileImage = responseData.secure_url;
+    } else {
+      console.log('Error uploading to Cloudinary: ', responseData);
+      return false;
+    }
+  }
+  await updateDoc(doc(db, 'shop-owners', uid), updateData);
+};
+
+export const addOffer = async (shopId, data) => {
+  try {
+    let imageUrl = '';
+    if (data.imageUrl) {
+      const formData = new FormData();
+      formData.append('file', {
+        uri: data.imageUrl,
+        type: 'image/jpeg',
+        name: 'offer_upload.jpg',
+      });
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+      const response = await fetch(CLOUDINARY_URL, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const responseData = await response.json();
+      if (responseData.secure_url) {
+        imageUrl = responseData.secure_url;
+      } else {
+        console.error(
+          'Error uploading offer image to Cloudinary: ',
+          responseData,
+        );
+        return false;
+      }
+    }
+
+    const offersCollectionRef = collection(db, 'offers');
+
+    await addDoc(offersCollectionRef, {
+      shopId: shopId,
+      ...data,
+      imageUrl,
+      createdAt: new Date(),
+    });
+
+    return true;
+  } catch (error) {
+    console.error('Error while adding offer: ', error);
+    return false;
   }
 };

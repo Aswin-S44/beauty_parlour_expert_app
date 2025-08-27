@@ -7,12 +7,48 @@ import {
   StatusBar,
   TouchableOpacity,
 } from 'react-native';
-import React from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import { primaryColor } from '../../constants/colors';
+import { AuthContext } from '../../context/AuthContext';
+import { getUserData } from '../../apis/services';
+import { AVATAR_IMAGE } from '../../constants/images';
 
 const ProfileScreen = ({ navigation }) => {
+  const { user } = useContext(AuthContext);
+  const [name, setName] = useState('');
+  const [imageUri, setImageUri] = useState(null);
+  const [about, setAbout] = useState('');
+  const [address, setAddress] = useState('');
+  const [profileLoading, setProfileLoading] = useState(true);
+  const initialImage = AVATAR_IMAGE;
+
+  const imageSource = imageUri ? { uri: imageUri } : initialImage;
+  useEffect(() => {
+    if (user && user.uid) {
+      setProfileLoading(true);
+      const fetchUserData = async () => {
+        try {
+          const res = await getUserData(user.uid);
+          if (res) {
+            setName(res.parlourName || '');
+            setAbout(res.about || '');
+            setAddress(res.address || '');
+            setImageUri(res.profileImage || null);
+          }
+        } catch (error) {
+          console.error('Failed to fetch user data:', error);
+        } finally {
+          setProfileLoading(false);
+        }
+      };
+      fetchUserData();
+    } else {
+      setProfileLoading(false);
+    }
+  }, [user]);
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -35,11 +71,8 @@ const ProfileScreen = ({ navigation }) => {
           >
             <FontAwesomeIcon name="pencil" size={22} color={primaryColor} />
           </TouchableOpacity>
-          <Text style={styles.name}>Jesika Sabrina</Text>
-          <Image
-            source={require('../../assets/images/home_bg-1.png')}
-            style={styles.avatar}
-          />
+          <Text style={styles.name}>{name ?? '_'}</Text>
+          <Image source={imageSource} style={styles.avatar} />
           <Text style={styles.title}>CEO, Beauty Girls Parlour</Text>
           <View style={styles.ratingContainer}>
             <FontAwesomeIcon name="star" size={20} color="#FFD700" />
@@ -53,10 +86,7 @@ const ProfileScreen = ({ navigation }) => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>About</Text>
-          <Text style={styles.sectionText}>
-            Aenean leoiqula porttitor eu,consequat vitae eleifend acenimliquam
-            lorem ante dapibus in viverra quis feugiat
-          </Text>
+          <Text style={styles.sectionText}>{about ?? ''}</Text>
         </View>
 
         <View style={styles.section}>
@@ -76,9 +106,7 @@ const ProfileScreen = ({ navigation }) => {
           <View style={styles.addressContainer}>
             <View style={styles.addressRow}>
               <Icon name="location-sharp" size={20} color={primaryColor} />
-              <Text style={styles.addressText}>
-                58 Street - al dulha london - USA
-              </Text>
+              <Text style={styles.addressText}>{address ?? ''}</Text>
             </View>
             <View style={styles.addressRow}>
               <Icon

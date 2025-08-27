@@ -5,6 +5,7 @@ import {
 } from 'firebase/auth';
 import { auth, db } from '../config/firebase';
 import { doc, setDoc } from 'firebase/firestore';
+import { AVATAR_IMAGE } from '../constants/images';
 
 export const signup = async (email, password) => {
   try {
@@ -13,7 +14,7 @@ export const signup = async (email, password) => {
       email,
       password,
     );
-
+ 
     // Storing data into firestore
     const user = userCredential.user;
     await setDoc(doc(db, 'shop-owners', user.uid), {
@@ -24,6 +25,9 @@ export const signup = async (email, password) => {
       createdAt: new Date(),
       parlourName: '',
       about: '',
+      address: '',
+      isOnboarded: false,
+      profileImage: AVATAR_IMAGE,
     });
 
     return userCredential.user;
@@ -52,3 +56,4 @@ export const logout = async () => {
     throw error;
   }
 };
+

@@ -57,7 +57,7 @@ const AllOffersScreen = ({ navigation }) => {
       <StatusBar barStyle="light-content" />
       <View style={styles.header}>
         <Image
-          source={{ uri: 'https://i.imgur.com/VPROSjQ.png' }}
+          source={require('../../assets/images/home_bg-1.png')}
           style={styles.headerImage}
         />
         <View style={styles.overlay} />
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '500',
     textAlign: 'center',
     marginVertical: 20,
     color: '#333',
