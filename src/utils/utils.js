@@ -1,5 +1,13 @@
 import { formatDistanceToNow } from 'date-fns';
 
+export function formatFirestoreTimestamp(timestamp) {
+  if (!timestamp?.seconds) return '';
+
+  const date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1e6);
+
+  return `Added ${formatDistanceToNow(date, { addSuffix: true })}`;
+}
+
 export const formatDateTime = dateTime => {
   return formatDistanceToNow(dateTime, { addSuffix: true });
 };

@@ -7,9 +7,14 @@ import {
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
-import React from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { AuthContext } from '../../context/AuthContext';
+import { getOffersByShop } from '../../apis/services';
+import ServiceCardSkeleton from '../../components/ServiceCardSkeleton/ServiceCardSkeleton';
+import EmptyComponent from '../../components/EmptyComponent/EmptyComponent';
+import { formatFirestoreTimestamp } from '../../utils/utils';
 
 const offersData = [
   {
@@ -39,18 +44,93 @@ const offersData = [
 ];
 
 const AllOffersScreen = ({ navigation }) => {
-  const renderOfferItem = ({ item }) => (
+  const [offers, setOffers] = useState([]);
+  const [offersLoading, setOffersLoading] = useState(false);
+
+  const { user, loading } = useContext(AuthContext);
+
+  useEffect(() => {
+    if (user && user.uid) {
+      const fetchOffers = async () => {
+        try {
+          setOffersLoading(true);
+          const res = await getOffersByShop(user.uid);
+          setOffersLoading(false);
+          console.log('offers:', offers);
+          if (res && res.length > 0) {
+            setOffers(res);
+          }
+        } catch (err) {
+          console.error('Error fetching offers:', err);
+        } finally {
+          setOffersLoading(false);
+        }
+      };
+
+      fetchOffers();
+    }
+  }, [user]);
+
+  const RenderOfferItem = ({ item }) => (
     <View style={styles.card}>
-      <Image source={{ uri: item.imageUrl }} style={styles.offerImage} />
+      <Image
+        source={{ uri: item.service.imageUrl }}
+        style={styles.offerImage}
+      />
       <View style={styles.cardContent}>
-        <Text style={styles.offerName}>{item.name}</Text>
-        <Text style={styles.offerAdded}>{item.added}</Text>
+        <Text style={styles.offerName}>{item.serviceName}</Text>
+        <Text style={styles.offerAdded}>
+          {formatFirestoreTimestamp(item.createdAt)}
+        </Text>
       </View>
       <TouchableOpacity>
         <MaterialCommunityIcons name="dots-vertical" size={24} color="#888" />
       </TouchableOpacity>
     </View>
   );
+
+  const OfferItem = ({ item, shopId }) => {
+    const navigation = useNavigation();
+    return (
+      <View style={styles.card}>
+        <Image
+          source={{
+            uri:
+              typeof item.service.imageUrl === 'string'
+                ? item.service.imageUrl
+                : NO_IMAGE,
+          }}
+          style={styles.cardImage}
+        />
+        <View style={styles.cardTextContainer}>
+          <Text style={styles.cardTitle}>{item.serviceName}</Text>
+
+          <OfferText regularPrice={500} offerPrice={450} />
+        </View>
+        <TouchableOpacity
+          style={[
+            styles.bookButton,
+            item.active ? styles.activeButton : styles.inactiveButton,
+          ]}
+          onPress={() =>
+            navigation.navigate('BookingScreen', {
+              shopId: shopId,
+              serviceId: item.serviceId,
+            })
+          }
+        >
+          <Text
+            style={[
+              styles.bookButtonText,
+              item.active ? styles.activeButtonText : styles.inactiveButtonText,
+            ]}
+          >
+            Book
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -61,7 +141,10 @@ const AllOffersScreen = ({ navigation }) => {
           style={styles.headerImage}
         />
         <View style={styles.overlay} />
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Icon name="chevron-back" size={24} color="#fff" />
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
@@ -69,12 +152,35 @@ const AllOffersScreen = ({ navigation }) => {
 
       <View style={styles.contentContainer}>
         <Text style={styles.title}>Offer List</Text>
-        <FlatList
+
+        <>
+          {offersLoading ? (
+            <>
+              <ServiceCardSkeleton />
+            </>
+          ) : !offersLoading && offers.length == 0 ? (
+            <>
+              <EmptyComponent />
+            </>
+          ) : (
+            <FlatList
+              data={offers}
+              renderItem={({ item }) => (
+                // <OfferItem item={item} shopId={user.uid} />
+                <RenderOfferItem item={item} />
+              )}
+              // renderItem={renderOfferItem}
+              keyExtractor={item => item.id}
+              contentContainerStyle={styles.listContainer}
+            />
+          )}
+        </>
+        {/* <FlatList
           data={offersData}
           renderItem={renderOfferItem}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContainer}
-        />
+        /> */}
       </View>
       <View style={styles.footer}>
         <TouchableOpacity

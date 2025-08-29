@@ -221,3 +221,27 @@ export const addOffer = async (shopId, data) => {
     return false;
   }
 };
+
+
+export const getOffersByShop = async shopId => {
+  const q = query(collection(db, 'offers'), where('shopId', '==', shopId));
+  const querySnapshot = await getDocs(q);
+
+  const offers = await Promise.all(
+    querySnapshot.docs.map(async offerDoc => {
+      const offerData = offerDoc.data();
+      const serviceRef = doc(db, 'services', offerData.serviceId);
+      const serviceSnap = await getDoc(serviceRef);
+
+      return {
+        id: offerDoc.id,
+        ...offerData,
+        service: serviceSnap.exists()
+          ? { id: serviceSnap.id, ...serviceSnap.data() }
+          : null,
+      };
+    }),
+  );
+
+  return offers;
+};
