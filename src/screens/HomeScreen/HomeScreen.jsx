@@ -8,28 +8,90 @@ import {
   TextInput,
   StatusBar,
 } from 'react-native';
-import React, { useContext } from 'react';
-
+import React, { useContext, useEffect, useState } from 'react';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Card from '../../components/Card/Card';
 import { primaryColor, secondaryColor } from '../../constants/colors';
 import { AuthContext } from '../../context/AuthContext';
+import {
+  getAppointmentsByShopId,
+  getAppointmentStats,
+} from '../../apis/services';
+import moment from 'moment';
 
 const HomeScreen = ({ navigation }) => {
-  const weeklyData = [
-    { day: 'SAT', value: 2200, color: '#4A5568' },
-    { day: 'SUN', value: 1500, color: '#E53E3E' },
-    { day: 'MON', value: 2300, color: '#48BB78' },
-    { day: 'TUE', value: 1300, color: '#F6E05E' },
-    { day: 'WED', value: 1800, color: '#4299E1' },
-    { day: 'THU', value: 1700, color: '#ED64A6' },
-    { day: 'FRI', value: 2500, color: '#9F7AEA' },
-  ];
-  const maxValue = 2500;
-  console.log('hello aseins');
   const { user, loading } = useContext(AuthContext);
-  console.log('USER-----------', user ? user?.uid : 'no user');
+  const [totalServices, setTotalServices] = useState(0);
+  const [pendingServices, setPendingServices] = useState(0);
+  const [completedServices, setCompletedServices] = useState(0);
+  const [weeklyData, setWeeklyData] = useState([]);
+  const [maxValue, setMaxValue] = useState(0);
+
+  useEffect(() => {
+    if (user && user.uid) {
+      const fetchServiceStatsAndGraphData = async () => {
+        const statsRes = await getAppointmentStats(user.uid);
+        if (statsRes) {
+          setTotalServices(statsRes.totalAppointments);
+          setPendingServices(statsRes.pendingCount);
+          setCompletedServices(statsRes.completedCount);
+        }
+
+        const appointmentsRes = await getAppointmentsByShopId(user.uid);
+        if (appointmentsRes) {
+          const sevenDaysAgo = moment().subtract(6, 'days').startOf('day');
+          const dailyEarnings = {};
+
+          for (let i = 0; i < 7; i++) {
+            const date = moment(sevenDaysAgo).add(i, 'days');
+            dailyEarnings[date.format('YYYY-MM-DD')] = {
+              day: date.format('ddd').toUpperCase(),
+              value: 0,
+              color: getRandomColor(),
+            };
+          }
+
+          appointmentsRes.forEach(appointment => {
+            if (
+              appointment.appointmentStatus === 'confirmed' &&
+              appointment.totalAmount
+            ) {
+              const confirmedDate = moment(appointment.confirmedAt.toDate());
+              if (
+                confirmedDate.isSameOrAfter(sevenDaysAgo, 'day') &&
+                confirmedDate.isSameOrBefore(moment(), 'day')
+              ) {
+                const dateKey = confirmedDate.format('YYYY-MM-DD');
+                if (dailyEarnings[dateKey]) {
+                  dailyEarnings[dateKey].value += appointment.totalAmount;
+                }
+              }
+            }
+          });
+
+          const graphData = Object.values(dailyEarnings);
+          const maxVal = Math.max(...graphData.map(item => item.value), 0);
+          setWeeklyData(graphData);
+          setMaxValue(maxVal > 0 ? maxVal : 1);
+        }
+      };
+      fetchServiceStatsAndGraphData();
+    }
+  }, [user]);
+
+  const getRandomColor = () => {
+    const colors = [
+      '#4A5568',
+      '#E53E3E',
+      '#48BB78',
+      '#F6E05E',
+      '#4299E1',
+      '#ED64A6',
+      '#9F7AEA',
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+  };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -87,7 +149,7 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.card}>
           <View style={styles.weeklyEarnHeader}>
             <Text style={styles.cardTitle}>WEEKLY EARN</Text>
-            <Text style={styles.yAxisLabel}>2,500</Text>
+            <Text style={styles.yAxisLabel}>{maxValue.toLocaleString()}</Text>
           </View>
           <View style={styles.chartContainer}>
             {weeklyData.map((item, index) => (
@@ -113,15 +175,21 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
             <Text style={styles.statTitle}>Total Services</Text>
-            <Text style={[styles.statNumber, { color: '#3182CE' }]}>2723</Text>
+            <Text style={[styles.statNumber, { color: '#3182CE' }]}>
+              {totalServices}
+            </Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statTitle}>Pending Services</Text>
-            <Text style={[styles.statNumber, { color: '#DD6B20' }]}>523</Text>
+            <Text style={[styles.statNumber, { color: '#DD6B20' }]}>
+              {pendingServices}
+            </Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statTitle}>Completed Services</Text>
-            <Text style={[styles.statNumber, { color: '#38A169' }]}>1524</Text>
+            <Text style={[styles.statNumber, { color: '#38A169' }]}>
+              {completedServices}
+            </Text>
           </View>
         </View>
       </View>

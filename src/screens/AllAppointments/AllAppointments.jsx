@@ -6,87 +6,90 @@ import {
   Image,
   StatusBar,
 } from 'react-native';
-import React from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import { AuthContext } from '../../context/AuthContext';
+import { getAppointmentsByShopId } from '../../apis/services';
+import { convertFIrstCharToUpper, formatTimestamp } from '../../utils/utils';
+import AppointmentHistorySkeleton from '../../components/AppointmentHistorySkeleton/AppointmentHistorySkeleton';
+import EmptyComponent from '../../components/EmptyComponent/EmptyComponent';
+import ServiceCardSkeleton from '../../components/ServiceCardSkeleton/ServiceCardSkeleton';
 
 const AllAppointments = () => {
-  const appointments = [
-    {
-      id: '1',
-      name: 'Fahima Khan',
-      date: '2 Feb 2021, 12:00 pm',
-      amount: 120,
-      status: 'Running',
-      imageUrl: 'https://i.imgur.com/6t4k2j6.png',
-    },
-    {
-      id: '2',
-      name: 'Mariya Tuba',
-      date: '1 Feb 2021, 05:00 pm',
-      amount: 250,
-      status: 'Running',
-      imageUrl: 'https://i.imgur.com/xgA31iK.png',
-    },
-    {
-      id: '3',
-      name: 'Sakina Joshifa',
-      date: '22 Jan 2021, 04.30 pm',
-      amount: 99,
-      status: 'Completed',
-      imageUrl: 'https://i.imgur.com/S5ai1Jg.png',
-    },
-    {
-      id: '4',
-      name: 'Lifaniya Mujo',
-      date: '21 Jan 2021, 09:15 am',
-      amount: 130,
-      status: 'Completed',
-      imageUrl: 'https://i.imgur.com/i4j1k7G.png',
-    },
-    {
-      id: '5',
-      name: 'Wakina Tashiya',
-      date: '15 Jan 2021, 12:05 am',
-      amount: 50,
-      status: 'Completed',
-      imageUrl: 'https://i.imgur.com/gDaIp0D.png',
-    },
-  ];
+  const { user } = useContext(AuthContext);
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user && user.uid) {
+      const fetchAppointmentHistory = async () => {
+        setLoading(true);
+        const res = await getAppointmentsByShopId(user.uid);
+        setLoading(false);
+        if (res) {
+          setAppointments(res);
+        }
+      };
+      fetchAppointmentHistory();
+    }
+  }, [user]);
 
   const renderAppointment = ({ item }) => (
     <View style={styles.itemContainer}>
-      <Image source={{ uri: item.imageUrl }} style={styles.avatar} />
+      <Image
+        source={{
+          uri:
+            typeof item.expert.imageUrl === 'string'
+              ? item.expert.imageUrl
+              : NO_IMAGE,
+        }}
+        style={styles.avatar}
+      />
       <View style={styles.itemDetails}>
-        <Text style={styles.itemName}>{item.name}</Text>
-        <Text style={styles.itemDate}>{item.date}</Text>
-        <Text style={styles.itemAmountText}>Amount {item.amount}</Text>
+        <Text style={styles.itemName}>{item.expert.expertName}</Text>
+        <Text style={styles.itemDate}>
+          {' '}
+          {formatTimestamp(item.createdAt)} {'  '} {item.selectedTime}
+        </Text>
+        <Text style={styles.itemAmountText}>Amount {item.totalAmount}</Text>
       </View>
       <View style={styles.itemStatus}>
-        <Text style={styles.itemPrice}>${item.amount}</Text>
-        <Text style={styles.itemStatusText}>{item.status}</Text>
+        <Text style={styles.itemPrice}>{item.totalAmount}</Text>
+        <Text style={styles.itemStatusText}>
+          {' '}
+          {convertFIrstCharToUpper(item.appointmentStatus)}
+        </Text>
       </View>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <View style={styles.header}>
-        <Image
-          source={require('../../assets/images/home_bg-1.png')}
-          style={styles.headerImage}
-        />
-        <View style={styles.overlay} />
-      </View>
+      {loading ? (
+        <ServiceCardSkeleton />
+      ) : !loading && appointments.length == 0 ? (
+        <EmptyComponent />
+      ) : (
+        <>
+          <StatusBar barStyle="light-content" />
+          <View style={styles.header}>
+            <Image
+              source={require('../../assets/images/home_bg-1.png')}
+              style={styles.headerImage}
+            />
+            <View style={styles.overlay} />
+          </View>
 
-      <View style={styles.contentContainer}>
-        <Text style={styles.title}>Appointment History</Text>
-        <FlatList
-          data={appointments}
-          renderItem={renderAppointment}
-          keyExtractor={item => item.id}
-          showsVerticalScrollIndicator={false}
-        />
-      </View>
+          <View style={styles.contentContainer}>
+            <Text style={styles.title}>Appointment History</Text>
+            <FlatList
+              data={appointments}
+              renderItem={renderAppointment}
+              keyExtractor={item => item.id}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        </>
+      )}
     </View>
   );
 };

@@ -10,71 +10,51 @@ import {
   StatusBar,
   Modal,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { primaryColor } from '../../constants/colors';
+import { AuthContext } from '../../context/AuthContext';
+import {
+  confirmAppointment,
+  getUserPendingRequests,
+} from '../../apis/services';
+import { formatTimestamp } from '../../utils/utils';
+import ServiceCardSkeleton from '../../components/ServiceCardSkeleton/ServiceCardSkeleton';
+import EmptyComponent from '../../components/EmptyComponent/EmptyComponent';
 
 const AppointmentRequestsScreen = ({ navigation }) => {
+  const { user } = useContext(AuthContext);
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [userRequests, setUserRequests] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState('');
 
-  const requests = [
-    {
-      id: '1',
-      name: 'Fahima Khan',
-      datetime: '27 Dec 2020, 10:00pm',
-      amount: '$350',
-      image: 'https://i.imgur.com/7s1gG2g.png',
-      isPrimary: true,
-      details: {
-        date: '25 August 2021',
-        time: '08.00 pm',
-        services: [
-          { name: 'Style Hair Cut', quantity: '01', price: '$25' },
-          { name: 'Spa', quantity: '01', price: '$100' },
-          { name: 'Skin Treatment', quantity: '01', price: '$80' },
-        ],
-        subtotal: '$205',
-        discount: '- $10',
-        total: '$195',
-      },
-    },
-    {
-      id: '2',
-      name: 'Mariya Tuba',
-      datetime: '27 Dec 2020, 12:00pm',
-      amount: '$78',
-      image: 'https://i.imgur.com/uR7Yf46.png',
-      details: {
-        date: '27 Dec 2020',
-        time: '12:00 pm',
-        services: [{ name: 'Manicure', quantity: '01', price: '$78' }],
-        subtotal: '$78',
-        discount: '- $0',
-        total: '$78',
-      },
-    },
-    {
-      id: '3',
-      name: 'Sakina Josifa',
-      datetime: '30 Dec 2020, 09:30pm',
-      amount: '$450',
-      image: 'https://i.imgur.com/C3fdoH7.png',
-      details: {
-        date: '30 Dec 2020',
-        time: '09:30 pm',
-        services: [
-          { name: 'Full Makeup', quantity: '01', price: '$250' },
-          { name: 'Hair Styling', quantity: '01', price: '$200' },
-        ],
-        subtotal: '$450',
-        discount: '- $0',
-        total: '$450',
-      },
-    },
-  ];
+  useEffect(() => {
+    if (user && user.uid) {
+      fetchRequests();
+    }
+  }, [user]);
+
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      const res = await getUserPendingRequests(user.uid);
+      if (res && res.length > 0) {
+        setUserRequests(res);
+      } else {
+        setUserRequests([]);
+      }
+    } catch (err) {
+      console.error('Error fetching user requests:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAcceptPress = item => {
     setSelectedRequest(item);
@@ -83,35 +63,60 @@ const AppointmentRequestsScreen = ({ navigation }) => {
 
   const handleCancelPress = item => {
     setSelectedRequest(item);
+    setCancellationReason('');
     setCancelModalVisible(true);
   };
 
-  const renderRequestItem = ({ item }) => (
+  const handleAcceptAppointment = async (appointmentId, shopId) => {
+    try {
+      setConfirming(true);
+      await confirmAppointment(appointmentId, shopId);
+      setAcceptModalVisible(false);
+      await fetchRequests();
+    } catch (error) {
+      console.log('Error while accepting appointment : ', error);
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  const handleConfirmCancel = async () => {
+    try {
+      setConfirming(true);
+      // TODO:Cancellation functionality
+      setCancelModalVisible(false);
+      await fetchRequests();
+    } catch (error) {
+      console.error('Error canceling appointment:', error);
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  const RenderRequestItem = ({ item }) => (
     <View style={styles.requestItem}>
-      <Image source={{ uri: item.image }} style={styles.avatar} />
+      <Image
+        source={{
+          uri:
+            typeof item.expert.imageUrl === 'string'
+              ? item.expert.imageUrl
+              : NO_IMAGE,
+        }}
+        style={styles.avatar}
+      />
       <View style={styles.requestInfo}>
-        <Text style={styles.requesterName}>{item.name}</Text>
-        <Text style={styles.requestDetails}>{item.datetime}</Text>
-        <Text style={styles.requestDetails}>Amount {item.amount}</Text>
+        <Text style={styles.requesterName}>{item.expert.expertName ?? ''}</Text>
+        <Text style={styles.requestDetails}>
+          {formatTimestamp(item.createdAt)} {'  '} {item.selectedTime}
+        </Text>
+        <Text style={styles.requestDetails}>Amount {item.totalAmount}</Text>
       </View>
       <View style={styles.actionButtons}>
         <TouchableOpacity
           onPress={() => handleAcceptPress(item)}
-          style={[
-            styles.button,
-            item.isPrimary ? styles.acceptButtonPrimary : styles.acceptButton,
-          ]}
+          style={[styles.button, styles.acceptButton]}
         >
-          <Text
-            style={[
-              styles.buttonText,
-              item.isPrimary
-                ? styles.acceptButtonTextPrimary
-                : styles.acceptButtonText,
-            ]}
-          >
-            Accept
-          </Text>
+          <Text style={styles.acceptButtonText}>Accept</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => handleCancelPress(item)}
@@ -136,13 +141,13 @@ const AppointmentRequestsScreen = ({ navigation }) => {
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Date</Text>
             <Text style={styles.detailValue}>
-              {selectedRequest?.details.date}
+              {selectedRequest?.selectedDate ?? ''}
             </Text>
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Time</Text>
             <Text style={styles.detailValue}>
-              {selectedRequest?.details.time}
+              {selectedRequest?.selectedTime ?? ''}
             </Text>
           </View>
 
@@ -152,43 +157,61 @@ const AppointmentRequestsScreen = ({ navigation }) => {
             <Text style={styles.amountHeader}>Quantity</Text>
             <Text style={styles.amountHeader}>Price</Text>
           </View>
-          {selectedRequest?.details.services.map((service, index) => (
+          {selectedRequest?.services.map((service, index) => (
             <View key={index} style={styles.amountRow}>
-              <Text style={styles.serviceText}>{service.name}</Text>
-              <Text style={styles.serviceText}>{service.quantity}</Text>
-              <Text style={styles.serviceText}>{service.price}</Text>
+              <Text style={styles.serviceText}>
+                {service.serviceName ?? '_'}
+              </Text>
+              <Text style={styles.serviceText}>{service?.qty ?? 1}</Text>
+              <Text style={styles.serviceText}>
+                {service?.servicePrice * (service?.qty ?? 1) || '_'}
+              </Text>
             </View>
           ))}
           <View style={styles.lineSeparator} />
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Subtotal</Text>
             <Text style={styles.summaryValue}>
-              {selectedRequest?.details.subtotal}
+              {selectedRequest?.totalAmount ?? 0}
             </Text>
           </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Discount by coupon</Text>
-            <Text style={styles.summaryValue}>
-              {selectedRequest?.details.discount}
-            </Text>
-          </View>
+          {selectedRequest?.offerAvailable && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Discount price by Offer</Text>
+              <Text style={styles.summaryValue}>
+                {selectedRequest?.offerPrice ?? 0}
+              </Text>
+            </View>
+          )}
+
           <View style={styles.lineSeparator} />
           <View style={styles.summaryRow}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalValue}>
-              {selectedRequest?.details.total}
+              {selectedRequest?.offerPrice ?? 0}
             </Text>
           </View>
           <View style={styles.modalActions}>
             <TouchableOpacity
               style={styles.modalAcceptButton}
-              onPress={() => setAcceptModalVisible(false)}
+              onPress={() => {
+                handleAcceptAppointment(
+                  selectedRequest.id,
+                  selectedRequest.shopId,
+                );
+              }}
+              disabled={confirming}
             >
-              <Text style={styles.modalButtonTextPrimary}>Accept</Text>
+              {confirming ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.modalButtonTextPrimary}>Accept</Text>
+              )}
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.modalCancelButton}
               onPress={() => setAcceptModalVisible(false)}
+              disabled={confirming}
             >
               <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
             </TouchableOpacity>
@@ -212,17 +235,26 @@ const AppointmentRequestsScreen = ({ navigation }) => {
             style={styles.reasonInput}
             placeholder="Enter reason here..."
             multiline
+            value={cancellationReason}
+            onChangeText={setCancellationReason}
+            editable={!confirming}
           />
           <View style={styles.modalActions}>
             <TouchableOpacity
               style={styles.modalAcceptButton}
-              onPress={() => setCancelModalVisible(false)}
+              onPress={handleConfirmCancel}
+              disabled={confirming}
             >
-              <Text style={styles.modalButtonTextPrimary}>Submit</Text>
+              {confirming ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.modalButtonTextPrimary}>Submit</Text>
+              )}
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.modalCancelButton}
               onPress={() => setCancelModalVisible(false)}
+              disabled={confirming}
             >
               <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
             </TouchableOpacity>
@@ -232,6 +264,10 @@ const AppointmentRequestsScreen = ({ navigation }) => {
     </Modal>
   );
 
+  if (loading) {
+    return <ServiceCardSkeleton />;
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -240,7 +276,10 @@ const AppointmentRequestsScreen = ({ navigation }) => {
         style={styles.headerBackground}
       >
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
             <Ionicons name="chevron-back" size={24} color="#fff" />
             <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
@@ -249,13 +288,17 @@ const AppointmentRequestsScreen = ({ navigation }) => {
 
       <View style={styles.contentContainer}>
         <Text style={styles.title}>User Request</Text>
-        <FlatList
-          data={requests}
-          renderItem={renderRequestItem}
-          keyExtractor={item => item.id}
-          showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={styles.listSeparator} />}
-        />
+        {!loading && userRequests.length === 0 ? (
+          <Text>No appointments Found</Text>
+        ) : (
+          <FlatList
+            data={userRequests}
+            renderItem={({ item }) => <RenderRequestItem item={item} />}
+            keyExtractor={item => item.id}
+            showsVerticalScrollIndicator={false}
+            ItemSeparatorComponent={() => <View style={styles.listSeparator} />}
+          />
+        )}
       </View>
 
       {selectedRequest && renderAcceptModal()}
@@ -338,9 +381,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  acceptButtonPrimary: {
-    backgroundColor: primaryColor,
-  },
   acceptButton: {
     backgroundColor: primaryColor,
   },
@@ -349,11 +389,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
-  acceptButtonTextPrimary: {
-    color: '#fff',
-  },
   acceptButtonText: {
-    color: primaryColor,
+    color: '#fff',
   },
   cancelButtonText: {
     color: 'gray',

@@ -1,4 +1,4 @@
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 
 export function formatFirestoreTimestamp(timestamp) {
   if (!timestamp?.seconds) return '';
@@ -30,4 +30,15 @@ export const timeAgo = date => {
     }
   }
   return 'just now';
+};
+
+export const formatTimestamp = timestamp => {
+  const date = new Date(
+    timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000,
+  );
+  return format(date, 'dd MMM yyyy');
+};
+
+export const convertFIrstCharToUpper = s => {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 };

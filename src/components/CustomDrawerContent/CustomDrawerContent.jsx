@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { DrawerContentScrollView } from '@react-navigation/drawer';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -6,6 +6,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { primaryColor } from '../../constants/colors';
 import { logout } from '../../apis/auth';
+import { AuthContext } from '../../context/AuthContext';
 
 const DrawerItem = ({ iconName, iconSet, label, onPress }) => {
   const IconComponent =
@@ -28,16 +29,8 @@ const DrawerItem = ({ iconName, iconSet, label, onPress }) => {
   );
 };
 
-const handleLogout = async navigation => {
-  try {
-    await logout();
-    navigation.replace('SignInScreen');
-  } catch (error) {
-    console.error(error);
-  }
-};
-
 const CustomDrawerContent = props => {
+  const { logout } = useContext(AuthContext);
   return (
     <View style={styles.container}>
       <DrawerContentScrollView {...props}>
@@ -99,7 +92,7 @@ const CustomDrawerContent = props => {
             label="Sign Out"
             iconSet="MaterialCommunity"
             iconName="logout"
-            onPress={() => handleLogout(props.navigation)}
+            onPress={logout}
           />
         </View>
       </DrawerContentScrollView>
