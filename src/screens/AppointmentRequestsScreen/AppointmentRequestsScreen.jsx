@@ -17,6 +17,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { primaryColor } from '../../constants/colors';
 import { AuthContext } from '../../context/AuthContext';
 import {
+  cancelAppointment,
   confirmAppointment,
   getUserPendingRequests,
 } from '../../apis/services';
@@ -33,6 +34,7 @@ const AppointmentRequestsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [cancellationReason, setCancellationReason] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     if (user && user.uid) {
@@ -80,21 +82,24 @@ const AppointmentRequestsScreen = ({ navigation }) => {
     }
   };
 
-  const handleConfirmCancel = async () => {
+  const handleCancelAppointment = async (appointmentId, shopId) => {
     try {
-      setConfirming(true);
-      // TODO:Cancellation functionality
+      setCancelling(true);
+      await cancelAppointment(appointmentId, shopId);
       setCancelModalVisible(false);
       await fetchRequests();
     } catch (error) {
       console.error('Error canceling appointment:', error);
     } finally {
-      setConfirming(false);
+      setCancelling(false);
     }
   };
 
   const RenderRequestItem = ({ item }) => (
-    <View style={styles.requestItem}>
+    <TouchableOpacity
+      style={styles.requestItem}
+      onPress={() => navigation.navigate('ServiceSummaryScreen', { item })}
+    >
       <Image
         source={{
           uri:
@@ -125,7 +130,7 @@ const AppointmentRequestsScreen = ({ navigation }) => {
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderAcceptModal = () => (
@@ -231,24 +236,22 @@ const AppointmentRequestsScreen = ({ navigation }) => {
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Reason for Cancellation</Text>
-          <TextInput
-            style={styles.reasonInput}
-            placeholder="Enter reason here..."
-            multiline
-            value={cancellationReason}
-            onChangeText={setCancellationReason}
-            editable={!confirming}
-          />
+          <Text>Do you want to cancel the appointment request ?</Text>
           <View style={styles.modalActions}>
             <TouchableOpacity
               style={styles.modalAcceptButton}
-              onPress={handleConfirmCancel}
-              disabled={confirming}
+              onPress={() => {
+                handleCancelAppointment(
+                  selectedRequest.id,
+                  selectedRequest.shopId,
+                );
+              }}
+              disabled={cancelling}
             >
-              {confirming ? (
+              {cancelling ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.modalButtonTextPrimary}>Submit</Text>
+                <Text style={styles.modalButtonTextPrimary}>Yes</Text>
               )}
             </TouchableOpacity>
             <TouchableOpacity
@@ -256,7 +259,7 @@ const AppointmentRequestsScreen = ({ navigation }) => {
               onPress={() => setCancelModalVisible(false)}
               disabled={confirming}
             >
-              <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
+              <Text style={styles.modalButtonTextSecondary}>No</Text>
             </TouchableOpacity>
           </View>
         </View>

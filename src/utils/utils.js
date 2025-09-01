@@ -1,4 +1,4 @@
-import { format, formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, isValid } from 'date-fns';
 
 export function formatFirestoreTimestamp(timestamp) {
   if (!timestamp?.seconds) return '';
@@ -41,4 +41,13 @@ export const formatTimestamp = timestamp => {
 
 export const convertFIrstCharToUpper = s => {
   return s.charAt(0).toUpperCase() + s.slice(1);
+};
+
+export const formatDate = dateString => {
+  const date = new Date(dateString);
+  if (!isValid(date)) {
+    return '-';
+  }
+
+  return format(date, 'dd MMMM yyyy');
 };

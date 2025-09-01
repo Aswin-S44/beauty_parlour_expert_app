@@ -459,3 +459,35 @@ export const getAppointmentStats = async shopId => {
     throw error;
   }
 };
+
+export const cancelAppointment = async (id, shopId) => {
+  try {
+    const appointmentRef = doc(db, 'appointments', id);
+    const appointmentSnap = await getDoc(appointmentRef);
+
+    if (!appointmentSnap.exists()) {
+      throw new Error('Appointment not found');
+    }
+
+    const appointmentData = appointmentSnap.data();
+
+    if (appointmentData.shopId !== shopId) {
+      throw new Error('Appointment does not belong to this shop');
+    }
+
+    if (appointmentData.appointmentStatus !== 'pending') {
+      throw new Error('Appointment is not in pending status');
+    }
+
+    await updateDoc(appointmentRef, {
+      appointmentStatus: APPOINTMENT_STATUSES.CANCELLED,
+      confirmedAt: new Date(),
+    });
+
+    console.log('Appointment cancelled successfully');
+    return { success: true, message: 'Appointment cancelled successfully' };
+  } catch (error) {
+    console.error('Error cancelling appointment:', error);
+    throw error;
+  }
+};
