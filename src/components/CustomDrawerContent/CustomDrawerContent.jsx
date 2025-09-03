@@ -7,6 +7,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { primaryColor } from '../../constants/colors';
 import { logout } from '../../apis/auth';
 import { AuthContext } from '../../context/AuthContext';
+import { AVATAR_IMAGE } from '../../constants/images';
 
 const DrawerItem = ({ iconName, iconSet, label, onPress }) => {
   const IconComponent =
@@ -30,17 +31,18 @@ const DrawerItem = ({ iconName, iconSet, label, onPress }) => {
 };
 
 const CustomDrawerContent = props => {
-  const { logout } = useContext(AuthContext);
+  const { logout, user, userData, loading } = useContext(AuthContext);
+
   return (
     <View style={styles.container}>
       <DrawerContentScrollView {...props}>
         <View style={styles.profileContainer}>
           <Image
-            source={{ uri: 'https://i.imgur.com/2nJ1Mbe.png' }}
+            source={{ uri: userData?.profileImage ?? AVATAR_IMAGE }}
             style={styles.avatar}
           />
-          <Text style={styles.userName}>Jesika Sabrina</Text>
-          <Text style={styles.userPhone}>5936-685-214</Text>
+          <Text style={styles.userName}>{userData?.parlourName ?? ''}</Text>
+          <Text style={styles.userPhone}>{userData?.phone ?? ''}</Text>
         </View>
 
         <View style={styles.drawerSection}>
