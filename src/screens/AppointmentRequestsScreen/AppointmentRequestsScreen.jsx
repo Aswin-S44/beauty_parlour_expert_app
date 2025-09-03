@@ -292,7 +292,7 @@ const AppointmentRequestsScreen = ({ navigation }) => {
       <View style={styles.contentContainer}>
         <Text style={styles.title}>User Request</Text>
         {!loading && userRequests.length === 0 ? (
-          <Text>No appointments Found</Text>
+          <EmptyComponent />
         ) : (
           <FlatList
             data={userRequests}

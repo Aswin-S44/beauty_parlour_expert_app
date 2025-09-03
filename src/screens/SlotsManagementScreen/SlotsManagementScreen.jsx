@@ -11,6 +11,7 @@ import {
   SafeAreaView,
   Platform,
   ActivityIndicator,
+  StatusBar, // Import StatusBar
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import moment from 'moment';
@@ -30,8 +31,11 @@ import {
 import { AuthContext } from '../../context/AuthContext';
 import { db } from '../../config/firebase';
 import { primaryColor } from '../../constants/colors';
+import { ScrollView } from 'react-native';
+import SlotsSkeleton from '../../components/SlotsSkeleton/SlotsSkeleton';
 
-const SlotsManagementScreen = () => {
+const SlotsManagementScreen = ({ navigation }) => {
+  // Add navigation prop
   const { user, userData } = useContext(AuthContext);
   const [selectedDate, setSelectedDate] = useState(
     moment().format('YYYY-MM-DD'),
@@ -214,7 +218,7 @@ const SlotsManagementScreen = () => {
           onPress={() => openEditSlotModal(item)}
           style={styles.actionIcon}
         >
-          <Icon name="pencil-outline" size={20} color="#6200EE" />
+          <Icon name="pencil-outline" size={20} color={primaryColor} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => handleDeleteSlot(item.id)}
@@ -238,79 +242,97 @@ const SlotsManagementScreen = () => {
   };
 
   if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#6200EE" />
-          <Text style={styles.loadingText}>Loading slots...</Text>
-        </View>
-      </SafeAreaView>
-    );
+    return <SlotsSkeleton />;
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.header}>Manage Booking Slots</Text>
-
-      <View style={styles.calendarContainer}>
-        <Calendar
-          onDayPress={onDayPress}
-          markedDates={markedDates}
-          theme={{
-            backgroundColor: '#FFFFFF',
-            calendarBackground: '#FFFFFF',
-            textSectionTitleColor: primaryColor,
-            selectedDayBackgroundColor: primaryColor,
-            selectedDayTextColor: '#ffffff',
-            todayTextColor: '#6200EE',
-            dayTextColor: '#2d4150',
-            textDisabledColor: '#d9e1e8',
-            dotColor: primaryColor,
-            selectedDotColor: '#ffffff',
-            arrowColor: primaryColor,
-            monthTextColor: '#2d4150',
-            indicatorColor: primaryColor,
-            textDayFontWeight: '300',
-            textMonthFontWeight: 'bold',
-            textDayHeaderFontWeight: '500',
-            textDayFontSize: 16,
-            textMonthFontSize: 18,
-            textDayHeaderFontSize: 14,
-          }}
-        />
-      </View>
-
-      <View style={styles.slotListHeader}>
-        <Text style={styles.slotListHeaderText}>
-          Slots for {moment(selectedDate).format('MMMM Do, YYYY')}
-        </Text>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor={primaryColor} />{' '}
+      {/* Status bar */}
+      {/* Custom Header */}
+      <View style={styles.customHeader}>
         <TouchableOpacity
-          onPress={openAddSlotModal}
-          style={styles.addSlotButton}
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
         >
-          <Icon name="plus" size={18} color="#FFFFFF" style={styles.addIcon} />
-          <Text style={styles.addSlotButtonText}>Add Slot</Text>
+          <Icon name="chevron-left" size={24} color="#FFFFFF" />
+          <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
+        <View style={{ width: 60 }} /> {/* Spacer to balance title */}
       </View>
+      <View style={styles.contentContainer}>
+        <Text style={styles.sectionHeader}>Manage Booking Slots</Text>
 
-      <FlatList
-        data={slots[selectedDate] || []}
-        renderItem={renderSlotItem}
-        keyExtractor={item => item.id}
-        ListEmptyComponent={
-          <View style={styles.emptySlotsContainer}>
-            <Icon name="calendar-remove-outline" size={40} color="#B0B0B0" />
-            <Text style={styles.emptySlotsText}>
-              No slots configured for this date.
-            </Text>
-            <Text style={styles.emptySlotsSubText}>
-              Tap "Add Slot" to create new availability.
-            </Text>
+        <ScrollView>
+          <View style={styles.calendarContainer}>
+            <Calendar
+              onDayPress={onDayPress}
+              markedDates={markedDates}
+              theme={{
+                backgroundColor: '#FFFFFF',
+                calendarBackground: '#FFFFFF',
+                textSectionTitleColor: primaryColor,
+                selectedDayBackgroundColor: primaryColor,
+                selectedDayTextColor: '#ffffff',
+                todayTextColor: '#6200EE',
+                dayTextColor: '#2d4150',
+                textDisabledColor: '#d9e1e8',
+                dotColor: primaryColor,
+                selectedDotColor: '#ffffff',
+                arrowColor: primaryColor,
+                monthTextColor: '#2d4150',
+                indicatorColor: primaryColor,
+                textDayFontWeight: '300',
+                textMonthFontWeight: 'bold',
+                textDayHeaderFontWeight: '500',
+                textDayFontSize: 16,
+                textMonthFontSize: 18,
+                textDayHeaderFontSize: 14,
+              }}
+            />
           </View>
-        }
-        style={styles.slotsList}
-      />
 
+          <View style={styles.slotListHeader}>
+            <Text style={styles.slotListHeaderText}>
+              Slots for {moment(selectedDate).format('MMMM Do, YYYY')}
+            </Text>
+            <TouchableOpacity
+              onPress={openAddSlotModal}
+              style={styles.addSlotButton}
+            >
+              <Icon
+                name="plus"
+                size={18}
+                color="#FFFFFF"
+                style={styles.addIcon}
+              />
+              <Text style={styles.addSlotButtonText}>Add Slot</Text>
+            </TouchableOpacity>
+          </View>
+
+          <FlatList
+            data={slots[selectedDate] || []}
+            renderItem={renderSlotItem}
+            keyExtractor={item => item.id}
+            ListEmptyComponent={
+              <View style={styles.emptySlotsContainer}>
+                <Icon
+                  name="calendar-remove-outline"
+                  size={40}
+                  color="#B0B0B0"
+                />
+                <Text style={styles.emptySlotsText}>
+                  No slots configured for this date.
+                </Text>
+                <Text style={styles.emptySlotsSubText}>
+                  Tap "Add Slot" to create new availability.
+                </Text>
+              </View>
+            }
+            style={styles.slotsList}
+          />
+        </ScrollView>
+      </View>
       {/* Add/Edit Slot Modal */}
       <Modal
         animationType="fade"
@@ -354,7 +376,7 @@ const SlotsManagementScreen = () => {
                 style={[styles.modalButton, styles.confirmButton]}
                 onPress={handleAddOrUpdateSlot}
               >
-                <Text style={styles.buttonText}>
+                <Text style={[styles.buttonText, styles.confirmButtonText]}>
                   {editingSlot ? 'Update Slot' : 'Add Slot'}
                 </Text>
               </TouchableOpacity>
@@ -367,19 +389,51 @@ const SlotsManagementScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#F7F8FC',
-    paddingHorizontal: 15,
-    paddingTop: Platform.OS === 'android' ? 25 : 0,
+    backgroundColor: primaryColor, // Background color for the header area
   },
-  header: {
+  customHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 10,
+    paddingBottom: 40,
+    backgroundColor: primaryColor, // Header background color
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  backButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    marginLeft: 5,
+  },
+  headerTitle: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  contentContainer: {
+    flex: 1,
+    backgroundColor: '#F7F8FC', // Background for the rest of the screen
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    paddingHorizontal: 15,
+    paddingTop: 20,
+    marginTop: -20, // Overlap with the header to create the curved effect
+    overflow: 'hidden', // Ensures the curve is clean
+  },
+  sectionHeader: {
     fontSize: 26,
-    fontWeight: '700',
+    fontWeight: '500',
     color: '#333',
     textAlign: 'center',
     marginBottom: 20,
-    marginTop: 10,
+    // marginTop: 10, // Removed as it's handled by contentContainer padding
   },
   calendarContainer: {
     borderRadius: 12,
@@ -399,7 +453,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   slotListHeaderText: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '600',
     color: '#333',
   },
@@ -411,7 +465,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderRadius: 25,
     elevation: 2,
-    shadowColor: '#6200EE',
+    shadowColor: primaryColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
@@ -534,7 +588,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F0F0',
   },
   confirmButton: {
-    backgroundColor: '#6200EE',
+    backgroundColor: primaryColor,
   },
   buttonText: {
     color: '#333',
