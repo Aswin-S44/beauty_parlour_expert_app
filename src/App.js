@@ -40,6 +40,8 @@ import { AuthContext } from './context/AuthContext';
 import { primaryColor } from './constants/colors';
 import EditProfileScreen from './screens/EditProfileScreen/EditProfileScreen';
 import ServiceSummaryScreen from './screens/ServiceSummaryScreen/ServiceSummaryScreen';
+import ConfirmationWaitingScreen from './screens/ConfirmationWaitingScreen/ConfirmationWaitingScreen';
+import GeneralInformationScreen from './screens/GeneralInformationScreen/GeneralInformationScreen';
 
 const Tab = createMaterialBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -179,10 +181,10 @@ function AuthStack() {
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="SignIn" component={SignInScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
-      <Stack.Screen
+      {/* <Stack.Screen
         name="OTPVerificationScreen"
         component={OTPVerificationScreen}
-      />
+      /> */}
       <Stack.Screen
         name="AddGeneralInformationScreen"
         component={AddGeneralInformationScreen}
@@ -191,13 +193,36 @@ function AuthStack() {
         name="PrivacyPolicyScreen"
         component={PrivacyPolicyScreen}
       />
+
+      <Stack.Screen
+        name="ConfirmationWaitingScreen"
+        component={ConfirmationWaitingScreen}
+      />
+    </Stack.Navigator>
+  );
+}
+
+function OTPStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen
+        name="OTPVerificationScreen"
+        component={OTPVerificationScreen}
+      />
+      <Stack.Screen name="SignIn" component={SignInScreen} />
+      <Stack.Screen name="SignUp" component={SignUpScreen} />
+      {/* GeneralInformationScreen */}
+      <Stack.Screen
+        name="GeneralInformationScreen"
+        component={GeneralInformationScreen}
+      />
     </Stack.Navigator>
   );
 }
 
 export default function App() {
-  const { user, loading } = useContext(AuthContext);
-
+  const { user, userData, loading } = useContext(AuthContext);
+  console.log('USER DATA----------', userData);
   if (loading) {
     return <SplashScreen1 />;
   }
@@ -205,7 +230,19 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NavigationContainer>
-        {user ? <MainAppStack /> : <AuthStack />}
+        {!user ? (
+          <AuthStack />
+        ) : !userData?.isOTPVerified ? (
+          <OTPStack />
+        ) : !userData?.isOnboarded && !userData?.profileCompleted ? (
+          <GeneralInformationScreen />
+        ) : !userData?.isOnboarded &&
+          userData?.profileCompleted &&
+          userData?.isOTPVerified ? (
+          <ConfirmationWaitingScreen />
+        ) : (
+          <MainAppStack />
+        )}
       </NavigationContainer>
     </GestureHandlerRootView>
   );

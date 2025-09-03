@@ -30,7 +30,8 @@ const SignUpScreen = ({ navigation, route }) => {
     }
 
     try {
-      await signup(email, password);
+      const res = await signup(email, password);
+      console.log('Signup success -----------', res ? res : 'no res');
       alert('Account created!');
     } catch (error) {
       alert(error.message);
