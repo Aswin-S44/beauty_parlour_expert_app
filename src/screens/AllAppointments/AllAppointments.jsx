@@ -64,32 +64,33 @@ const AllAppointments = () => {
 
   return (
     <View style={styles.container}>
-      {loading ? (
-        <ServiceCardSkeleton />
-      ) : !loading && appointments.length == 0 ? (
-        <EmptyComponent />
-      ) : (
-        <>
-          <StatusBar barStyle="light-content" />
-          <View style={styles.header}>
-            <Image
-              source={require('../../assets/images/home_bg-1.png')}
-              style={styles.headerImage}
-            />
-            <View style={styles.overlay} />
-          </View>
+      <>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.header}>
+          <Image
+            source={require('../../assets/images/home_bg-1.png')}
+            style={styles.headerImage}
+          />
+          <View style={styles.overlay} />
+        </View>
 
-          <View style={styles.contentContainer}>
-            <Text style={styles.title}>Appointment History</Text>
+        <View style={styles.contentContainer}>
+          <Text style={styles.title}>Appointment History</Text>
+
+          {loading ? (
+            <ServiceCardSkeleton />
+          ) : !loading && appointments.length == 0 ? (
+            <EmptyComponent />
+          ) : (
             <FlatList
               data={appointments}
               renderItem={renderAppointment}
               keyExtractor={item => item.id}
               showsVerticalScrollIndicator={false}
             />
-          </View>
-        </>
-      )}
+          )}
+        </View>
+      </>
     </View>
   );
 };

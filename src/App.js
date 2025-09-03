@@ -7,6 +7,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { ActivityIndicator, View } from 'react-native';
+import Feather from 'react-native-vector-icons/Feather';
 
 import HomeScreen from './screens/HomeScreen/HomeScreen';
 import ProfileScreen from './screens/ProfileScreen/ProfileScreen';
@@ -42,6 +43,7 @@ import EditProfileScreen from './screens/EditProfileScreen/EditProfileScreen';
 import ServiceSummaryScreen from './screens/ServiceSummaryScreen/ServiceSummaryScreen';
 import ConfirmationWaitingScreen from './screens/ConfirmationWaitingScreen/ConfirmationWaitingScreen';
 import GeneralInformationScreen from './screens/GeneralInformationScreen/GeneralInformationScreen';
+import SlotsManagementScreen from './screens/SlotsManagementScreen/SlotsManagementScreen';
 
 const Tab = createMaterialBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -116,6 +118,21 @@ function TabNavigator() {
           ),
         }}
       />
+      <Tab.Screen
+        name="SlotsManagementScreen"
+        component={SlotsManagementScreen}
+        options={{
+          tabBarLabel: 'Slots',
+          tabBarIcon: ({ focused, color }) => (
+            <Feather
+              name="clock"
+              size={focused ? 26 : 20}
+              color={focused ? primaryColor : color}
+            />
+          ),
+        }}
+      />
+      {/* SlotsManagementScreen */}
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}

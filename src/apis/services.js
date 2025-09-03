@@ -491,3 +491,70 @@ export const cancelAppointment = async (id, shopId) => {
     throw error;
   }
 };
+
+// Get all slots for a shop
+export const getShopSlots = async shopId => {
+  try {
+    const slotsRef = collection(db, 'slots');
+    const q = query(slotsRef, where('shopId', '==', shopId));
+    const querySnapshot = await getDocs(q);
+
+    const slots = [];
+    querySnapshot.forEach(doc => {
+      slots.push({ id: doc.id, ...doc.data() });
+    });
+
+    return { success: true, data: slots };
+  } catch (error) {
+    console.error('Error getting shop slots:', error);
+    throw error;
+  }
+};
+
+// Get slots for a specific date
+export const getSlotsByDate = async (shopId, date) => {
+  try {
+    const slotsRef = collection(db, 'slots');
+    const q = query(
+      slotsRef,
+      where('shopId', '==', shopId),
+      where('date', '==', date),
+    );
+    const querySnapshot = await getDocs(q);
+
+    const slots = [];
+    querySnapshot.forEach(doc => {
+      slots.push({ id: doc.id, ...doc.data() });
+    });
+
+    return { success: true, data: slots };
+  } catch (error) {
+    console.error('Error getting slots by date:', error);
+    throw error;
+  }
+};
+
+// Delete a slot
+export const deleteSlot = async (slotId, shopId) => {
+  try {
+    const slotRef = doc(db, 'slots', slotId);
+    const slotSnap = await getDoc(slotRef);
+
+    if (!slotSnap.exists()) {
+      throw new Error('Slot not found');
+    }
+
+    const slotData = slotSnap.data();
+
+    if (slotData.shopId !== shopId) {
+      throw new Error('Slot does not belong to this shop');
+    }
+
+    await deleteDoc(slotRef);
+    console.log('Slot deleted successfully');
+    return { success: true, message: 'Slot deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting slot:', error);
+    throw error;
+  }
+};
