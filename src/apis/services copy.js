@@ -1,5 +1,14 @@
-import firestore from '@react-native-firebase/firestore';
-import { firestore as db } from '../config/firebase';
+import {
+  collection,
+  addDoc,
+  query,
+  where,
+  getDocs,
+  doc,
+  getDoc,
+  updateDoc,
+} from 'firebase/firestore';
+import { db } from '../config/firebase';
 import { APPOINTMENT_STATUSES } from '../constants/variables';
 
 const CLOUDINARY_URL =
@@ -31,14 +40,14 @@ export const addServices = async (shopId, data, imageUri) => {
       }
     }
 
-    await firestore()
-      .collection('services')
-      .add({
-        shopId: shopId,
-        ...data,
-        imageUrl,
-        createdAt: new Date(),
-      });
+    const servicesCollectionRef = collection(db, 'services');
+
+    await addDoc(servicesCollectionRef, {
+      shopId: shopId,
+      ...data,
+      imageUrl,
+      createdAt: new Date(),
+    });
 
     return true;
   } catch (error) {
@@ -49,10 +58,9 @@ export const addServices = async (shopId, data, imageUri) => {
 
 export const getShopServices = async shopId => {
   try {
-    const querySnapshot = await firestore()
-      .collection('services')
-      .where('shopId', '==', shopId)
-      .get();
+    const q = query(collection(db, 'services'), where('shopId', '==', shopId));
+
+    const querySnapshot = await getDocs(q);
 
     const services = [];
     querySnapshot.forEach(doc => {
@@ -91,14 +99,14 @@ export const addBeautyExpert = async (shopId, data, imageUri) => {
       }
     }
 
-    await firestore()
-      .collection('beauty_experts')
-      .add({
-        shopId: shopId,
-        ...data,
-        imageUrl,
-        createdAt: new Date(),
-      });
+    const expertCollectionRef = collection(db, 'beauty_experts');
+
+    await addDoc(expertCollectionRef, {
+      shopId: shopId,
+      ...data,
+      imageUrl,
+      createdAt: new Date(),
+    });
 
     return true;
   } catch (error) {
@@ -109,10 +117,12 @@ export const addBeautyExpert = async (shopId, data, imageUri) => {
 
 export const getBeautyExperts = async shopId => {
   try {
-    const querySnapshot = await firestore()
-      .collection('beauty_experts')
-      .where('shopId', '==', shopId)
-      .get();
+    const q = query(
+      collection(db, 'beauty_experts'),
+      where('shopId', '==', shopId),
+    );
+
+    const querySnapshot = await getDocs(q);
 
     const experts = [];
     querySnapshot.forEach(doc => {
@@ -128,9 +138,10 @@ export const getBeautyExperts = async shopId => {
 
 export const getUserData = async uid => {
   try {
-    const docSnap = await firestore().collection('shop-owners').doc(uid).get();
-    console.log('docSnap exists?', docSnap.exists);
-    if (docSnap.exists) {
+    const docRef = doc(db, 'shop-owners', uid);
+    const docSnap = await getDoc(docRef);
+    console.log('docSnap exists?', docSnap.exists());
+    if (docSnap.exists()) {
       return docSnap.data();
     }
     return null;
@@ -141,39 +152,28 @@ export const getUserData = async uid => {
 };
 
 export const updateUserData = async (uid, updateData) => {
-  try {
-    if (
-      updateData.profileImage &&
-      typeof updateData.profileImage === 'string' &&
-      updateData.profileImage.startsWith('file://')
-    ) {
-      const formData = new FormData();
-      formData.append('file', {
-        uri: updateData.profileImage,
-        type: 'image/jpeg',
-        name: 'upload.jpg',
-      });
-      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  if (updateData.profileImage) {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: updateData.profileImage,
+      type: 'image/jpeg',
+      name: 'upload.jpg',
+    });
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
-      const response = await fetch(CLOUDINARY_URL, {
-        method: 'POST',
-        body: formData,
-      });
-      const responseData = await response.json();
-      if (responseData.secure_url) {
-        updateData.profileImage = responseData.secure_url;
-      } else {
-        console.log('Error uploading to Cloudinary: ', responseData);
-        return false;
-      }
+    const response = await fetch(CLOUDINARY_URL, {
+      method: 'POST',
+      body: formData,
+    });
+    const responseData = await response.json();
+    if (responseData.secure_url) {
+      updateData.profileImage = responseData.secure_url;
+    } else {
+      console.log('Error uploading to Cloudinary: ', responseData);
+      return false;
     }
-
-    await firestore().collection('shop-owners').doc(uid).update(updateData);
-    return true;
-  } catch (error) {
-    console.error('Error updating user data:', error);
-    return false;
   }
+  await updateDoc(doc(db, 'shop-owners', uid), updateData);
 };
 
 export const addOffer = async (shopId, data) => {
@@ -205,14 +205,14 @@ export const addOffer = async (shopId, data) => {
       }
     }
 
-    await firestore()
-      .collection('offers')
-      .add({
-        shopId: shopId,
-        ...data,
-        imageUrl,
-        createdAt: new Date(),
-      });
+    const offersCollectionRef = collection(db, 'offers');
+
+    await addDoc(offersCollectionRef, {
+      shopId: shopId,
+      ...data,
+      imageUrl,
+      createdAt: new Date(),
+    });
 
     return true;
   } catch (error) {
@@ -222,43 +222,36 @@ export const addOffer = async (shopId, data) => {
 };
 
 export const getOffersByShop = async shopId => {
-  try {
-    const querySnapshot = await firestore()
-      .collection('offers')
-      .where('shopId', '==', shopId)
-      .get();
+  const q = query(collection(db, 'offers'), where('shopId', '==', shopId));
+  const querySnapshot = await getDocs(q);
 
-    const offers = await Promise.all(
-      querySnapshot.docs.map(async offerDoc => {
-        const offerData = offerDoc.data();
-        const serviceSnap = await firestore()
-          .collection('services')
-          .doc(offerData.serviceId)
-          .get();
+  const offers = await Promise.all(
+    querySnapshot.docs.map(async offerDoc => {
+      const offerData = offerDoc.data();
+      const serviceRef = doc(db, 'services', offerData.serviceId);
+      const serviceSnap = await getDoc(serviceRef);
 
-        return {
-          id: offerDoc.id,
-          ...offerData,
-          service: serviceSnap.exists
-            ? { id: serviceSnap.id, ...serviceSnap.data() }
-            : null,
-        };
-      }),
-    );
+      return {
+        id: offerDoc.id,
+        ...offerData,
+        service: serviceSnap.exists()
+          ? { id: serviceSnap.id, ...serviceSnap.data() }
+          : null,
+      };
+    }),
+  );
 
-    return offers;
-  } catch (error) {
-    console.error('Error fetching offers:', error);
-    return [];
-  }
+  return offers;
 };
 
 export const getUserRequests = async shopId => {
   try {
-    const querySnapshot = await firestore()
-      .collection('appointments')
-      .where('shopId', '==', shopId)
-      .get();
+    const q = query(
+      collection(db, 'appointments'),
+      where('shopId', '==', shopId),
+    );
+
+    const querySnapshot = await getDocs(q);
 
     const userRequests = [];
     querySnapshot.forEach(doc => {
@@ -267,18 +260,19 @@ export const getUserRequests = async shopId => {
 
     return userRequests;
   } catch (error) {
-    console.error('Error fetching user requests:', error);
+    console.error('Error fetching experts:', error);
     return [];
   }
 };
 
 export const getAppointmentsByShopId = async shopId => {
   try {
-    const querySnapshot = await firestore()
-      .collection('appointments')
-      .where('shopId', '==', shopId)
-      .where('appointmentStatus', 'in', ['confirmed', 'pending'])
-      .get();
+    const q = query(
+      collection(db, 'appointments'),
+      where('shopId', '==', shopId),
+      where('appointmentStatus', 'in', ['confirmed', 'pending']),
+    );
+    const querySnapshot = await getDocs(q);
 
     const results = await Promise.all(
       querySnapshot.docs.map(async appointmentDoc => {
@@ -287,11 +281,9 @@ export const getAppointmentsByShopId = async shopId => {
 
         let expertData = null;
         if (expertId) {
-          const expertSnap = await firestore()
-            .collection('beauty_experts')
-            .doc(expertId)
-            .get();
-          if (expertSnap.exists) {
+          const expertRef = doc(db, 'beauty_experts', expertId);
+          const expertSnap = await getDoc(expertRef);
+          if (expertSnap.exists()) {
             expertData = { id: expertSnap.id, ...expertSnap.data() };
           }
         }
@@ -313,17 +305,18 @@ export const getAppointmentsByShopId = async shopId => {
 
 export const getUserPendingRequests = async shopId => {
   try {
-    const querySnapshot = await firestore()
-      .collection('appointments')
-      .where('shopId', '==', shopId)
-      .where('appointmentStatus', '==', APPOINTMENT_STATUSES.PENDING)
-      .get();
+    const q = query(
+      collection(db, 'appointments'),
+      where('shopId', '==', shopId),
+      where('appointmentStatus', '==', APPOINTMENT_STATUSES.PENDING),
+    );
+    const querySnapshot = await getDocs(q);
 
-    const offersSnapshot = await firestore()
-      .collection('offers')
-      .where('shopId', '==', shopId)
-      .get();
-
+    const offersQuery = query(
+      collection(db, 'offers'),
+      where('shopId', '==', shopId),
+    );
+    const offersSnapshot = await getDocs(offersQuery);
     const shopOffers = offersSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
@@ -337,22 +330,18 @@ export const getUserPendingRequests = async shopId => {
 
         let expertData = null;
         if (expertId) {
-          const expertSnap = await firestore()
-            .collection('beauty_experts')
-            .doc(expertId)
-            .get();
-          if (expertSnap.exists) {
+          const expertRef = doc(db, 'beauty_experts', expertId);
+          const expertSnap = await getDoc(expertRef);
+          if (expertSnap.exists()) {
             expertData = { id: expertSnap.id, ...expertSnap.data() };
           }
         }
 
         const services = await Promise.all(
           serviceIds.map(async serviceId => {
-            const serviceSnap = await firestore()
-              .collection('services')
-              .doc(serviceId)
-              .get();
-            if (serviceSnap.exists) {
+            const serviceRef = doc(db, 'services', serviceId);
+            const serviceSnap = await getDoc(serviceRef);
+            if (serviceSnap.exists()) {
               return { id: serviceSnap.id, ...serviceSnap.data() };
             }
             return null;
@@ -371,6 +360,7 @@ export const getUserPendingRequests = async shopId => {
 
           if (applicableOffers.length > 0) {
             offerAvailable = true;
+
             offerPrice =
               applicableOffers[0].price || applicableOffers[0].offerPrice;
           }
@@ -396,10 +386,10 @@ export const getUserPendingRequests = async shopId => {
 
 export const confirmAppointment = async (id, shopId) => {
   try {
-    const appointmentRef = firestore().collection('appointments').doc(id);
-    const appointmentSnap = await appointmentRef.get();
+    const appointmentRef = doc(db, 'appointments', id);
+    const appointmentSnap = await getDoc(appointmentRef);
 
-    if (!appointmentSnap.exists) {
+    if (!appointmentSnap.exists()) {
       throw new Error('Appointment not found');
     }
 
@@ -413,7 +403,7 @@ export const confirmAppointment = async (id, shopId) => {
       throw new Error('Appointment is not in pending status');
     }
 
-    await appointmentRef.update({
+    await updateDoc(appointmentRef, {
       appointmentStatus: APPOINTMENT_STATUSES.CONFIRMED,
       confirmedAt: new Date(),
     });
@@ -428,10 +418,11 @@ export const confirmAppointment = async (id, shopId) => {
 
 export const getAppointmentStats = async shopId => {
   try {
-    const querySnapshot = await firestore()
-      .collection('appointments')
-      .where('shopId', '==', shopId)
-      .get();
+    const q = query(
+      collection(db, 'appointments'),
+      where('shopId', '==', shopId),
+    );
+    const querySnapshot = await getDocs(q);
 
     let totalAppointments = 0;
     let pendingCount = 0;
@@ -471,10 +462,10 @@ export const getAppointmentStats = async shopId => {
 
 export const cancelAppointment = async (id, shopId) => {
   try {
-    const appointmentRef = firestore().collection('appointments').doc(id);
-    const appointmentSnap = await appointmentRef.get();
+    const appointmentRef = doc(db, 'appointments', id);
+    const appointmentSnap = await getDoc(appointmentRef);
 
-    if (!appointmentSnap.exists) {
+    if (!appointmentSnap.exists()) {
       throw new Error('Appointment not found');
     }
 
@@ -488,9 +479,9 @@ export const cancelAppointment = async (id, shopId) => {
       throw new Error('Appointment is not in pending status');
     }
 
-    await appointmentRef.update({
+    await updateDoc(appointmentRef, {
       appointmentStatus: APPOINTMENT_STATUSES.CANCELLED,
-      cancelledAt: new Date(),
+      confirmedAt: new Date(),
     });
 
     console.log('Appointment cancelled successfully');
@@ -504,10 +495,9 @@ export const cancelAppointment = async (id, shopId) => {
 // Get all slots for a shop
 export const getShopSlots = async shopId => {
   try {
-    const querySnapshot = await firestore()
-      .collection('slots')
-      .where('shopId', '==', shopId)
-      .get();
+    const slotsRef = collection(db, 'slots');
+    const q = query(slotsRef, where('shopId', '==', shopId));
+    const querySnapshot = await getDocs(q);
 
     const slots = [];
     querySnapshot.forEach(doc => {
@@ -524,11 +514,13 @@ export const getShopSlots = async shopId => {
 // Get slots for a specific date
 export const getSlotsByDate = async (shopId, date) => {
   try {
-    const querySnapshot = await firestore()
-      .collection('slots')
-      .where('shopId', '==', shopId)
-      .where('date', '==', date)
-      .get();
+    const slotsRef = collection(db, 'slots');
+    const q = query(
+      slotsRef,
+      where('shopId', '==', shopId),
+      where('date', '==', date),
+    );
+    const querySnapshot = await getDocs(q);
 
     const slots = [];
     querySnapshot.forEach(doc => {
@@ -545,10 +537,10 @@ export const getSlotsByDate = async (shopId, date) => {
 // Delete a slot
 export const deleteSlot = async (slotId, shopId) => {
   try {
-    const slotRef = firestore().collection('slots').doc(slotId);
-    const slotSnap = await slotRef.get();
+    const slotRef = doc(db, 'slots', slotId);
+    const slotSnap = await getDoc(slotRef);
 
-    if (!slotSnap.exists) {
+    if (!slotSnap.exists()) {
       throw new Error('Slot not found');
     }
 
@@ -558,7 +550,7 @@ export const deleteSlot = async (slotId, shopId) => {
       throw new Error('Slot does not belong to this shop');
     }
 
-    await slotRef.delete();
+    await deleteDoc(slotRef);
     console.log('Slot deleted successfully');
     return { success: true, message: 'Slot deleted successfully' };
   } catch (error) {

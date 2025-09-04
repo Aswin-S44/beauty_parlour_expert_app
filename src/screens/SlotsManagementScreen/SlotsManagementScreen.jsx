@@ -11,31 +11,19 @@ import {
   SafeAreaView,
   Platform,
   ActivityIndicator,
-  StatusBar, // Import StatusBar
+  StatusBar,
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import moment from 'moment';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {
-  collection,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  getDocs,
-  query,
-  where,
-  onSnapshot,
-} from 'firebase/firestore';
+import firestore from '@react-native-firebase/firestore';
 
 import { AuthContext } from '../../context/AuthContext';
-import { db } from '../../config/firebase';
 import { primaryColor } from '../../constants/colors';
 import { ScrollView } from 'react-native';
 import SlotsSkeleton from '../../components/SlotsSkeleton/SlotsSkeleton';
 
 const SlotsManagementScreen = ({ navigation }) => {
-  // Add navigation prop
   const { user, userData } = useContext(AuthContext);
   const [selectedDate, setSelectedDate] = useState(
     moment().format('YYYY-MM-DD'),
@@ -51,34 +39,35 @@ const SlotsManagementScreen = ({ navigation }) => {
     if (!user?.uid) return;
 
     setLoading(true);
-    const slotsRef = collection(db, 'slots');
-    const q = query(slotsRef, where('shopId', '==', user.uid));
 
-    const unsubscribe = onSnapshot(
-      q,
-      querySnapshot => {
-        const slotsData = {};
+    // React Native Firebase realtime listener
+    const unsubscribe = firestore()
+      .collection('slots')
+      .where('shopId', '==', user.uid)
+      .onSnapshot(
+        querySnapshot => {
+          const slotsData = {};
 
-        querySnapshot.forEach(doc => {
-          const slot = { id: doc.id, ...doc.data() };
-          const slotDate = slot.date;
+          querySnapshot.forEach(doc => {
+            const slot = { id: doc.id, ...doc.data() };
+            const slotDate = slot.date;
 
-          if (!slotsData[slotDate]) {
-            slotsData[slotDate] = [];
-          }
+            if (!slotsData[slotDate]) {
+              slotsData[slotDate] = [];
+            }
 
-          slotsData[slotDate].push(slot);
-        });
+            slotsData[slotDate].push(slot);
+          });
 
-        setSlots(slotsData);
-        setLoading(false);
-      },
-      error => {
-        console.error('Error fetching slots:', error);
-        setLoading(false);
-        Alert.alert('Error', 'Failed to load slots');
-      },
-    );
+          setSlots(slotsData);
+          setLoading(false);
+        },
+        error => {
+          console.error('Error fetching slots:', error);
+          setLoading(false);
+          Alert.alert('Error', 'Failed to load slots');
+        },
+      );
 
     return () => unsubscribe();
   }, [user]);
@@ -89,12 +78,13 @@ const SlotsManagementScreen = ({ navigation }) => {
 
   const addSlotToFirestore = async slotData => {
     try {
-      const slotsRef = collection(db, 'slots');
-      await addDoc(slotsRef, {
-        ...slotData,
-        shopId: user.uid,
-        createdAt: new Date(),
-      });
+      await firestore()
+        .collection('slots')
+        .add({
+          ...slotData,
+          shopId: user.uid,
+          createdAt: new Date(),
+        });
       return { success: true };
     } catch (error) {
       console.error('Error adding slot:', error);
@@ -104,11 +94,13 @@ const SlotsManagementScreen = ({ navigation }) => {
 
   const updateSlotInFirestore = async (slotId, slotData) => {
     try {
-      const slotRef = doc(db, 'slots', slotId);
-      await updateDoc(slotRef, {
-        ...slotData,
-        updatedAt: new Date(),
-      });
+      await firestore()
+        .collection('slots')
+        .doc(slotId)
+        .update({
+          ...slotData,
+          updatedAt: new Date(),
+        });
       return { success: true };
     } catch (error) {
       console.error('Error updating slot:', error);
@@ -118,8 +110,7 @@ const SlotsManagementScreen = ({ navigation }) => {
 
   const deleteSlotFromFirestore = async slotId => {
     try {
-      const slotRef = doc(db, 'slots', slotId);
-      await deleteDoc(slotRef);
+      await firestore().collection('slots').doc(slotId).delete();
       return { success: true };
     } catch (error) {
       console.error('Error deleting slot:', error);
@@ -247,8 +238,7 @@ const SlotsManagementScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={primaryColor} />{' '}
-      {/* Status bar */}
+      <StatusBar barStyle="light-content" backgroundColor={primaryColor} />
       {/* Custom Header */}
       <View style={styles.customHeader}>
         <TouchableOpacity
@@ -388,10 +378,12 @@ const SlotsManagementScreen = ({ navigation }) => {
   );
 };
 
+// ... (keep your styles the same)
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: primaryColor, // Background color for the header area
+    backgroundColor: primaryColor,
   },
   customHeader: {
     flexDirection: 'row',
@@ -400,7 +392,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 10,
     paddingBottom: 40,
-    backgroundColor: primaryColor, // Header background color
+    backgroundColor: primaryColor,
   },
   backButton: {
     flexDirection: 'row',
@@ -412,20 +404,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 5,
   },
-  headerTitle: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '600',
-  },
   contentContainer: {
     flex: 1,
-    backgroundColor: '#F7F8FC', // Background for the rest of the screen
+    backgroundColor: '#F7F8FC',
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
     paddingHorizontal: 15,
     paddingTop: 20,
-    marginTop: -20, // Overlap with the header to create the curved effect
-    overflow: 'hidden', // Ensures the curve is clean
+    marginTop: -20,
+    overflow: 'hidden',
   },
   sectionHeader: {
     fontSize: 26,
@@ -433,7 +420,6 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlign: 'center',
     marginBottom: 20,
-    // marginTop: 10, // Removed as it's handled by contentContainer padding
   },
   calendarContainer: {
     borderRadius: 12,
@@ -597,16 +583,6 @@ const styles = StyleSheet.create({
   },
   confirmButtonText: {
     color: '#FFFFFF',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#6200EE',
   },
 });
 

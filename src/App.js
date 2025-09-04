@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
@@ -44,6 +44,10 @@ import ServiceSummaryScreen from './screens/ServiceSummaryScreen/ServiceSummaryS
 import ConfirmationWaitingScreen from './screens/ConfirmationWaitingScreen/ConfirmationWaitingScreen';
 import GeneralInformationScreen from './screens/GeneralInformationScreen/GeneralInformationScreen';
 import SlotsManagementScreen from './screens/SlotsManagementScreen/SlotsManagementScreen';
+import FirebaseNotificationService from './apis/FirebaseNotificationService';
+import { auth } from './config/firebase';
+import AllNotificationScreen from './screens/AllNotificationScreen/AllNotificationScreen';
+import NofificationDetailsScreen from './screens/NofificationDetailsScreen/NofificationDetailsScreen';
 
 const Tab = createMaterialBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -132,7 +136,7 @@ function TabNavigator() {
           ),
         }}
       />
-      {/* SlotsManagementScreen */}
+
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
@@ -186,6 +190,14 @@ function MainAppStack() {
         name="ServiceSummaryScreen"
         component={ServiceSummaryScreen}
       />
+      <Stack.Screen
+        name="AllNotificationScreen"
+        component={AllNotificationScreen}
+      />
+      <Stack.Screen
+        name="NofificationDetailsScreen"
+        component={NofificationDetailsScreen}
+      />
     </Stack.Navigator>
   );
 }
@@ -198,10 +210,6 @@ function AuthStack() {
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="SignIn" component={SignInScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
-      {/* <Stack.Screen
-        name="OTPVerificationScreen"
-        component={OTPVerificationScreen}
-      /> */}
       <Stack.Screen
         name="AddGeneralInformationScreen"
         component={AddGeneralInformationScreen}
@@ -228,7 +236,6 @@ function OTPStack() {
       />
       <Stack.Screen name="SignIn" component={SignInScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
-      {/* GeneralInformationScreen */}
       <Stack.Screen
         name="GeneralInformationScreen"
         component={GeneralInformationScreen}
@@ -239,7 +246,44 @@ function OTPStack() {
 
 export default function App() {
   const { user, userData, loading } = useContext(AuthContext);
-  console.log('USER DATA----------', userData);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [fcmToken, setFcmToken] = useState('');
+
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        FirebaseNotificationService.setupNotificationHandlers();
+
+        const hasPermission =
+          await FirebaseNotificationService.requestNotificationPermission();
+
+        if (hasPermission) {
+          const token = await FirebaseNotificationService.getFCMToken();
+          setFcmToken(token);
+        }
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error('App initialization error:', error);
+        setIsLoading(false);
+      }
+    };
+
+    initializeApp();
+
+    const unsubscribeAuth = auth().onAuthStateChanged(async user => {
+      if (user) {
+        const token = await FirebaseNotificationService.getFCMToken();
+        setFcmToken(token);
+      }
+    });
+
+    return () => {
+      unsubscribeAuth();
+    };
+  }, []);
+
   if (loading) {
     return <SplashScreen1 />;
   }

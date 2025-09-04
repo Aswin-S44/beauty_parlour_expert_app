@@ -1,21 +1,17 @@
+// authService.js or wherever your auth functions are
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-} from 'firebase/auth';
-import { auth, db } from '../config/firebase';
-import {
-  doc,
-  setDoc,
-  collection,
-  query,
-  where,
-  getDocs,
-  updateDoc,
-} from 'firebase/firestore';
+} from '@react-native-firebase/auth'; // Changed from 'firebase/auth'
 import { AVATAR_IMAGE } from '../constants/images';
 import axios from 'axios';
 import { BACKEND_URL, USER_TYPES } from '../constants/variables';
+import { auth, firestore } from '../config/firebase';
+
+// Note: firestore() returns the firestore instance, no need for getFirestore()
+
+import { auth as firebaseAuth } from '../config/firebase';
 
 export const signup = async (email, password) => {
   try {
@@ -27,7 +23,7 @@ export const signup = async (email, password) => {
 
     // Storing data into firestore
     const user = userCredential.user;
-    await setDoc(doc(db, 'shop-owners', user.uid), {
+    await firestore().collection('shop-owners').doc(user.uid).set({
       uid: user.uid,
       fullName: '',
       phone: '',
@@ -42,6 +38,7 @@ export const signup = async (email, password) => {
       accountInitiated: true,
       profileCompleted: false,
     });
+
     Promise.allSettled([
       axios.post(BACKEND_URL + `/send-otp`, {
         email,
@@ -59,13 +56,16 @@ export const signup = async (email, password) => {
 
 export const login = async (email, password) => {
   try {
-    const userCredential = await signInWithEmailAndPassword(
-      auth,
+    // React Native Firebase uses different syntax
+    const userCredential = await auth().signInWithEmailAndPassword(
       email,
       password,
     );
+
+    console.log('userCredential----------', userCredential);
     return userCredential.user;
   } catch (error) {
+    console.log('ERROR--------------', error);
     throw error;
   }
 };
@@ -80,8 +80,10 @@ export const logout = async () => {
 
 export const verifyOtp = async (email, otp) => {
   try {
-    const q = query(collection(db, 'shop-owners'), where('email', '==', email));
-    const snapshot = await getDocs(q);
+    const snapshot = await firestore()
+      .collection('shop-owners')
+      .where('email', '==', email)
+      .get();
 
     if (snapshot.empty) {
       return { success: false, message: 'No user found with this email' };
@@ -92,7 +94,7 @@ export const verifyOtp = async (email, otp) => {
 
     if (userData.otp && userData.otp === otp) {
       // Update with only the fields that need to change
-      // await updateDoc(userDoc.ref, {
+      // await userDoc.ref.update({
       //   isOTPVerified: true,
       //   otp: '',
       // });
@@ -117,9 +119,7 @@ export const verifyOtp = async (email, otp) => {
 
 export const updateShop = async (uid, dataToUpdate) => {
   try {
-    const shopRef = doc(db, 'shop-owners', uid);
-
-    await updateDoc(shopRef, dataToUpdate);
+    await firestore().collection('shop-owners').doc(uid).update(dataToUpdate);
 
     return {
       success: true,

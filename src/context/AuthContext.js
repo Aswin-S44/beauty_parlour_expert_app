@@ -1,23 +1,26 @@
-import React, { createContext, useState, useEffect } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth, db } from '../config/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import React, { createContext, useState, useEffect, useContext } from 'react'; // Added useContext
+import auth from '@react-native-firebase/auth'; // Changed import
+import { auth as firebaseAuth, firestore } from '../config/firebase'; // Make sure path is correct
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // Firebase user
-  const [userData, setUserData] = useState(null); // Firestore user data
+  const [user, setUser] = useState(null);
+  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
+    // React Native Firebase uses different syntax
+    const unsubscribe = auth().onAuthStateChanged(async firebaseUser => {
       if (firebaseUser) {
         setUser(firebaseUser);
         try {
-          const docRef = doc(db, 'shop-owners', firebaseUser.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
+          const docSnap = await firestore()
+            .collection('shop-owners')
+            .doc(firebaseUser.uid)
+            .get();
+
+          if (docSnap.exists) {
             setUserData(docSnap.data());
           }
         } catch (err) {
@@ -34,14 +37,25 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = () => {
-    signOut(auth);
+    auth().signOut();
     setUser(null);
     setUserData(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, userData, logout, loading }}>
+    <AuthContext.Provider
+      value={{ user, userData, logout, loading, setLoading }}
+    >
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Optional: Create a hook for easier usage
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

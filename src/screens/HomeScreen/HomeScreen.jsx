@@ -126,6 +126,7 @@ const HomeScreen = ({ navigation }) => {
                 justifyContent: 'center',
                 borderRadius: 50,
               }}
+              onPress={() => navigation.navigate('AllNotificationScreen')}
             >
               <Ionicons
                 name="notifications-outline"
