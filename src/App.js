@@ -53,6 +53,7 @@ import ServiceDetailsScreen from './screens/ServiceDetailsScreen/ServiceDetailsS
 import EditExpertScreen from './screens/EditExpertScreen/EditExpertScreen';
 import ExpertDetailsScreen from './screens/ExpertDetailsScreen/ExpertDetailsScreen';
 import EditOffersScreen from './screens/EditOffersScreen/EditOffersScreen';
+import OfferDetailsScreen from './screens/OfferDetailsScreen/OfferDetailsScreen';
 
 const Tab = createMaterialBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -217,6 +218,8 @@ function MainAppStack() {
       />
 
       <Stack.Screen name="EditOffersScreen" component={EditOffersScreen} />
+
+      <Stack.Screen name="OfferDetailsScreen" component={OfferDetailsScreen} />
     </Stack.Navigator>
   );
 }

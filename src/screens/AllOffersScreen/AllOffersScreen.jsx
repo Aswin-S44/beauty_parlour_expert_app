@@ -83,7 +83,10 @@ const AllOffersScreen = ({ navigation }) => {
   };
 
   const RenderOfferItem = ({ item }) => (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => navigation.navigate('OfferDetailsScreen', { offer: item })}
+    >
       <Image
         source={{ uri: item.service.imageUrl }}
         style={styles.offerImage}
@@ -97,7 +100,7 @@ const AllOffersScreen = ({ navigation }) => {
       <TouchableOpacity onPress={() => openMenu(item)}>
         <MaterialCommunityIcons name="dots-vertical" size={24} color="#888" />
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
