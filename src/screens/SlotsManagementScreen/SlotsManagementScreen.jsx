@@ -145,6 +145,7 @@ const SlotsManagementScreen = ({ navigation }) => {
       date: selectedDate,
       startTime: startTimeInput,
       endTime: endTimeInput,
+      isAvailable: true,
     };
 
     try {
@@ -199,27 +200,36 @@ const SlotsManagementScreen = ({ navigation }) => {
     );
   };
 
-  const renderSlotItem = ({ item }) => (
-    <View style={styles.slotItem}>
-      <Text
-        style={styles.slotTime}
-      >{`${item.startTime} - ${item.endTime}`}</Text>
-      <View style={styles.slotActions}>
-        <TouchableOpacity
-          onPress={() => openEditSlotModal(item)}
-          style={styles.actionIcon}
-        >
-          <Icon name="pencil-outline" size={20} color={primaryColor} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => handleDeleteSlot(item.id)}
-          style={styles.actionIcon}
-        >
-          <Icon name="trash-can-outline" size={20} color="#E84F67" />
-        </TouchableOpacity>
+  const renderSlotItem = ({ item }) => {
+    const statusText = item.isAvailable ? 'Available' : 'Booked';
+    const statusColor = item.isAvailable ? 'green' : 'red';
+    return (
+      <View style={styles.slotItem}>
+        {console.log('item : ', item)}
+        <Text
+          style={styles.slotTime}
+        >{`${item.startTime} - ${item.endTime}`}</Text>
+        <Text style={[styles.statusText, { color: statusColor }]}>
+          {statusText}
+        </Text>
+        <View style={styles.slotActions}>
+          <TouchableOpacity
+            onPress={() => openEditSlotModal(item)}
+            style={styles.actionIcon}
+          >
+            <Icon name="pencil-outline" size={20} color={primaryColor} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => handleDeleteSlot(item.id)}
+            style={styles.actionIcon}
+          >
+            <Icon name="trash-can-outline" size={20} color="#E84F67" />
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const markedDates = {};
   Object.keys(slots).forEach(date => {
@@ -231,10 +241,6 @@ const SlotsManagementScreen = ({ navigation }) => {
     selectedColor: '#6200EE',
     selectedTextColor: '#FFFFFF',
   };
-
-  if (loading) {
-    return <SlotsSkeleton />;
-  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -251,77 +257,83 @@ const SlotsManagementScreen = ({ navigation }) => {
         <View style={{ width: 60 }} /> {/* Spacer to balance title */}
       </View>
       <View style={styles.contentContainer}>
-        <Text style={styles.sectionHeader}>Manage Booking Slots</Text>
+        {loading ? (
+          <SlotsSkeleton />
+        ) : (
+          <>
+            <Text style={styles.sectionHeader}>Manage Booking Slots</Text>
 
-        <ScrollView>
-          <View style={styles.calendarContainer}>
-            <Calendar
-              onDayPress={onDayPress}
-              markedDates={markedDates}
-              theme={{
-                backgroundColor: '#FFFFFF',
-                calendarBackground: '#FFFFFF',
-                textSectionTitleColor: primaryColor,
-                selectedDayBackgroundColor: primaryColor,
-                selectedDayTextColor: '#ffffff',
-                todayTextColor: '#6200EE',
-                dayTextColor: '#2d4150',
-                textDisabledColor: '#d9e1e8',
-                dotColor: primaryColor,
-                selectedDotColor: '#ffffff',
-                arrowColor: primaryColor,
-                monthTextColor: '#2d4150',
-                indicatorColor: primaryColor,
-                textDayFontWeight: '300',
-                textMonthFontWeight: 'bold',
-                textDayHeaderFontWeight: '500',
-                textDayFontSize: 16,
-                textMonthFontSize: 18,
-                textDayHeaderFontSize: 14,
-              }}
-            />
-          </View>
-
-          <View style={styles.slotListHeader}>
-            <Text style={styles.slotListHeaderText}>
-              Slots for {moment(selectedDate).format('MMMM Do, YYYY')}
-            </Text>
-            <TouchableOpacity
-              onPress={openAddSlotModal}
-              style={styles.addSlotButton}
-            >
-              <Icon
-                name="plus"
-                size={18}
-                color="#FFFFFF"
-                style={styles.addIcon}
-              />
-              <Text style={styles.addSlotButtonText}>Add Slot</Text>
-            </TouchableOpacity>
-          </View>
-
-          <FlatList
-            data={slots[selectedDate] || []}
-            renderItem={renderSlotItem}
-            keyExtractor={item => item.id}
-            ListEmptyComponent={
-              <View style={styles.emptySlotsContainer}>
-                <Icon
-                  name="calendar-remove-outline"
-                  size={40}
-                  color="#B0B0B0"
+            <ScrollView>
+              <View style={styles.calendarContainer}>
+                <Calendar
+                  onDayPress={onDayPress}
+                  markedDates={markedDates}
+                  theme={{
+                    backgroundColor: '#FFFFFF',
+                    calendarBackground: '#FFFFFF',
+                    textSectionTitleColor: primaryColor,
+                    selectedDayBackgroundColor: primaryColor,
+                    selectedDayTextColor: '#ffffff',
+                    todayTextColor: '#6200EE',
+                    dayTextColor: '#2d4150',
+                    textDisabledColor: '#d9e1e8',
+                    dotColor: primaryColor,
+                    selectedDotColor: '#ffffff',
+                    arrowColor: primaryColor,
+                    monthTextColor: '#2d4150',
+                    indicatorColor: primaryColor,
+                    textDayFontWeight: '300',
+                    textMonthFontWeight: 'bold',
+                    textDayHeaderFontWeight: '500',
+                    textDayFontSize: 16,
+                    textMonthFontSize: 18,
+                    textDayHeaderFontSize: 14,
+                  }}
                 />
-                <Text style={styles.emptySlotsText}>
-                  No slots configured for this date.
-                </Text>
-                <Text style={styles.emptySlotsSubText}>
-                  Tap "Add Slot" to create new availability.
-                </Text>
               </View>
-            }
-            style={styles.slotsList}
-          />
-        </ScrollView>
+
+              <View style={styles.slotListHeader}>
+                <Text style={styles.slotListHeaderText}>
+                  Slots for {moment(selectedDate).format('MMMM Do, YYYY')}
+                </Text>
+                <TouchableOpacity
+                  onPress={openAddSlotModal}
+                  style={styles.addSlotButton}
+                >
+                  <Icon
+                    name="plus"
+                    size={18}
+                    color="#FFFFFF"
+                    style={styles.addIcon}
+                  />
+                  <Text style={styles.addSlotButtonText}>Add Slot</Text>
+                </TouchableOpacity>
+              </View>
+
+              <FlatList
+                data={slots[selectedDate] || []}
+                renderItem={renderSlotItem}
+                keyExtractor={item => item.id}
+                ListEmptyComponent={
+                  <View style={styles.emptySlotsContainer}>
+                    <Icon
+                      name="calendar-remove-outline"
+                      size={40}
+                      color="#B0B0B0"
+                    />
+                    <Text style={styles.emptySlotsText}>
+                      No slots configured for this date.
+                    </Text>
+                    <Text style={styles.emptySlotsSubText}>
+                      Tap "Add Slot" to create new availability.
+                    </Text>
+                  </View>
+                }
+                style={styles.slotsList}
+              />
+            </ScrollView>
+          </>
+        )}
       </View>
       {/* Add/Edit Slot Modal */}
       <Modal

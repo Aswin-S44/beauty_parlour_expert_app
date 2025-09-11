@@ -267,10 +267,6 @@ const AppointmentRequestsScreen = ({ navigation }) => {
     </Modal>
   );
 
-  if (loading) {
-    return <ServiceCardSkeleton />;
-  }
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -291,7 +287,9 @@ const AppointmentRequestsScreen = ({ navigation }) => {
 
       <View style={styles.contentContainer}>
         <Text style={styles.title}>User Request</Text>
-        {!loading && userRequests.length === 0 ? (
+        {loading ? (
+          <ServiceCardSkeleton />
+        ) : !loading && userRequests.length === 0 ? (
           <EmptyComponent />
         ) : (
           <FlatList

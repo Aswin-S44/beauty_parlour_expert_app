@@ -115,16 +115,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   skeletonSquare: {
-    width: 30,
-    height: 30,
-    backgroundColor: '#E0E0E0',
+    width: 40,
+    height: 40,
+    backgroundColor: 'whitesmoke',
     borderRadius: 6,
   },
   skeletonCircle: {
-    width: 35,
-    height: 35,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 17.5,
+    width: 40,
+    height: 40,
+    backgroundColor: 'whitesmoke',
+    borderRadius: '50%',
     margin: 4,
   },
   skeletonCircleSmall: {
