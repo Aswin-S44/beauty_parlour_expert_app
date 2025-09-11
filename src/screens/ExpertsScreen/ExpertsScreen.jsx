@@ -14,8 +14,14 @@ import React, { useContext, useEffect, useState } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { AuthContext } from '../../context/AuthContext';
-import { getBeautyExperts } from '../../apis/services';
-import { formatDateTime } from '../../utils/utils';
+import { deleteExpert, getBeautyExperts } from '../../apis/services';
+import {
+  formatDateTime,
+  formatServiceName,
+  formattedTimeAgo,
+  formatTimeAgo,
+  timeAgo,
+} from '../../utils/utils';
 
 const ExpertsScreen = ({ navigation }) => {
   const [experts, setExperts] = useState([]);
@@ -23,6 +29,8 @@ const ExpertsScreen = ({ navigation }) => {
   const [isMenuVisible, setMenuVisible] = useState(false);
   const [selectedExpert, setSelectedExpert] = useState(null);
   const { user } = useContext(AuthContext);
+  const [deleteConfirmationVisible, setDeleteConfirmationVisible] =
+    useState(false);
 
   const fetchExperts = async () => {
     try {
@@ -57,46 +65,48 @@ const ExpertsScreen = ({ navigation }) => {
 
   const handleEdit = () => {
     if (selectedExpert) {
-      // navigation.navigate('EditExpertScreen', { expert: selectedExpert });
-      console.log('Editing:', selectedExpert);
+      navigation.navigate('EditExpertScreen', { expert: selectedExpert });
     }
     closeMenu();
   };
 
   const handleDelete = () => {
     if (selectedExpert) {
-      Alert.alert(
-        'Delete Expert',
-        `Are you sure you want to delete ${selectedExpert.expertName}?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            onPress: () => {
-              // Call your delete API here
-              console.log('Deleting:', selectedExpert);
-              setExperts(prev => prev.filter(e => e.id !== selectedExpert.id));
-            },
-            style: 'destructive',
-          },
-        ],
-      );
+      setDeleteConfirmationVisible(true);
     }
-    closeMenu();
+    setMenuVisible(false);
+  };
+
+  const confirmDelete = async () => {
+    if (selectedExpert && user && user.uid) {
+      await deleteExpert(selectedExpert.id, user.uid);
+
+      setExperts(prev => prev.filter(s => s.id !== selectedExpert.id));
+    }
+    setDeleteConfirmationVisible(false);
   };
 
   const renderExpertItem = ({ item }) => (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() =>
+        navigation.navigate('ExpertDetailsScreen', { expert: item })
+      }
+    >
       <Image source={{ uri: item.imageUrl }} style={styles.avatar} />
       <View style={styles.cardContent}>
         <Text style={styles.expertName}>{item.expertName}</Text>
-        <Text style={styles.expertSpecialty}>{item.specialist}</Text>
-        <Text style={styles.expertAdded}>Added 2 months ago</Text>
+        <Text style={styles.expertSpecialty}>
+          {item.specialist ? formatServiceName(item.specialist) : '-'}
+        </Text>
+        <Text style={styles.expertAdded}>
+          {item.createdAt ? formatTimeAgo(item.createdAt) : '-'}
+        </Text>
       </View>
       <TouchableOpacity onPress={() => openMenu(item)}>
         <MaterialCommunityIcons name="dots-vertical" size={24} color="#888" />
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 
   const ListEmptyComponent = () => (
@@ -178,6 +188,39 @@ const ExpertsScreen = ({ navigation }) => {
               <Text style={[styles.menuItemText, { color: '#ff3b30' }]}>
                 Delete
               </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+      <Modal
+        transparent={true}
+        visible={deleteConfirmationVisible}
+        animationType="fade"
+        onRequestClose={() => setDeleteConfirmationVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.centeredView}
+          activeOpacity={1}
+          onPressOut={() => setDeleteConfirmationVisible(false)}
+        >
+          <View style={styles.modalView}>
+            <View style={styles.modalIconContainer}>
+              <Icon name="checkmark-circle" size={60} color="#8e44ad" />
+            </View>
+            <Text style={styles.modalText}>
+              Are you sure you want to delete {selectedExpert?.expertName}?
+            </Text>
+            <TouchableOpacity
+              style={[styles.button, styles.buttonConfirm]}
+              onPress={confirmDelete}
+            >
+              <Text style={styles.textStyle}>DELETE</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.buttonCancel]}
+              onPress={() => setDeleteConfirmationVisible(false)}
+            >
+              <Text style={styles.cancelText}>CANCEL</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -343,6 +386,68 @@ const styles = StyleSheet.create({
     marginLeft: 15,
     fontSize: 16,
     color: '#333',
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: '80%',
+  },
+  modalIconContainer: {
+    marginBottom: 15,
+    backgroundColor: '#e0c0e0',
+    borderRadius: 50,
+    padding: 10,
+  },
+  modalText: {
+    marginBottom: 25,
+    textAlign: 'center',
+    fontSize: 18,
+    color: '#333',
+    fontWeight: '500',
+  },
+  button: {
+    borderRadius: 10,
+    padding: 15,
+    elevation: 2,
+    width: '100%',
+    marginBottom: 10,
+  },
+  buttonConfirm: {
+    backgroundColor: '#8e44ad',
+  },
+  buttonCancel: {
+    backgroundColor: '#f4f4f4',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  textStyle: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 16,
+  },
+  cancelText: {
+    color: '#111',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 16,
   },
 });
 

@@ -44,7 +44,6 @@ class FirebaseNotificationService {
       }
 
       const token = await messaging().getToken();
-      console.log('FCM Token:', token);
 
       // Store token in Firestore for the current user
       await this.storeFCMToken(token);
@@ -122,7 +121,6 @@ class FirebaseNotificationService {
   static async unsubscribeFromShopTopic(shopId) {
     try {
       await messaging().unsubscribeFromTopic(`shop_${shopId}`);
-      console.log(`Unsubscribed from shop topic: shop_${shopId}`);
     } catch (error) {
       console.error('Error unsubscribing from topic:', error);
     }

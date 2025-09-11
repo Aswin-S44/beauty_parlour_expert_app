@@ -26,7 +26,6 @@ export const addServices = async (shopId, data, imageUri) => {
       if (responseData.secure_url) {
         imageUrl = responseData.secure_url;
       } else {
-        console.log('Error uploading to Cloudinary: ', responseData);
         return false;
       }
     }
@@ -42,7 +41,6 @@ export const addServices = async (shopId, data, imageUri) => {
 
     return true;
   } catch (error) {
-    console.log('Error while adding service : ', error);
     return false;
   }
 };
@@ -86,7 +84,6 @@ export const addBeautyExpert = async (shopId, data, imageUri) => {
       if (responseData.secure_url) {
         imageUrl = responseData.secure_url;
       } else {
-        console.log('Error uploading to Cloudinary: ', responseData);
         return false;
       }
     }
@@ -102,7 +99,6 @@ export const addBeautyExpert = async (shopId, data, imageUri) => {
 
     return true;
   } catch (error) {
-    console.log('Error while adding beauty expert : ', error);
     return false;
   }
 };
@@ -129,13 +125,12 @@ export const getBeautyExperts = async shopId => {
 export const getUserData = async uid => {
   try {
     const docSnap = await firestore().collection('shop-owners').doc(uid).get();
-    console.log('docSnap exists?', docSnap.exists);
+
     if (docSnap.exists) {
       return docSnap.data();
     }
     return null;
   } catch (e) {
-    console.log('Firestore error:', e);
     return null;
   }
 };
@@ -163,7 +158,6 @@ export const updateUserData = async (uid, updateData) => {
       if (responseData.secure_url) {
         updateData.profileImage = responseData.secure_url;
       } else {
-        console.log('Error uploading to Cloudinary: ', responseData);
         return false;
       }
     }
@@ -418,7 +412,6 @@ export const confirmAppointment = async (id, shopId) => {
       confirmedAt: new Date(),
     });
 
-    console.log('Appointment confirmed successfully');
     return { success: true, message: 'Appointment confirmed successfully' };
   } catch (error) {
     console.error('Error confirming appointment:', error);
@@ -493,7 +486,6 @@ export const cancelAppointment = async (id, shopId) => {
       cancelledAt: new Date(),
     });
 
-    console.log('Appointment cancelled successfully');
     return { success: true, message: 'Appointment cancelled successfully' };
   } catch (error) {
     console.error('Error cancelling appointment:', error);
@@ -501,7 +493,6 @@ export const cancelAppointment = async (id, shopId) => {
   }
 };
 
-// Get all slots for a shop
 export const getShopSlots = async shopId => {
   try {
     const querySnapshot = await firestore()
@@ -521,7 +512,6 @@ export const getShopSlots = async shopId => {
   }
 };
 
-// Get slots for a specific date
 export const getSlotsByDate = async (shopId, date) => {
   try {
     const querySnapshot = await firestore()
@@ -542,7 +532,6 @@ export const getSlotsByDate = async (shopId, date) => {
   }
 };
 
-// Delete a slot
 export const deleteSlot = async (slotId, shopId) => {
   try {
     const slotRef = firestore().collection('slots').doc(slotId);
@@ -559,10 +548,234 @@ export const deleteSlot = async (slotId, shopId) => {
     }
 
     await slotRef.delete();
-    console.log('Slot deleted successfully');
+
     return { success: true, message: 'Slot deleted successfully' };
   } catch (error) {
     console.error('Error deleting slot:', error);
     throw error;
+  }
+};
+
+export const getNotificationsByShopId = async shopId => {
+  try {
+    const querySnapshot = await firestore()
+      .collection('notifications')
+      .where('toId', '==', shopId)
+      .get();
+
+    const notifications = await Promise.all(
+      querySnapshot.docs.map(async doc => {
+        const data = doc.data();
+        const customerSnapshot = await firestore()
+          .collection('customers')
+          .where('uid', '==', data.fromId)
+          .limit(1)
+          .get();
+
+        const customer = !customerSnapshot.empty
+          ? {
+              id: customerSnapshot.docs[0].id,
+              ...customerSnapshot.docs[0].data(),
+            }
+          : null;
+
+        return { id: doc.id, ...data, customer };
+      }),
+    );
+
+    return notifications;
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    return [];
+  }
+};
+
+export const markNotificationAsRead = async id => {
+  try {
+    const notificationRef = firestore().collection('notifications').doc(id);
+    const docSnapshot = await notificationRef.get();
+
+    if (!docSnapshot.exists) {
+      return { success: false, message: 'Notification not found' };
+    }
+
+    await notificationRef.update({
+      isRead: true,
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating notification:', error);
+    return { success: false, error };
+  }
+};
+
+export const deleteService = async (serviceId, shopId) => {
+  try {
+    const serviceRef = firestore().collection('services').doc(serviceId);
+    const serviceSnap = await serviceRef.get();
+
+    if (!serviceSnap.exists) {
+      throw new Error('Services not exist not found');
+    }
+
+    const serviceData = serviceSnap.data();
+
+    if (serviceData.shopId !== shopId) {
+      throw new Error('Service does not belong to this shop');
+    }
+
+    await serviceRef.delete();
+
+    return { success: true, message: 'Service deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting service:', error);
+    throw error;
+  }
+};
+
+const uploadImage = async image => {
+  try {
+    if (image === 'string' && image.startsWith('file://')) {
+      const formData = new FormData();
+      formData.append('file', {
+        uri: image,
+        type: 'image/jpeg',
+        name: 'upload.jpg',
+      });
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+      const response = await fetch(CLOUDINARY_URL, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const responseData = await response.json();
+
+      if (responseData.secure_url) {
+        return responseData.secure_url;
+      }
+    }
+  } catch (error) {
+    console.log('Error uploading image: ', error);
+    return error;
+  }
+};
+
+export const updateService = async (uid, updateData) => {
+  try {
+    if (!updateData.imageUri.startsWith('https://')) {
+      const formData = new FormData();
+      formData.append('file', {
+        uri: updateData.imageUri,
+        type: 'image/jpeg',
+        name: 'offer_upload.jpg',
+      });
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+      const response = await fetch(CLOUDINARY_URL, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const responseData = await response.json();
+      if (responseData.secure_url) {
+        updateData.imageUrl = responseData.secure_url;
+      }
+    }
+
+    await firestore().collection('services').doc(uid).update(updateData);
+    return true;
+  } catch (error) {
+    console.error('Error updating user data:', error);
+    return false;
+  }
+};
+
+export const deleteExpert = async (expertId, shopId) => {
+  try {
+    const expertRef = firestore().collection('beauty_experts').doc(expertId);
+    const expertSnap = await expertRef.get();
+
+    if (!expertSnap.exists) {
+      throw new Error('Expert not found');
+    }
+
+    const expertData = expertSnap.data();
+
+    if (expertData.shopId !== shopId) {
+      throw new Error('Expert does not belong to this shop');
+    }
+
+    await expertRef.delete();
+
+    return { success: true, message: 'Expert deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting expert:', error);
+    throw error;
+  }
+};
+
+export const updateBeautyExpert = async (uid, updateData) => {
+  try {
+    if (!updateData.imageUri.startsWith('https://')) {
+      const formData = new FormData();
+      formData.append('file', {
+        uri: updateData.imageUri,
+        type: 'image/jpeg',
+        name: 'offer_upload.jpg',
+      });
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+      const response = await fetch(CLOUDINARY_URL, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const responseData = await response.json();
+      if (responseData.secure_url) {
+        updateData.imageUrl = responseData.secure_url;
+      }
+    }
+
+    await firestore().collection('beauty_experts').doc(uid).update(updateData);
+    return true;
+  } catch (error) {
+    console.error('Error updating beauty expert:', error);
+    return false;
+  }
+};
+
+export const deleteOffer = async (offerId, shopId) => {
+  try {
+    const offerRef = firestore().collection('offers').doc(offerId);
+    const offerSnap = await offerRef.get();
+
+    if (!offerSnap.exists) {
+      throw new Error('Offer not found');
+    }
+
+    const offerData = offerSnap.data();
+
+    if (offerData.shopId !== shopId) {
+      throw new Error('Offer does not belong to this shop');
+    }
+
+    await offerRef.delete();
+
+    return { success: true, message: 'Offer deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting offer:', error);
+    throw error;
+  }
+};
+
+export const updateServiceOffer = async (uid, updateData) => {
+  try {
+    await firestore().collection('offers').doc(uid).update(updateData);
+    return true;
+  } catch (error) {
+    console.error('Error updating offer:', error);
+    return false;
   }
 };

@@ -7,14 +7,15 @@ import {
   StatusBar,
   TextInput,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import { primaryColor } from '../../constants/colors';
 import { signup } from '../../apis/auth';
+import { useAuth } from '../../context/AuthContext';
 
 const SignUpScreen = ({ navigation, route }) => {
-  // const { signIn } = route.params;
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [securePassword, setSecurePassword] = useState(true);
   const [secureConfirmPassword, setSecureConfirmPassword] = useState(true);
@@ -22,25 +23,82 @@ const SignUpScreen = ({ navigation, route }) => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [termsError, setTermsError] = useState('');
+  const [signupError, setSignupError] = useState('');
+  const { setUserData } = useAuth();
+
+  const validateFields = () => {
+    let isValid = true;
+    setEmailError('');
+    setPasswordError('');
+    setConfirmPasswordError('');
+    setTermsError('');
+
+    if (!email) {
+      setEmailError('Email is required.');
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError('Email address is invalid.');
+      isValid = false;
+    }
+
+    if (!password) {
+      setPasswordError('Password is required.');
+      isValid = false;
+    } else if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters.');
+      isValid = false;
+    }
+
+    if (!confirmPassword) {
+      setConfirmPasswordError('Confirm Password is required.');
+      isValid = false;
+    } else if (password !== confirmPassword) {
+      setConfirmPasswordError('Passwords do not match.');
+      isValid = false;
+    }
+
+    if (!acceptedTerms) {
+      setTermsError('You must accept the privacy policy.');
+      isValid = false;
+    }
+
+    return isValid;
+  };
 
   const handleSignup = async () => {
-    if (password !== confirmPassword) {
-      alert('Passwords do not match');
+    setSignupError('');
+    if (!validateFields()) {
       return;
     }
 
+    setIsLoading(true);
     try {
-      const res = await signup(email, password);
-      console.log('Signup success -----------', res ? res : 'no res');
-      alert('Account created!');
+      await signup(email, password);
+      setUserData({
+        isOTPVerified: false, // or whatever your initial flags should be
+      });
+      navigation.navigate('OTPVerificationScreen');
     } catch (error) {
-      alert(error.message);
+      setSignupError(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <View style={styles.outerContainer}>
       <StatusBar backgroundColor={primaryColor} barStyle="light-content" />
+
+      {isLoading && (
+        <View style={styles.loaderOverlay}>
+          <ActivityIndicator size="large" color="#fff" />
+        </View>
+      )}
 
       <TouchableOpacity
         style={styles.backButton}
@@ -53,6 +111,12 @@ const SignUpScreen = ({ navigation, route }) => {
       <View style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
           <Text style={styles.mainTitle}>Sign Up</Text>
+
+          {signupError ? (
+            <View style={styles.signupErrorBox}>
+              <Text style={styles.signupErrorText}>{signupError}</Text>
+            </View>
+          ) : null}
 
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Email</Text>
@@ -70,9 +134,15 @@ const SignUpScreen = ({ navigation, route }) => {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={text => {
+                  setEmail(text);
+                  if (emailError) validateFields();
+                }}
               />
             </View>
+            {emailError ? (
+              <Text style={styles.errorText}>{emailError}</Text>
+            ) : null}
           </View>
 
           <View style={styles.inputGroup}>
@@ -90,7 +160,10 @@ const SignUpScreen = ({ navigation, route }) => {
                 placeholderTextColor="#888"
                 secureTextEntry={securePassword}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={text => {
+                  setPassword(text);
+                  if (passwordError) validateFields();
+                }}
               />
               <TouchableOpacity
                 onPress={() => setSecurePassword(!securePassword)}
@@ -102,6 +175,9 @@ const SignUpScreen = ({ navigation, route }) => {
                 />
               </TouchableOpacity>
             </View>
+            {passwordError ? (
+              <Text style={styles.errorText}>{passwordError}</Text>
+            ) : null}
           </View>
 
           <View style={styles.inputGroup}>
@@ -119,7 +195,10 @@ const SignUpScreen = ({ navigation, route }) => {
                 placeholderTextColor="#888"
                 secureTextEntry={secureConfirmPassword}
                 value={confirmPassword}
-                onChangeText={setConfirmPassword}
+                onChangeText={text => {
+                  setConfirmPassword(text);
+                  if (confirmPasswordError) validateFields();
+                }}
               />
               <TouchableOpacity
                 onPress={() => setSecureConfirmPassword(!secureConfirmPassword)}
@@ -133,11 +212,17 @@ const SignUpScreen = ({ navigation, route }) => {
                 />
               </TouchableOpacity>
             </View>
+            {confirmPasswordError ? (
+              <Text style={styles.errorText}>{confirmPasswordError}</Text>
+            ) : null}
           </View>
 
           <TouchableOpacity
             style={styles.termsContainer}
-            onPress={() => setAcceptedTerms(!acceptedTerms)}
+            onPress={() => {
+              setAcceptedTerms(!acceptedTerms);
+              if (termsError) validateFields();
+            }}
           >
             <Ionicons
               name={acceptedTerms ? 'checkbox' : 'square-outline'}
@@ -157,13 +242,23 @@ const SignUpScreen = ({ navigation, route }) => {
               </TouchableOpacity>
             </Text>
           </TouchableOpacity>
+          {termsError ? (
+            <Text style={styles.errorTextTerms}>{termsError}</Text>
+          ) : null}
 
           <TouchableOpacity
-            style={styles.createButton}
-            // onPress={() => navigation.navigate('AddGeneralInformationScreen')}
+            style={[
+              styles.createButton,
+              (!acceptedTerms || isLoading) && styles.disabledButton,
+            ]}
             onPress={handleSignup}
+            disabled={!acceptedTerms || isLoading}
           >
-            <Text style={styles.createButtonText}>NEXT</Text>
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.createButtonText}>NEXT</Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.signInContainer}>
@@ -182,6 +277,13 @@ const styles = StyleSheet.create({
   outerContainer: {
     flex: 1,
     backgroundColor: primaryColor,
+  },
+  loaderOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
   },
   backButton: {
     position: 'absolute',
@@ -212,6 +314,21 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 30,
   },
+  signupErrorBox: {
+    backgroundColor: '#ffe6e6',
+    borderWidth: 1,
+    borderColor: 'red',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  signupErrorText: {
+    color: 'red',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
   inputGroup: {
     marginBottom: 20,
   },
@@ -238,10 +355,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 5,
+    marginLeft: 5,
+  },
+  errorTextTerms: {
+    color: 'red',
+    fontSize: 12,
+    marginBottom: 20,
+    marginLeft: 5,
+  },
   termsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 5,
     marginTop: 5,
   },
   termsText: {
@@ -259,6 +388,9 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
     marginBottom: 30,
+  },
+  disabledButton: {
+    backgroundColor: '#A9A9A9',
   },
   createButtonText: {
     color: '#fff',

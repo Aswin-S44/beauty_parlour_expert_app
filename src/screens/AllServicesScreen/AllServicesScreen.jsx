@@ -13,9 +13,9 @@ import {
 import React from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { getShopServices } from '../../apis/services';
+import { deleteService, getShopServices } from '../../apis/services';
 import { AuthContext } from '../../context/AuthContext';
-import { formatDateTime } from '../../utils/utils';
+import { formatTimeAgo } from '../../utils/utils';
 
 const AllServicesScreen = ({ navigation }) => {
   const [services, setServices] = React.useState([]);
@@ -23,6 +23,8 @@ const AllServicesScreen = ({ navigation }) => {
   const [isMenuVisible, setMenuVisible] = React.useState(false);
   const [selectedService, setSelectedService] = React.useState(null);
   const { user } = React.useContext(AuthContext);
+  const [deleteConfirmationVisible, setDeleteConfirmationVisible] =
+    React.useState(false);
 
   const fetchServices = async () => {
     try {
@@ -58,46 +60,44 @@ const AllServicesScreen = ({ navigation }) => {
 
   const handleEdit = () => {
     if (selectedService) {
-      // navigation.navigate('EditServiceScreen', { service: selectedService });
-      console.log('Editing:', selectedService);
+      navigation.navigate('EditServiceScreen', { service: selectedService });
     }
     closeMenu();
   };
-
+ 
   const handleDelete = () => {
     if (selectedService) {
-      Alert.alert(
-        'Delete Service',
-        `Are you sure you want to delete ${selectedService.serviceName}?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            onPress: () => {
-              console.log('Deleting:', selectedService);
-              setServices(prev =>
-                prev.filter(s => s.id !== selectedService.id),
-              );
-            },
-            style: 'destructive',
-          },
-        ],
-      );
+      setDeleteConfirmationVisible(true);
     }
-    closeMenu();
+    setMenuVisible(false);
   };
 
+  const confirmDelete = async () => {
+    if (selectedService && user && user.uid) {
+      await deleteService(selectedService.id, user.uid);
+      setServices(prev => prev.filter(s => s.id !== selectedService.id));
+    }
+    setDeleteConfirmationVisible(false);
+  }; 
+
   const renderServiceItem = ({ item }) => (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() =>
+        navigation.navigate('ServiceDetailsScreen', { service: item })
+      }
+    >
       <Image source={{ uri: item.imageUrl }} style={styles.serviceImage} />
       <View style={styles.cardContent}>
         <Text style={styles.serviceName}>{item.category}</Text>
-        <Text style={styles.serviceAdded}>{item.serviceName}</Text>
+        <Text style={styles.serviceAdded}>
+          {item.createdAt ? formatTimeAgo(item.createdAt) : '_'}
+        </Text>
       </View>
       <TouchableOpacity onPress={() => openMenu(item)}>
         <MaterialCommunityIcons name="dots-vertical" size={24} color="#888" />
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 
   const ListEmptyComponent = () => (
@@ -179,6 +179,40 @@ const AllServicesScreen = ({ navigation }) => {
               <Text style={[styles.menuItemText, { color: '#ff3b30' }]}>
                 Delete
               </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      <Modal
+        transparent={true}
+        visible={deleteConfirmationVisible}
+        animationType="fade"
+        onRequestClose={() => setDeleteConfirmationVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.centeredView}
+          activeOpacity={1}
+          onPressOut={() => setDeleteConfirmationVisible(false)}
+        >
+          <View style={styles.modalView}>
+            <View style={styles.modalIconContainer}>
+              <Icon name="checkmark-circle" size={60} color="#8e44ad" />
+            </View>
+            <Text style={styles.modalText}>
+              Are you sure you want to delete {selectedService?.serviceName}?
+            </Text>
+            <TouchableOpacity
+              style={[styles.button, styles.buttonConfirm]}
+              onPress={confirmDelete}
+            >
+              <Text style={styles.textStyle}>DELETE</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.buttonCancel]}
+              onPress={() => setDeleteConfirmationVisible(false)}
+            >
+              <Text style={styles.cancelText}>CANCEL</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -337,6 +371,68 @@ const styles = StyleSheet.create({
     marginLeft: 15,
     fontSize: 16,
     color: '#333',
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: '80%',
+  },
+  modalIconContainer: {
+    marginBottom: 15,
+    backgroundColor: '#e0c0e0',
+    borderRadius: 50,
+    padding: 10,
+  },
+  modalText: {
+    marginBottom: 25,
+    textAlign: 'center',
+    fontSize: 18,
+    color: '#333',
+    fontWeight: '500',
+  },
+  button: {
+    borderRadius: 10,
+    padding: 15,
+    elevation: 2,
+    width: '100%',
+    marginBottom: 10,
+  },
+  buttonConfirm: {
+    backgroundColor: '#8e44ad',
+  },
+  buttonCancel: {
+    backgroundColor: '#f4f4f4',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  textStyle: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 16,
+  },
+  cancelText: {
+    color: '#111',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 16,
   },
 });
 

@@ -9,6 +9,8 @@ import {
   TextInput,
   ScrollView,
   Alert,
+  ActivityIndicator,
+  Modal,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { primaryColor } from '../../constants/colors';
@@ -16,7 +18,6 @@ import { AuthContext } from '../../context/AuthContext';
 import { updateShop, verifyOtp } from '../../apis/auth';
 
 const OTPVerificationScreen = ({ navigation }) => {
-  // Create refs for all 6 input fields
   const firstInput = useRef();
   const secondInput = useRef();
   const thirdInput = useRef();
@@ -24,29 +25,31 @@ const OTPVerificationScreen = ({ navigation }) => {
   const fifthInput = useRef();
   const sixthInput = useRef();
 
-  // Initialize state for 6 OTP digits
   const [otp, setOtp] = useState({ 1: '', 2: '', 3: '', 4: '', 5: '', 6: '' });
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const { user, userData, loading } = useContext(AuthContext);
 
   const handleVerifyOTP = async () => {
-    console.log('USER--------', user?.email);
-    console.log('OTP values----', otp);
+    setIsVerifying(true);
     const otpValue = Object.values(otp).join('');
-    console.log('OTP String:', otpValue);
+
     try {
       if (user && user.email && user.uid) {
         const res = await verifyOtp(user?.email, otpValue);
-        console.log('res------------', res ? res : 'no res');
 
         if (res && res.success) {
           await updateShop(user.uid, { isOTPVerified: true });
+          navigation.navigate('GeneralInformationScreen');
         } else {
-          Alert('Invalid OTP');
+          Alert.alert('Invalid OTP');
         }
       }
     } catch (error) {
-      console.log('Error while verifying OTP : ', error);
+      Alert.alert('Error', 'An error occurred during OTP verification.');
+      return error;
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -57,6 +60,7 @@ const OTPVerificationScreen = ({ navigation }) => {
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}
+        disabled={isVerifying}
       >
         <Ionicons name="arrow-back" size={28} color={primaryColor} />
       </TouchableOpacity>
@@ -71,7 +75,7 @@ const OTPVerificationScreen = ({ navigation }) => {
         <Text style={styles.infoText}>Enter OTP Sent To:</Text>
         <View style={styles.resendContainer}>
           <Text style={styles.resendText}>Didn't get OTP code? </Text>
-          <TouchableOpacity>
+          <TouchableOpacity disabled={isVerifying}>
             <Text style={styles.resendLink}>RESEND</Text>
           </TouchableOpacity>
         </View>
@@ -94,36 +98,51 @@ const OTPVerificationScreen = ({ navigation }) => {
                   maxLength={1}
                   ref={refs[index]}
                   onChangeText={text => {
-                    // Update OTP state
                     setOtp({ ...otp, [digit]: text });
 
-                    // Auto-focus to next input if text exists
                     if (text && index < 5) {
                       refs[index + 1].current.focus();
                     }
 
-                    // Auto-focus to previous input if text is deleted (backspace)
                     if (!text && index > 0) {
                       refs[index - 1].current.focus();
                     }
                   }}
+                  editable={!isVerifying}
                 />
               </View>
             );
           })}
         </View>
 
-        <TouchableOpacity style={styles.createButton} onPress={handleVerifyOTP}>
-          <Text style={styles.createButtonText}>NEXT</Text>
+        <TouchableOpacity
+          style={styles.createButton}
+          onPress={handleVerifyOTP}
+          disabled={isVerifying}
+        >
+          {isVerifying ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.createButtonText}>NEXT</Text>
+          )}
         </TouchableOpacity>
 
         <View style={styles.signInContainer}>
           <Text style={styles.signInText}>Back to SignIn? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('SignIn')}
+            disabled={isVerifying}
+          >
             <Text style={styles.signInLink}>Sign In</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <Modal transparent={true} animationType="fade" visible={isVerifying}>
+        <View style={styles.overlay}>
+          <ActivityIndicator size="large" color={primaryColor} />
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -225,6 +244,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: primaryColor,
     fontWeight: '500',
+  },
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
 });
 

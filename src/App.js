@@ -48,6 +48,11 @@ import FirebaseNotificationService from './apis/FirebaseNotificationService';
 import { auth } from './config/firebase';
 import AllNotificationScreen from './screens/AllNotificationScreen/AllNotificationScreen';
 import NofificationDetailsScreen from './screens/NofificationDetailsScreen/NofificationDetailsScreen';
+import EditServicesScreen from './screens/EditServicesScreen/EditServicesScreen';
+import ServiceDetailsScreen from './screens/ServiceDetailsScreen/ServiceDetailsScreen';
+import EditExpertScreen from './screens/EditExpertScreen/EditExpertScreen';
+import ExpertDetailsScreen from './screens/ExpertDetailsScreen/ExpertDetailsScreen';
+import EditOffersScreen from './screens/EditOffersScreen/EditOffersScreen';
 
 const Tab = createMaterialBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -198,6 +203,20 @@ function MainAppStack() {
         name="NofificationDetailsScreen"
         component={NofificationDetailsScreen}
       />
+
+      <Stack.Screen name="EditServiceScreen" component={EditServicesScreen} />
+      <Stack.Screen
+        name="ServiceDetailsScreen"
+        component={ServiceDetailsScreen}
+      />
+
+      <Stack.Screen name="EditExpertScreen" component={EditExpertScreen} />
+      <Stack.Screen
+        name="ExpertDetailsScreen"
+        component={ExpertDetailsScreen}
+      />
+
+      <Stack.Screen name="EditOffersScreen" component={EditOffersScreen} />
     </Stack.Navigator>
   );
 }
@@ -222,6 +241,10 @@ function AuthStack() {
       <Stack.Screen
         name="ConfirmationWaitingScreen"
         component={ConfirmationWaitingScreen}
+      />
+      <Stack.Screen
+        name="OTPVerificationScreen"
+        component={OTPVerificationScreen}
       />
     </Stack.Navigator>
   );
@@ -251,38 +274,40 @@ export default function App() {
   const [fcmToken, setFcmToken] = useState('');
 
   useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        FirebaseNotificationService.setupNotificationHandlers();
+    if (user) {
+      const initializeApp = async () => {
+        try {
+          FirebaseNotificationService.setupNotificationHandlers();
 
-        const hasPermission =
-          await FirebaseNotificationService.requestNotificationPermission();
+          const hasPermission =
+            await FirebaseNotificationService.requestNotificationPermission();
 
-        if (hasPermission) {
+          if (hasPermission) {
+            const token = await FirebaseNotificationService.getFCMToken();
+            setFcmToken(token);
+          }
+
+          setIsLoading(false);
+        } catch (error) {
+          console.error('App initialization error:', error);
+          setIsLoading(false);
+        }
+      };
+
+      initializeApp();
+
+      const unsubscribeAuth = auth().onAuthStateChanged(async user => {
+        if (user) {
           const token = await FirebaseNotificationService.getFCMToken();
           setFcmToken(token);
         }
+      });
 
-        setIsLoading(false);
-      } catch (error) {
-        console.error('App initialization error:', error);
-        setIsLoading(false);
-      }
-    };
-
-    initializeApp();
-
-    const unsubscribeAuth = auth().onAuthStateChanged(async user => {
-      if (user) {
-        const token = await FirebaseNotificationService.getFCMToken();
-        setFcmToken(token);
-      }
-    });
-
-    return () => {
-      unsubscribeAuth();
-    };
-  }, []);
+      return () => {
+        unsubscribeAuth();
+      };
+    }
+  }, [user]);
 
   if (loading) {
     return <SplashScreen1 />;

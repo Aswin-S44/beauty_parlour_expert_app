@@ -6,46 +6,24 @@ import {
   FlatList,
   TouchableOpacity,
   StatusBar,
+  Modal,
 } from 'react-native';
 import React, { useState, useEffect, useContext } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { AuthContext } from '../../context/AuthContext';
-import { getOffersByShop } from '../../apis/services';
+import { deleteOffer, getOffersByShop } from '../../apis/services';
 import ServiceCardSkeleton from '../../components/ServiceCardSkeleton/ServiceCardSkeleton';
 import EmptyComponent from '../../components/EmptyComponent/EmptyComponent';
 import { formatFirestoreTimestamp } from '../../utils/utils';
 
-const offersData = [
-  {
-    id: '1',
-    name: 'Facial Makup',
-    added: 'Added 2month ago',
-    imageUrl: 'https://i.imgur.com/2wDG5I4.png',
-  },
-  {
-    id: '2',
-    name: 'Hair Treatment',
-    added: 'Added 2month ago',
-    imageUrl: 'https://i.imgur.com/xgA31iK.png',
-  },
-  {
-    id: '3',
-    name: 'Style Hair Cut',
-    added: 'Added 3month ago',
-    imageUrl: 'https://i.imgur.com/VPROSjQ.png',
-  },
-  {
-    id: '4',
-    name: 'Body Messages & Spa',
-    added: 'Added 5month ago',
-    imageUrl: 'https://i.imgur.com/g8u2mVI.png',
-  },
-];
-
 const AllOffersScreen = ({ navigation }) => {
   const [offers, setOffers] = useState([]);
+  const [isMenuVisible, setMenuVisible] = React.useState(false);
   const [offersLoading, setOffersLoading] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState(null);
+  const [deleteConfirmationVisible, setDeleteConfirmationVisible] =
+    useState(false);
 
   const { user, loading } = useContext(AuthContext);
 
@@ -56,7 +34,7 @@ const AllOffersScreen = ({ navigation }) => {
           setOffersLoading(true);
           const res = await getOffersByShop(user.uid);
           setOffersLoading(false);
-          console.log('offers:', offers);
+
           if (res && res.length > 0) {
             setOffers(res);
           }
@@ -71,6 +49,39 @@ const AllOffersScreen = ({ navigation }) => {
     }
   }, [user]);
 
+  const openMenu = item => {
+    setSelectedOffer(item);
+    setMenuVisible(true);
+  };
+
+  const closeMenu = () => {
+    setMenuVisible(false);
+    setSelectedOffer(null);
+  };
+
+  const handleEdit = () => {
+    if (selectedOffer) {
+      navigation.navigate('EditOffersScreen', { offer: selectedOffer });
+    }
+    closeMenu();
+  };
+
+  const handleDelete = () => {
+    if (selectedOffer) {
+      setDeleteConfirmationVisible(true);
+    }
+    setMenuVisible(false);
+  };
+
+  const confirmDelete = async () => {
+    if (selectedOffer && user && user.uid) {
+      console.log('selected offer : ', selectedOffer);
+      await deleteOffer(selectedOffer.id, user.uid);
+      setOffers(prev => prev.filter(s => s.id !== selectedOffer.id));
+    }
+    setDeleteConfirmationVisible(false);
+  };
+
   const RenderOfferItem = ({ item }) => (
     <View style={styles.card}>
       <Image
@@ -83,54 +94,11 @@ const AllOffersScreen = ({ navigation }) => {
           {formatFirestoreTimestamp(item.createdAt)}
         </Text>
       </View>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => openMenu(item)}>
         <MaterialCommunityIcons name="dots-vertical" size={24} color="#888" />
       </TouchableOpacity>
     </View>
   );
-
-  const OfferItem = ({ item, shopId }) => {
-    const navigation = useNavigation();
-    return (
-      <View style={styles.card}>
-        <Image
-          source={{
-            uri:
-              typeof item.service.imageUrl === 'string'
-                ? item.service.imageUrl
-                : NO_IMAGE,
-          }}
-          style={styles.cardImage}
-        />
-        <View style={styles.cardTextContainer}>
-          <Text style={styles.cardTitle}>{item.serviceName}</Text>
-
-          <OfferText regularPrice={500} offerPrice={450} />
-        </View>
-        <TouchableOpacity
-          style={[
-            styles.bookButton,
-            item.active ? styles.activeButton : styles.inactiveButton,
-          ]}
-          onPress={() =>
-            navigation.navigate('BookingScreen', {
-              shopId: shopId,
-              serviceId: item.serviceId,
-            })
-          }
-        >
-          <Text
-            style={[
-              styles.bookButtonText,
-              item.active ? styles.activeButtonText : styles.inactiveButtonText,
-            ]}
-          >
-            Book
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
 
   return (
     <View style={styles.container}>
@@ -192,6 +160,66 @@ const AllOffersScreen = ({ navigation }) => {
           <Text style={styles.addButtonText}>ADD NEW OFFER +</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        transparent={true}
+        visible={isMenuVisible}
+        animationType="fade"
+        onRequestClose={closeMenu}
+      >
+        <TouchableOpacity
+          style={styles.modalBackdrop}
+          activeOpacity={1}
+          onPressOut={closeMenu}
+        >
+          <View style={styles.menuContainer}>
+            <TouchableOpacity style={styles.menuItem} onPress={handleEdit}>
+              <Icon name="pencil-outline" size={22} color="#555" />
+              <Text style={styles.menuItemText}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuItem} onPress={handleDelete}>
+              <Icon name="trash-outline" size={22} color="#ff3b30" />
+              <Text style={[styles.menuItemText, { color: '#ff3b30' }]}>
+                Delete
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      <Modal
+        transparent={true}
+        visible={deleteConfirmationVisible}
+        animationType="fade"
+        onRequestClose={() => setDeleteConfirmationVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.centeredView}
+          activeOpacity={1}
+          onPressOut={() => setDeleteConfirmationVisible(false)}
+        >
+          <View style={styles.modalView}>
+            <View style={styles.modalIconContainer}>
+              <Icon name="checkmark-circle" size={60} color="#8e44ad" />
+            </View>
+            <Text style={styles.modalText}>
+              Are you sure you want to delete offer ?
+            </Text>
+            <TouchableOpacity
+              style={[styles.button, styles.buttonConfirm]}
+              onPress={confirmDelete}
+            >
+              <Text style={styles.textStyle}>DELETE</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.buttonCancel]}
+              onPress={() => setDeleteConfirmationVisible(false)}
+            >
+              <Text style={styles.cancelText}>CANCEL</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -286,6 +314,90 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  menuContainer: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 30,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+  },
+  menuItemText: {
+    marginLeft: 15,
+    fontSize: 16,
+    color: '#333',
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: '80%',
+  },
+  modalIconContainer: {
+    marginBottom: 15,
+    backgroundColor: '#e0c0e0',
+    borderRadius: 50,
+    padding: 10,
+  },
+  modalText: {
+    marginBottom: 25,
+    textAlign: 'center',
+    fontSize: 18,
+    color: '#333',
+    fontWeight: '500',
+  },
+  button: {
+    borderRadius: 10,
+    padding: 15,
+    elevation: 2,
+    width: '100%',
+    marginBottom: 10,
+  },
+  buttonConfirm: {
+    backgroundColor: '#8e44ad',
+  },
+  buttonCancel: {
+    backgroundColor: '#f4f4f4',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  textStyle: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 16,
+  },
+  cancelText: {
+    color: '#111',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 16,
   },
 });
 

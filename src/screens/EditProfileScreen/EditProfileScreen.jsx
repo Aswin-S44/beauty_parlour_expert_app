@@ -27,7 +27,7 @@ const EditProfileScreen = ({ navigation }) => {
   const [toastMessage, setToastMessage] = useState('');
 
   const initialImage = require('../../assets/images/home_bg-1.png');
-  console.log('USER---------', user ? user : 'no user');
+
   useEffect(() => {
     if (user && user.uid) {
       setProfileLoading(true);

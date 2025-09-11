@@ -76,7 +76,7 @@ const AppointmentRequestsScreen = ({ navigation }) => {
       setAcceptModalVisible(false);
       await fetchRequests();
     } catch (error) {
-      console.log('Error while accepting appointment : ', error);
+      return error;
     } finally {
       setConfirming(false);
     }

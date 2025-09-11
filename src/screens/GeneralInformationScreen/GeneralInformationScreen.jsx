@@ -13,12 +13,13 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { primaryColor } from '../../constants/colors';
 import { updateShop } from '../../apis/auth';
-import { AuthContext } from '../../context/AuthContext';
+import { AuthContext, useAuth } from '../../context/AuthContext';
 
 const GeneralInformationScreen = ({ navigation }) => {
   const [parlourName, setParlourName] = useState('');
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
+  const { setUserData } = useAuth();
 
   const { user } = useContext(AuthContext);
 
@@ -42,6 +43,11 @@ const GeneralInformationScreen = ({ navigation }) => {
 
         if (res && res.success) {
           Alert.alert('Success', 'Successfully updated profile');
+          setUserData({
+            profileCompleted: true,
+            isOnboarded: false,
+            isOTPVerified: true, // or whatever your initial flags should be
+          });
         } else {
           Alert.alert('Error', 'Error while updating profile');
         }

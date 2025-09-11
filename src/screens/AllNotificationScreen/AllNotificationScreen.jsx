@@ -8,47 +8,44 @@ import {
   StatusBar,
   Alert,
 } from 'react-native';
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Swipeable } from 'react-native-gesture-handler';
 import { primaryColor } from '../../constants/colors';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { AuthContext } from '../../context/AuthContext';
+import {
+  getNotificationsByShopId,
+  markNotificationAsRead,
+} from '../../apis/services';
+import AllNotificationsScreenSkeleton from '../AllNotificationsScreenSkeleton/AllNotificationsScreenSkeleton';
+import EmptyComponent from '../../components/EmptyComponent/EmptyComponent';
+import { AVATAR_IMAGE } from '../../constants/images';
 
 const AllNotificationScreen = ({ navigation }) => {
-  const [notifications, setNotifications] = useState([
-    {
-      id: '1',
-      title: 'Appointment Request Received',
-      message: 'Dr. Smith sent you an appointment request',
-      time: '2 hours ago',
-      read: false,
-      avatar: 'https://example.com/avatar1.jpg',
-      type: 'appointment',
-    },
-    {
-      id: '2',
-      title: 'Reminder',
-      message: 'Your appointment is in 30 minutes',
-      time: '1 hour ago',
-      read: true,
-      avatar: 'https://example.com/avatar2.jpg',
-      type: 'reminder',
-    },
-    {
-      id: '3',
-      title: 'New Message',
-      message: 'You have a new message from patient',
-      time: 'Just now',
-      read: false,
-      avatar: 'https://example.com/avatar3.jpg',
-      type: 'message',
-    },
-  ]);
+  const [loading, setLoading] = useState(false);
 
-  const handleNotificationPress = notification => {
+  const [notifications, setNotifications] = useState([]);
+
+  const { user } = useContext(AuthContext);
+  useEffect(() => {
+    if (user && user.uid) {
+      const fetchNotications = async () => {
+        setLoading(true);
+        const res = await getNotificationsByShopId(user.uid);
+
+        setLoading(false);
+        setNotifications(res || []);
+      };
+      fetchNotications();
+    }
+  }, [user]);
+
+  const handleNotificationPress = async notification => {
     const updatedNotifications = notifications.map(item =>
       item.id === notification.id ? { ...item, read: true } : item,
     );
+
     setNotifications(updatedNotifications);
     navigation.navigate('NofificationDetailsScreen', { notification });
   };
@@ -93,21 +90,31 @@ const AllNotificationScreen = ({ navigation }) => {
       }
     >
       <TouchableOpacity
-        style={[styles.notificationItem, item.read && styles.readNotification]}
+        style={[
+          styles.notificationItem,
+          item.isRead && styles.readNotification,
+        ]}
         onPress={() => handleNotificationPress(item)}
         onLongPress={() => handleLongPress(item)}
       >
         <Image
-          source={{ uri: 'https://picsum.photos/id/237/200/300' }}
+          source={{
+            uri: item.customer?.profileImage || AVATAR_IMAGE,
+          }}
           style={styles.avatar}
-          //   defaultSource={require('./placeholder-avatar.png')}
         />
         <View style={styles.notificationContent}>
-          <Text style={styles.notificationTitle}>{item.title}</Text>
+          <Text style={styles.notificationTitle}>
+            {item.notificationType === 'appointment_request'
+              ? 'Appointment Request'
+              : 'Notification'}
+          </Text>
           <Text style={styles.notificationMessage}>{item.message}</Text>
-          <Text style={styles.notificationTime}>{item.time}</Text>
+          <Text style={styles.notificationTime}>
+            {new Date(item.createdAt._seconds * 1000).toLocaleString()}
+          </Text>
         </View>
-        {!item.read && <View style={styles.unreadDot} />}
+        {!item.isRead && <View style={styles.unreadDot} />}
       </TouchableOpacity>
     </Swipeable>
   );
@@ -131,12 +138,20 @@ const AllNotificationScreen = ({ navigation }) => {
       </View>
       <View style={styles.contentContainer}>
         <Text style={styles.title}>Notifications</Text>
-        <FlatList
-          data={notifications}
-          renderItem={renderNotificationItem}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.listContainer}
-        />
+        {loading ? (
+          <AllNotificationsScreenSkeleton />
+        ) : !loading && notifications.length == 0 ? (
+          <EmptyComponent />
+        ) : (
+          <View>
+            <FlatList
+              data={notifications}
+              renderItem={renderNotificationItem}
+              keyExtractor={item => item.id}
+              contentContainerStyle={styles.listContainer}
+            />
+          </View>
+        )}
       </View>
     </View>
   );

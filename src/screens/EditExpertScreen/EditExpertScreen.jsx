@@ -11,22 +11,25 @@ import {
   Modal,
   ActivityIndicator,
 } from 'react-native';
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { launchImageLibrary } from 'react-native-image-picker';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { AuthContext } from '../../context/AuthContext';
-import { addBeautyExpert } from '../../apis/services';
+import { updateBeautyExpert } from '../../apis/services';
 
-const AddExpertScreen = ({ navigation }) => {
-  const [expertName, setExpertName] = useState('');
-  const [specialist, setSpecialist] = useState(null);
-  const [about, setAbout] = useState('');
-  const [address, setAddress] = useState('');
-  const [imageUri, setImageUri] = useState(null);
+const EditExpertScreen = ({ navigation, route }) => {
+  const { expert } = route.params;
+
+  const [expertName, setExpertName] = useState(expert.expertName);
+  const [specialist, setSpecialist] = useState(expert.specialist);
+  const [about, setAbout] = useState(expert.about);
+  const [address, setAddress] = useState(expert.address);
+  const [imageUri, setImageUri] = useState(expert.imageUrl);
   const [isModalVisible, setModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [imageChanged, setImageChanged] = useState(false);
 
   const { user } = useContext(AuthContext);
 
@@ -68,6 +71,7 @@ const AddExpertScreen = ({ navigation }) => {
         const uri = response.assets?.[0]?.uri;
         if (uri) {
           setImageUri(uri);
+          setImageChanged(true);
           if (errors.image) {
             setErrors(prev => ({ ...prev, image: null }));
           }
@@ -76,7 +80,7 @@ const AddExpertScreen = ({ navigation }) => {
     });
   };
 
-  const handleAddBeautyExpert = async () => {
+  const handleUpdateBeautyExpert = async () => {
     if (!validate()) {
       return;
     }
@@ -87,13 +91,16 @@ const AddExpertScreen = ({ navigation }) => {
         specialist,
         about,
         address,
+        imageUri,
       };
-      const result = await addBeautyExpert(user.uid, expertData, imageUri);
+
+      const result = await updateBeautyExpert(expert.id, expertData);
+
       if (result) {
         setModalVisible(true);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to add expert. Please try again.');
+      Alert.alert('Error', 'Failed to update expert. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -101,12 +108,6 @@ const AddExpertScreen = ({ navigation }) => {
 
   const handleCloseModal = () => {
     setModalVisible(false);
-    setExpertName('');
-    setSpecialist(null);
-    setAbout('');
-    setAddress('');
-    setImageUri(null);
-    setErrors({});
     navigation.goBack();
   };
 
@@ -133,7 +134,7 @@ const AddExpertScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title}>Add Beauty Expert</Text>
+        <Text style={styles.title}>Edit Beauty Expert</Text>
 
         <View style={styles.form}>
           <Text style={styles.label}>Expert Name</Text>
@@ -219,7 +220,10 @@ const AddExpertScreen = ({ navigation }) => {
                 />
                 <TouchableOpacity
                   style={styles.deleteIcon}
-                  onPress={() => setImageUri(null)}
+                  onPress={() => {
+                    setImageUri(null);
+                    setImageChanged(true);
+                  }}
                 >
                   <Icon name="close-circle" size={24} color="#333" />
                 </TouchableOpacity>
@@ -232,13 +236,13 @@ const AddExpertScreen = ({ navigation }) => {
         </View>
         <TouchableOpacity
           style={[styles.saveButton, isLoading && styles.disabledButton]}
-          onPress={handleAddBeautyExpert}
+          onPress={handleUpdateBeautyExpert}
           disabled={isLoading}
         >
           {isLoading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.saveButtonText}>ADD EXPERT +</Text>
+            <Text style={styles.saveButtonText}>UPDATE EXPERT</Text>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -255,7 +259,7 @@ const AddExpertScreen = ({ navigation }) => {
               <Icon name="checkmark" size={40} color="#fff" />
             </View>
             <Text style={styles.modalText}>
-              Successfully Added{'\n'}New Beauty Expert
+              Successfully Updated{'\n'}Beauty Expert
             </Text>
             <TouchableOpacity
               style={styles.okButton}
@@ -468,7 +472,7 @@ const styles = StyleSheet.create({
   },
   modalText: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '500',
     color: '#333',
     textAlign: 'center',
     marginBottom: 20,
@@ -494,4 +498,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddExpertScreen;
+export default EditExpertScreen;

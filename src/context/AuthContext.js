@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
             setUserData(docSnap.data());
           }
         } catch (err) {
-          console.log('Error fetching user data:', err);
+          return err;
         }
       } else {
         setUser(null);
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, userData, logout, loading, setLoading }}
+      value={{ user, userData, logout, loading, setLoading, setUserData }}
     >
       {children}
     </AuthContext.Provider>

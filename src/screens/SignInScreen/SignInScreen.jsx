@@ -28,6 +28,7 @@ const SignInScreen = ({ navigation }) => {
   const [passwordError, setPasswordError] = useState('');
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotEmailError, setForgotEmailError] = useState('');
+  const [loginError, setLoginError] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -54,15 +55,15 @@ const SignInScreen = ({ navigation }) => {
   };
 
   const handleLogin = async () => {
+    setLoginError('');
     if (!validateFields()) {
       return;
     }
     setIsLoading(true);
     try {
-      console.log('***********************');
       await login(email, password);
     } catch (error) {
-      Alert.alert('Login Failed', error.message);
+      setLoginError('Invalid credentials. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -148,6 +149,12 @@ const SignInScreen = ({ navigation }) => {
       <View style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
           <Text style={styles.mainTitle}>Sign In</Text>
+
+          {loginError ? (
+            <View style={styles.loginErrorBox}>
+              <Text style={styles.loginErrorText}>{loginError}</Text>
+            </View>
+          ) : null}
 
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Email</Text>
@@ -285,6 +292,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10,
     marginBottom: 30,
+  },
+  loginErrorBox: {
+    backgroundColor: '#ffe6e6',
+    borderWidth: 1,
+    borderColor: 'red',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  loginErrorText: {
+    color: 'red',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
   },
   inputGroup: {
     marginBottom: 20,

@@ -42,7 +42,7 @@ const AmountRow = ({ service, qty, price, isBold = false }) => (
 const ServiceSummaryScreen = ({ navigation }) => {
   const route = useRoute();
   const { item } = route.params;
-  console.log('ITEM-------------', item ? item : 'no item');
+
   const [modalVisible, setModalVisible] = useState(false);
 
   return (
