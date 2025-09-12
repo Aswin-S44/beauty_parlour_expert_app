@@ -28,6 +28,7 @@ const HomeScreen = ({ navigation }) => {
   const [maxValue, setMaxValue] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [upcomingBookings, setUpcomingBookings] = useState([]);
 
   useEffect(() => {
     if (user && user.uid) {
@@ -53,6 +54,7 @@ const HomeScreen = ({ navigation }) => {
         }
 
         const appointmentsRes = await getAppointmentsByShopId(user.uid);
+
         if (appointmentsRes) {
           const sevenDaysAgo = moment().subtract(6, 'days').startOf('day');
           const dailyEarnings = {};
@@ -88,6 +90,19 @@ const HomeScreen = ({ navigation }) => {
           const maxVal = Math.max(...graphData.map(item => item.value), 0);
           setWeeklyData(graphData);
           setMaxValue(maxVal > 0 ? maxVal : 1);
+
+          const now = moment();
+          const upcoming = appointmentsRes
+            .filter(
+              appointment =>
+                appointment.appointmentStatus === 'confirmed' &&
+                moment(appointment.preferredDate).isSameOrAfter(now, 'day'),
+            )
+            .sort((a, b) =>
+              moment(a.preferredDate).diff(moment(b.preferredDate)),
+            )
+            .slice(0, 3);
+          setUpcomingBookings(upcoming);
         }
       } catch (error) {
         console.error('Failed to fetch service data:', error);
@@ -175,6 +190,61 @@ const HomeScreen = ({ navigation }) => {
 
       <View style={styles.mainContent}>
         <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Upcoming Bookings</Text>
+
+          {upcomingBookings.length > 0 ? (
+            upcomingBookings.map((booking, index) => (
+              <View key={index} style={styles.upcomingBookingItem}>
+                <View style={styles.bookingDateTime}>
+                  <Ionicons name="calendar-outline" size={18} color="#4A5568" />
+                  <Text style={styles.bookingDateText}>
+                    {moment(booking.preferredDate).format('MMM DD, YYYY')}
+                  </Text>
+                  <Ionicons
+                    name="time-outline"
+                    size={18}
+                    color="#4A5568"
+                    style={{ marginLeft: 15 }}
+                  />
+                  <Text style={styles.bookingTimeText}>
+                    {booking.selectedTime}
+                  </Text>
+                </View>
+                <Text style={styles.upcomingBookingCustomer}>
+                  {booking.customer?.fullName ?? 'Client Name'}
+                </Text>
+                <Text style={styles.upcomingBookingService}>
+                  {booking.serviceName}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noBookingsText}>No upcoming bookings.</Text>
+          )}
+        </View>
+
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Text style={styles.statTitle}>Total Services</Text>
+            <Text style={[styles.statNumber, { color: '#3182CE' }]}>
+              {totalServices}
+            </Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statTitle}>Pending Services</Text>
+            <Text style={[styles.statNumber, { color: '#DD6B20' }]}>
+              {pendingServices}
+            </Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statTitle}>Completed Services</Text>
+            <Text style={[styles.statNumber, { color: '#38A169' }]}>
+              {completedServices}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.card}>
           <View style={styles.weeklyEarnHeader}>
             <Text style={styles.cardTitle}>WEEKLY EARN</Text>
             <Text style={styles.yAxisLabel}>{maxValue.toLocaleString()}</Text>
@@ -198,27 +268,6 @@ const HomeScreen = ({ navigation }) => {
           <Text style={[styles.yAxisLabel, { alignSelf: 'flex-start' }]}>
             0
           </Text>
-        </View>
-
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statTitle}>Total Services</Text>
-            <Text style={[styles.statNumber, { color: '#3182CE' }]}>
-              {totalServices}
-            </Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statTitle}>Pending Services</Text>
-            <Text style={[styles.statNumber, { color: '#DD6B20' }]}>
-              {pendingServices}
-            </Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statTitle}>Completed Services</Text>
-            <Text style={[styles.statNumber, { color: '#38A169' }]}>
-              {completedServices}
-            </Text>
-          </View>
         </View>
       </View>
     </ScrollView>
@@ -302,6 +351,58 @@ const styles = StyleSheet.create({
     shadowRadius: 1.41,
     marginBottom: 20,
   },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2D3748',
+    marginBottom: 15,
+  },
+  upcomingBookingItem: {
+    backgroundColor: '#F7FAFC',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    borderLeftWidth: 5,
+    borderLeftColor: primaryColor,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 2,
+  },
+  bookingDateTime: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  bookingDateText: {
+    fontSize: 14,
+    color: '#4A5568',
+    marginLeft: 5,
+    fontWeight: '500',
+  },
+  bookingTimeText: {
+    fontSize: 14,
+    color: '#4A5568',
+    marginLeft: 5,
+    fontWeight: '500',
+  },
+  upcomingBookingCustomer: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2D3748',
+    marginBottom: 4,
+  },
+  upcomingBookingService: {
+    fontSize: 14,
+    color: '#718096',
+  },
+  noBookingsText: {
+    fontSize: 14,
+    color: '#718096',
+    textAlign: 'center',
+    paddingVertical: 10,
+  },
   weeklyEarnHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -344,6 +445,7 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 20,
   },
   statCard: {
     backgroundColor: '#fff',

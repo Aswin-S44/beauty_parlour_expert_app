@@ -318,6 +318,7 @@ export const getAppointmentsByShopId = async shopId => {
         const appointmentData = appointmentDoc.data();
         const expertId = appointmentData.expertId;
         const serviceIds = appointmentData.serviceIds || [];
+        const customerId = appointmentData.customerId;
 
         let expertData = null;
         if (expertId) {
@@ -343,25 +344,32 @@ export const getAppointmentsByShopId = async shopId => {
           }),
         );
 
+        let customerData = null;
+        if (customerId) {
+          const customerSnap = await firestore()
+            .collection('customers')
+            .doc(customerId)
+            .get();
+          if (customerSnap.exists) {
+            customerData = { id: customerSnap.id, ...customerSnap.data() };
+          }
+        }
+
         return {
           id: appointmentDoc.id,
           ...appointmentData,
           expert: expertData,
           services: serviceData.filter(service => service !== null),
+          customer: customerData,
         };
       }),
     );
 
     return results;
   } catch (error) {
-    console.error(
-      'Error fetching appointments with expert and service data:',
-      error,
-    );
     throw error;
   }
 };
-
 export const getUserPendingRequests = async shopId => {
   try {
     const querySnapshot = await firestore()
