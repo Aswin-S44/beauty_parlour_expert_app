@@ -5,32 +5,46 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
-  TextInput,
+  RefreshControl,
   StatusBar,
 } from 'react-native';
-import React, { useContext, useEffect, useState } from 'react';
-import EvilIcons from 'react-native-vector-icons/EvilIcons';
+import React, { useContext, useEffect, useState, useCallback } from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import Card from '../../components/Card/Card';
-import { primaryColor, secondaryColor } from '../../constants/colors';
+import { primaryColor } from '../../constants/colors';
 import { AuthContext } from '../../context/AuthContext';
 import {
   getAppointmentsByShopId,
   getAppointmentStats,
+  getNotificationsCountByShopId,
 } from '../../apis/services';
 import moment from 'moment';
 
 const HomeScreen = ({ navigation }) => {
-  const { user, loading } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const [totalServices, setTotalServices] = useState(0);
   const [pendingServices, setPendingServices] = useState(0);
   const [completedServices, setCompletedServices] = useState(0);
   const [weeklyData, setWeeklyData] = useState([]);
   const [maxValue, setMaxValue] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   useEffect(() => {
     if (user && user.uid) {
-      const fetchServiceStatsAndGraphData = async () => {
+      const fetchNotificationCount = async () => {
+        const res = await getNotificationsCountByShopId(user.uid);
+        if (res) {
+          setNotificationCount(res);
+        }
+      };
+      fetchNotificationCount();
+    }
+  }, [user]);
+
+  const fetchServiceData = useCallback(async () => {
+    if (user && user.uid) {
+      setRefreshing(true);
+      try {
         const statsRes = await getAppointmentStats(user.uid);
         if (statsRes) {
           setTotalServices(statsRes.totalAppointments);
@@ -75,10 +89,17 @@ const HomeScreen = ({ navigation }) => {
           setWeeklyData(graphData);
           setMaxValue(maxVal > 0 ? maxVal : 1);
         }
-      };
-      fetchServiceStatsAndGraphData();
+      } catch (error) {
+        console.error('Failed to fetch service data:', error);
+      } finally {
+        setRefreshing(false);
+      }
     }
   }, [user]);
+
+  useEffect(() => {
+    fetchServiceData();
+  }, [fetchServiceData]);
 
   const getRandomColor = () => {
     const colors = [
@@ -94,7 +115,13 @@ const HomeScreen = ({ navigation }) => {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={fetchServiceData} />
+      }
+    >
       <StatusBar
         backgroundColor="transparent"
         translucent={true}
@@ -134,7 +161,7 @@ const HomeScreen = ({ navigation }) => {
                 color={primaryColor}
               />
               <View style={styles.badgeContainer}>
-                <Text style={styles.badgeText}>02</Text>
+                <Text style={styles.badgeText}>{notificationCount}</Text>
               </View>
             </TouchableOpacity>
           </View>

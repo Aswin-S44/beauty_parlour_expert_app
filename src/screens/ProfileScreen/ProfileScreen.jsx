@@ -6,8 +6,10 @@ import {
   ScrollView,
   StatusBar,
   TouchableOpacity,
+  RefreshControl,
+  Linking,
 } from 'react-native';
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useCallback } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import { primaryColor } from '../../constants/colors';
@@ -21,33 +23,58 @@ const ProfileScreen = ({ navigation }) => {
   const [imageUri, setImageUri] = useState(null);
   const [about, setAbout] = useState('');
   const [address, setAddress] = useState('');
+  const [openingHoursMonWed, setOpeningHoursMonWed] = useState('');
+  const [openingHoursFriSat, setOpeningHoursFriSat] = useState('');
+  const [googleReviewUrl, setGoogleReviewUrl] = useState('');
   const [profileLoading, setProfileLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const initialImage = AVATAR_IMAGE;
+  const [openingHours, setOpeningHours] = useState(null);
 
   const imageSource = imageUri ? { uri: imageUri } : initialImage;
-  useEffect(() => {
+
+  const fetchUserData = useCallback(async () => {
     if (user && user.uid) {
       setProfileLoading(true);
-      const fetchUserData = async () => {
-        try {
-          const res = await getUserData(user.uid);
-          if (res) {
-            setName(res.parlourName || '');
-            setAbout(res.about || '');
-            setAddress(res.address || '');
-            setImageUri(res.profileImage || null);
-          }
-        } catch (error) {
-          console.error('Failed to fetch user data:', error);
-        } finally {
-          setProfileLoading(false);
+      try {
+        const res = await getUserData(user.uid);
+        if (res) {
+          setName(res.parlourName || '');
+          setAbout(res.about || '');
+          setAddress(res.address || '');
+          setImageUri(res.profileImage || null);
+          setOpeningHoursMonWed(res.openingHoursMonWed || '');
+          setOpeningHoursFriSat(res.openingHoursFriSat || '');
+          setGoogleReviewUrl(res.googleReviewUrl || '');
+          setOpeningHours(res.openingHours);
         }
-      };
-      fetchUserData();
+      } catch (error) {
+        console.error('Failed to fetch user data:', error);
+      } finally {
+        setProfileLoading(false);
+      }
     } else {
       setProfileLoading(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchUserData();
+    setRefreshing(false);
+  }, [fetchUserData]);
+
+  const handleOpenGoogleReview = () => {
+    if (googleReviewUrl) {
+      Linking.openURL(googleReviewUrl).catch(err =>
+        console.error('Failed to open URL:', err),
+      );
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -63,6 +90,9 @@ const ProfileScreen = ({ navigation }) => {
       <ScrollView
         style={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         <View style={styles.profileInfo}>
           <TouchableOpacity
@@ -73,7 +103,7 @@ const ProfileScreen = ({ navigation }) => {
           </TouchableOpacity>
           <Text style={styles.name}>{name ?? '_'}</Text>
           <Image source={imageSource} style={styles.avatar} />
-          <Text style={styles.title}>CEO, Beauty Girls Parlour</Text>
+          {/* <Text style={styles.title}>CEO, Beauty Girls Parlour</Text> */}
           <View style={styles.ratingContainer}>
             <FontAwesomeIcon name="star" size={20} color="#FFD700" />
             <FontAwesomeIcon name="star" size={20} color="#FFD700" />
@@ -92,12 +122,13 @@ const ProfileScreen = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Opening Hours</Text>
           <View style={styles.hoursRow}>
-            <Text style={styles.sectionText}>Mon - Wed</Text>
-            <Text style={styles.sectionText}>8:00 am - 12:00 pm</Text>
-          </View>
-          <View style={styles.hoursRow}>
-            <Text style={styles.sectionText}>Fri - Sat</Text>
-            <Text style={styles.sectionText}>10:00 am - 11:00 pm</Text>
+            {!openingHours ? (
+              <Text>Not added</Text>
+            ) : (
+              <>
+                <Text style={styles.sectionText}>{openingHours}</Text>
+              </>
+            )}
           </View>
         </View>
 
@@ -108,15 +139,30 @@ const ProfileScreen = ({ navigation }) => {
               <Icon name="location-sharp" size={20} color={primaryColor} />
               <Text style={styles.addressText}>{address ?? ''}</Text>
             </View>
-            <View style={styles.addressRow}>
+            {/* <View style={styles.addressRow}>
               <Icon
                 name="navigate-circle-outline"
                 size={20}
                 color={primaryColor}
               />
               <Text style={styles.addressText}>5 KM</Text>
-            </View>
+            </View> */}
           </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Reviews</Text>
+          <TouchableOpacity
+            onPress={handleOpenGoogleReview}
+            style={styles.reviewButton}
+          >
+            <FontAwesomeIcon name="google" size={20} color="#DB4437" />
+            {!googleReviewUrl ? (
+              <Text style={styles.reviewButtonText}>Not added</Text>
+            ) : (
+              <Text style={styles.reviewButtonText}>{googleReviewUrl}</Text>
+            )}
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
@@ -231,6 +277,22 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 10,
     flexShrink: 1,
+  },
+  reviewButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    justifyContent: 'center',
+    marginTop: 5,
+  },
+  reviewButtonText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '600',
   },
 });
 

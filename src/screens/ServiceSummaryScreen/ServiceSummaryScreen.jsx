@@ -11,8 +11,9 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { primaryColor } from '../../constants/colors';
 import { useRoute } from '@react-navigation/native';
-import { formatDate } from '../../utils/utils';
+import { formatDate, formatServiceName } from '../../utils/utils';
 import { Image } from 'react-native';
+import { AVATAR_IMAGE } from '../../constants/images';
 
 const Row = ({ label, value }) => (
   <View style={styles.row}>
@@ -44,6 +45,19 @@ const ServiceSummaryScreen = ({ navigation }) => {
   const { item } = route.params;
 
   const [modalVisible, setModalVisible] = useState(false);
+
+  const getStatusStyle = status => {
+    switch (status) {
+      case 'confirmed':
+        return styles.statusConfirmed;
+      case 'pending':
+        return styles.statusPending;
+      case 'cancelled':
+        return styles.statusCancelled;
+      default:
+        return styles.statusDefault;
+    }
+  };
 
   return (
     <View style={styles.outerContainer}>
@@ -87,21 +101,39 @@ const ServiceSummaryScreen = ({ navigation }) => {
 
           <View style={styles.profileSection}>
             <Image
-              source={require('../../assets/images/users/2.png')}
+              source={{ uri: item.expert.imageUrl ?? AVATAR_IMAGE }}
               style={styles.avatar}
             />
-            <Text style={styles.expertName}>Jesika Sabnom</Text>
-            <Text style={styles.expertSpecialty}>Spa & Skin Specialist</Text>
-            {/* <StarRating rating={4.9} count={150} /> */}
+            <Text style={styles.expertName}>
+              {item?.expert?.expertName ?? '-'}
+            </Text>
+            <Text style={styles.expertSpecialty}>
+              {item?.expert?.specialist
+                ? formatServiceName(item?.expert?.specialist)
+                : '-'}
+            </Text>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Date & Time</Text>
+            <Text style={styles.sectionTitle}>Appointment Details</Text>
             <Row
               label="Date"
               value={item.selectedDate ? formatDate(item.selectedDate) : ''}
             />
             <Row label="Time" value={item.selectedTime ?? '_'} />
+            <View style={styles.row}>
+              <Text style={styles.text}>Status</Text>
+              <Text
+                style={[
+                  styles.statusText,
+                  getStatusStyle(item.appointmentStatus),
+                ]}
+              >
+                {item.appointmentStatus
+                  ? item.appointmentStatus.toUpperCase()
+                  : '-'}
+              </Text>
+            </View>
           </View>
 
           <View style={styles.section}>
@@ -124,8 +156,9 @@ const ServiceSummaryScreen = ({ navigation }) => {
                   Price
                 </Text>
               </View>
-              {item.services.map(service => (
+              {item.services.map((service, index) => (
                 <AmountRow
+                  key={index}
                   service={service.serviceName ?? '-'}
                   qty={service?.qty ?? 1}
                   price={service?.servicePrice ?? '-'}
@@ -138,7 +171,11 @@ const ServiceSummaryScreen = ({ navigation }) => {
             <AmountRow
               service="Subtotal"
               qty={item.services[0]?.qty ?? 1}
-              price={item.services[0].servicePrice ?? 0}
+              price={item.services.reduce(
+                (sum, service) =>
+                  sum + service.servicePrice * (service.qty || 1),
+                0,
+              )}
             />
             {item.offerAvailable && (
               <AmountRow
@@ -153,11 +190,7 @@ const ServiceSummaryScreen = ({ navigation }) => {
             <AmountRow
               service="Total"
               qty={item.services[0]?.qty ?? 1}
-              price={
-                item.offerAvailable
-                  ? item.offerPrice
-                  : item.services[0].servicePrice
-              }
+              price={item.totalAmount}
               isBold={true}
             />
           </View>
@@ -195,7 +228,7 @@ const styles = StyleSheet.create({
   },
   mainTitle: {
     fontSize: 26,
-    fontWeight: '400',
+    fontWeight: '500',
     color: '#333',
     textAlign: 'center',
     marginVertical: 25,
@@ -253,7 +286,7 @@ const styles = StyleSheet.create({
   confirmButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '500',
   },
   modalBackdrop: {
     flex: 1,
@@ -310,6 +343,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#777',
     marginVertical: 4,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 50,
+    marginRight: 15,
+  },
+  statusText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  statusConfirmed: {
+    backgroundColor: '#e6ffe6',
+    color: '#008000',
+  },
+  statusPending: {
+    backgroundColor: '#fffbe6',
+    color: '#ffbf00',
+  },
+  statusCancelled: {
+    backgroundColor: '#ffe6e6',
+    color: '#cc0000',
+  },
+  statusDefault: {
+    backgroundColor: '#f0f0f0',
+    color: '#555',
   },
 });
 

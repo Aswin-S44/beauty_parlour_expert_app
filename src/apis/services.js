@@ -266,6 +266,45 @@ export const getUserRequests = async shopId => {
   }
 };
 
+// export const getAppointmentsByShopId = async shopId => {
+//   try {
+//     const querySnapshot = await firestore()
+//       .collection('appointments')
+//       .where('shopId', '==', shopId)
+//       .where('appointmentStatus', 'in', ['confirmed', 'pending'])
+//       .get();
+
+//     const results = await Promise.all(
+//       querySnapshot.docs.map(async appointmentDoc => {
+//         const appointmentData = appointmentDoc.data();
+//         const expertId = appointmentData.expertId;
+
+//         let expertData = null;
+//         if (expertId) {
+//           const expertSnap = await firestore()
+//             .collection('beauty_experts')
+//             .doc(expertId)
+//             .get();
+//           if (expertSnap.exists) {
+//             expertData = { id: expertSnap.id, ...expertSnap.data() };
+//           }
+//         }
+
+//         return {
+//           id: appointmentDoc.id,
+//           ...appointmentData,
+//           expert: expertData,
+//         };
+//       }),
+//     );
+
+//     return results;
+//   } catch (error) {
+//     console.error('Error fetching appointments with expert data:', error);
+//     throw error;
+//   }
+// };
+
 export const getAppointmentsByShopId = async shopId => {
   try {
     const querySnapshot = await firestore()
@@ -278,6 +317,7 @@ export const getAppointmentsByShopId = async shopId => {
       querySnapshot.docs.map(async appointmentDoc => {
         const appointmentData = appointmentDoc.data();
         const expertId = appointmentData.expertId;
+        const serviceIds = appointmentData.serviceIds || [];
 
         let expertData = null;
         if (expertId) {
@@ -290,17 +330,34 @@ export const getAppointmentsByShopId = async shopId => {
           }
         }
 
+        const serviceData = await Promise.all(
+          serviceIds.map(async serviceId => {
+            const serviceSnap = await firestore()
+              .collection('services')
+              .doc(serviceId)
+              .get();
+            if (serviceSnap.exists) {
+              return { id: serviceSnap.id, ...serviceSnap.data() };
+            }
+            return null;
+          }),
+        );
+
         return {
           id: appointmentDoc.id,
           ...appointmentData,
           expert: expertData,
+          services: serviceData.filter(service => service !== null),
         };
       }),
     );
 
     return results;
   } catch (error) {
-    console.error('Error fetching appointments with expert data:', error);
+    console.error(
+      'Error fetching appointments with expert and service data:',
+      error,
+    );
     throw error;
   }
 };
@@ -777,5 +834,20 @@ export const updateServiceOffer = async (uid, updateData) => {
   } catch (error) {
     console.error('Error updating offer:', error);
     return false;
+  }
+};
+
+export const getNotificationsCountByShopId = async shopId => {
+  try {
+    const querySnapshot = await firestore()
+      .collection('notifications')
+      .where('toId', '==', shopId)
+      .where('isRead', '==', false)
+      .get();
+
+    return querySnapshot?.size ?? 0;
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    return 0;
   }
 };

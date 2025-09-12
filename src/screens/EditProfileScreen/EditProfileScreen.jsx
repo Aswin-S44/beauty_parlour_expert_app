@@ -22,6 +22,8 @@ const EditProfileScreen = ({ navigation }) => {
   const [imageUri, setImageUri] = useState(null);
   const [about, setAbout] = useState('');
   const [address, setAddress] = useState('');
+  const [openingHours, setOpeningHours] = useState(''); // Unified opening hours state
+  const [googleReviewUrl, setGoogleReviewUrl] = useState('');
   const [profileLoading, setProfileLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -39,6 +41,8 @@ const EditProfileScreen = ({ navigation }) => {
             setAbout(res.about || '');
             setAddress(res.address || '');
             setImageUri(res.profileImage || null);
+            setOpeningHours(res.openingHours || ''); // Load unified opening hours
+            setGoogleReviewUrl(res.googleReviewUrl || '');
           }
         } catch (error) {
           console.error('Failed to fetch user data:', error);
@@ -89,6 +93,8 @@ const EditProfileScreen = ({ navigation }) => {
       address: address,
       profileImage: imageUri,
       about: about,
+      openingHours: openingHours, // Save unified opening hours
+      googleReviewUrl: googleReviewUrl,
     };
     try {
       await updateUserData(user.uid, updatedData);
@@ -152,10 +158,33 @@ const EditProfileScreen = ({ navigation }) => {
           <View style={styles.inputSection}>
             <Text style={styles.label}>Address</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, styles.textArea]}
               value={address}
               onChangeText={setAddress}
               placeholder="Your Address"
+              multiline
+            />
+          </View>
+
+          <View style={styles.inputSection}>
+            <Text style={styles.label}>Opening Hours</Text>
+            <TextInput
+              style={styles.input}
+              value={openingHours}
+              onChangeText={setOpeningHours}
+              placeholder="e.g., Mon - Sat: 8:00 am - 12:00 pm"
+            />
+          </View>
+
+          <View style={styles.inputSection}>
+            <Text style={styles.label}>Google Review URL</Text>
+            <TextInput
+              style={styles.input}
+              value={googleReviewUrl}
+              onChangeText={setGoogleReviewUrl}
+              placeholder="Enter Google Review URL"
+              keyboardType="url"
+              autoCapitalize="none"
             />
           </View>
         </View>
@@ -248,7 +277,7 @@ const styles = StyleSheet.create({
     borderColor: '#eee',
   },
   textArea: {
-    height: 120,
+    height: 100,
     textAlignVertical: 'top',
   },
   loadingOverlay: {

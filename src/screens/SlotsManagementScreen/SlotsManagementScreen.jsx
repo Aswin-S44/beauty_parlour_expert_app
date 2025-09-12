@@ -202,14 +202,20 @@ const SlotsManagementScreen = ({ navigation }) => {
 
   const renderSlotItem = ({ item }) => {
     const statusText = item.isAvailable ? 'Available' : 'Booked';
-    const statusColor = item.isAvailable ? 'green' : 'red';
+    const statusColor = item.isAvailable ? '#B8E080' : '#ED5E3E';
     return (
       <View style={styles.slotItem}>
         {console.log('item : ', item)}
         <Text
           style={styles.slotTime}
         >{`${item.startTime} - ${item.endTime}`}</Text>
-        <Text style={[styles.statusText, { color: statusColor }]}>
+        <Text
+          style={[
+            styles.statusText,
+            styles.chip,
+            { backgroundColor: statusColor, color: '#fff', fontSize: 14 },
+          ]}
+        >
           {statusText}
         </Text>
         <View style={styles.slotActions}>
@@ -595,6 +601,10 @@ const styles = StyleSheet.create({
   },
   confirmButtonText: {
     color: '#FFFFFF',
+  },
+  chip: {
+    padding: 4,
+    borderRadius: 10,
   },
 });
 

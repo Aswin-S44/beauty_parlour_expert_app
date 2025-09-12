@@ -7,65 +7,50 @@ import {
   StyleSheet,
   StatusBar,
   Alert,
+  RefreshControl,
 } from 'react-native';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { Swipeable } from 'react-native-gesture-handler';
 import { primaryColor } from '../../constants/colors';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { AuthContext } from '../../context/AuthContext';
-import {
-  getNotificationsByShopId,
-  markNotificationAsRead,
-} from '../../apis/services';
+import { getNotificationsByShopId } from '../../apis/services';
 import AllNotificationsScreenSkeleton from '../AllNotificationsScreenSkeleton/AllNotificationsScreenSkeleton';
 import EmptyComponent from '../../components/EmptyComponent/EmptyComponent';
 import { AVATAR_IMAGE } from '../../constants/images';
 
 const AllNotificationScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
-
+  const [refreshing, setRefreshing] = useState(false);
   const [notifications, setNotifications] = useState([]);
-
   const { user } = useContext(AuthContext);
-  useEffect(() => {
-    if (user && user.uid) {
-      const fetchNotications = async () => {
-        setLoading(true);
-        const res = await getNotificationsByShopId(user.uid);
 
-        setLoading(false);
-        setNotifications(res || []);
-      };
-      fetchNotications();
+  const fetchNotifications = useCallback(async () => {
+    if (user && user.uid) {
+      setLoading(true);
+      const res = await getNotificationsByShopId(user.uid);
+      setLoading(false);
+      setNotifications(res || []);
     }
   }, [user]);
 
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchNotifications();
+    setRefreshing(false);
+  }, [fetchNotifications]);
+
   const handleNotificationPress = async notification => {
     const updatedNotifications = notifications.map(item =>
-      item.id === notification.id ? { ...item, read: true } : item,
+      item.id === notification.id ? { ...item, isRead: true } : item,
     );
-
     setNotifications(updatedNotifications);
     navigation.navigate('NofificationDetailsScreen', { notification });
-  };
-
-  const handleLongPress = notification => {
-    Alert.alert(
-      'Delete Notification',
-      'Are you sure you want to delete this notification?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          onPress: () => deleteNotification(notification.id),
-          style: 'destructive',
-        },
-      ],
-    );
   };
 
   const deleteNotification = id => {
@@ -95,7 +80,6 @@ const AllNotificationScreen = ({ navigation }) => {
           item.isRead && styles.readNotification,
         ]}
         onPress={() => handleNotificationPress(item)}
-        onLongPress={() => handleLongPress(item)}
       >
         <Image
           source={{
@@ -140,17 +124,18 @@ const AllNotificationScreen = ({ navigation }) => {
         <Text style={styles.title}>Notifications</Text>
         {loading ? (
           <AllNotificationsScreenSkeleton />
-        ) : !loading && notifications.length == 0 ? (
+        ) : !loading && notifications.length === 0 ? (
           <EmptyComponent />
         ) : (
-          <View>
-            <FlatList
-              data={notifications}
-              renderItem={renderNotificationItem}
-              keyExtractor={item => item.id}
-              contentContainerStyle={styles.listContainer}
-            />
-          </View>
+          <FlatList
+            data={notifications}
+            renderItem={renderNotificationItem}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.listContainer}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          />
         )}
       </View>
     </View>
@@ -253,10 +238,6 @@ const styles = StyleSheet.create({
     height: '80%',
     borderRadius: 8,
     marginTop: 8,
-  },
-  deleteButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
   },
   title: {
     fontSize: 24,
