@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,6 @@ import {
   Modal,
   ActivityIndicator,
   Alert,
-  Image,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
@@ -18,7 +17,6 @@ import { primaryColor } from '../../constants/colors';
 import { login } from '../../apis/auth';
 import axios from 'axios';
 import { BACKEND_URL, USER_TYPES } from '../../constants/variables';
-import auth from '@react-native-firebase/auth';
 
 export const resetPassword = async email => {
   try {
@@ -37,6 +35,8 @@ const sendOtp = async email => {
         userType: USER_TYPES.BEAUTY_SHOP,
       }),
     ]);
+
+    console.log('results==============', results);
 
     const successResult = results.find(
       result =>
@@ -117,18 +117,12 @@ const SignInScreen = ({ navigation }) => {
     setForgotEmailError('');
     setIsSendingOtp(true);
     try {
-      await resetPassword(forgotEmail);
+      await sendOtp(forgotEmail);
       setIsForgotModalVisible(false);
-      Alert.alert(
-        'Password Reset',
-        'We have sent a password reset link to your email. Please check your spam folder as well.',
-      );
+      navigation.navigate('OTPVerificationScreen', { email: forgotEmail });
       setForgotEmail('');
     } catch (error) {
-      Alert.alert(
-        'Error',
-        error.message || 'Failed to send password reset email.',
-      );
+      Alert.alert('Error', error.message || 'Failed to send OTP.');
     } finally {
       setIsSendingOtp(false);
     }
@@ -641,67 +635,83 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
+
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    zIndex: 1,
+  },
   content: {
     flexGrow: 1,
-    paddingHorizontal: 25,
-    paddingTop: 0,
     alignItems: 'center',
+    paddingTop: 100,
+    paddingHorizontal: 20,
+  },
+  mainTitle: {
+    fontSize: 28,
+    fontWeight: '400',
+    color: '#333',
+    marginBottom: 20,
   },
   illustration: {
-    width: 200,
-    height: 200,
+    width: 150,
+    height: 150,
     resizeMode: 'contain',
     marginBottom: 20,
   },
   infoText: {
     fontSize: 16,
-    color: '#555',
-    textAlign: 'center',
-    marginBottom: 20,
+    color: '#888',
   },
   resendContainer: {
     flexDirection: 'row',
-    marginBottom: 30,
+    marginTop: 8,
   },
   resendText: {
     fontSize: 15,
-    color: '#555',
+    color: '#888',
   },
   resendLink: {
     fontSize: 15,
     color: primaryColor,
-    fontWeight: '500',
+    fontWeight: 'bold',
   },
   otpInputContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 30,
-    width: '100%',
-    paddingHorizontal: 20,
+    width: '90%',
+    marginTop: 40,
   },
   otpBox: {
     width: 45,
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 10,
+    height: 60,
+    borderBottomWidth: 2,
+    borderBottomColor: '#ccc',
     justifyContent: 'center',
     alignItems: 'center',
+    marginHorizontal: 5,
   },
   otpInput: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '600',
     color: '#333',
     textAlign: 'center',
     width: '100%',
+    height: '100%',
   },
   createButton: {
     backgroundColor: primaryColor,
     padding: 18,
     borderRadius: 15,
     alignItems: 'center',
-    width: '100%',
     marginBottom: 30,
+    width: '80%',
+    marginTop: 20,
   },
   createButtonText: {
     color: '#fff',
@@ -712,7 +722,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginTop: 4,
   },
   signInText: {
     fontSize: 15,
@@ -725,9 +735,9 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
 });
 

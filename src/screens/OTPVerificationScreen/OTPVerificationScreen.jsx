@@ -17,13 +17,23 @@ import { primaryColor } from '../../constants/colors';
 import { AuthContext } from '../../context/AuthContext';
 import { updateShop, verifyOtp } from '../../apis/auth';
 
-const OTPVerificationScreen = ({ navigation }) => {
+export const resetPassword = async email => {
+  try {
+    await auth().sendPasswordResetEmail(email);
+    return true;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const OTPVerificationScreen = ({ navigation, route }) => {
   const firstInput = useRef();
   const secondInput = useRef();
   const thirdInput = useRef();
   const fourthInput = useRef();
   const fifthInput = useRef();
   const sixthInput = useRef();
+  const { email } = route.params;
 
   const [otp, setOtp] = useState({ 1: '', 2: '', 3: '', 4: '', 5: '', 6: '' });
   const [isVerifying, setIsVerifying] = useState(false);
@@ -33,19 +43,27 @@ const OTPVerificationScreen = ({ navigation }) => {
   const handleVerifyOTP = async () => {
     setIsVerifying(true);
     const otpValue = Object.values(otp).join('');
+    console.log('===============');
 
     try {
-      if (user && user.email && user.uid) {
-        const res = await verifyOtp(user?.email, otpValue);
-
+      if ((user && user.email && user.uid) || email) {
+        const res = await verifyOtp(user?.email || email, otpValue);
+        console.log('RES****************', res ? res : 'no res');
         if (res && res.success) {
-          await updateShop(user.uid, { isOTPVerified: true });
-          navigation.navigate('GeneralInformationScreen');
+          const uidToUpdate = user?.uid || res.userData.uid; // fallback if user is not signed in
+          await updateShop(uidToUpdate, { isOTPVerified: true });
+          if (user?.uid) {
+            navigation.navigate('GeneralInformationScreen');
+          } else {
+            //navigation.navigate('ResetPasswordScreen',{email});
+            await resetPassword(email);
+          }
         } else {
           Alert.alert('Invalid OTP');
         }
       }
     } catch (error) {
+      console.log('Eror---------', error);
       Alert.alert('Error', 'An error occurred during OTP verification.');
       return error;
     } finally {

@@ -21,7 +21,7 @@ const GeneralInformationScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const { setUserData } = useAuth();
 
-  const { user } = useContext(AuthContext);
+  const { user,userData } = useContext(AuthContext);
 
   const handleAddGeneralInformation = async () => {
     if (!parlourName.trim() || !address.trim()) {
@@ -30,7 +30,7 @@ const GeneralInformationScreen = ({ navigation }) => {
     }
 
     setLoading(true);
-
+    console.log('---------------', userData ? userData : 'no user');
     try {
       if (user && user.uid) {
         const dataToUpdate = {

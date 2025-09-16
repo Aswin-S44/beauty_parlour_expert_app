@@ -1,6 +1,6 @@
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import { AVATAR_IMAGE } from '../constants/images';
+import { AVATAR_IMAGE, NO_IMAGE } from '../constants/images';
 import axios from 'axios';
 import { BACKEND_URL, USER_TYPES } from '../constants/variables';
 import { COLLECTIONS } from '../constants/collections';
@@ -23,7 +23,7 @@ export const signup = async (email, password) => {
       about: '',
       address: '',
       isOnboarded: false,
-      profileImage: AVATAR_IMAGE,
+      profileImage: NO_IMAGE,
       isOTPVerified: false,
       accountInitiated: true,
       profileCompleted: false,
@@ -35,6 +35,7 @@ export const signup = async (email, password) => {
         userType: USER_TYPES.BEAUTY_SHOP,
       }),
     ]).then(results => {
+      console.log('OTP send results:', results);
       return results;
     });
 
@@ -43,7 +44,6 @@ export const signup = async (email, password) => {
     throw error;
   }
 };
-
 export const login = async (email, password) => {
   try {
     const userCredential = await auth().signInWithEmailAndPassword(
@@ -67,6 +67,8 @@ export const logout = async () => {
 
 export const verifyOtp = async (email, otp) => {
   try {
+    console.log('EMAIL------------', email);
+    console.log('OTP-------------', otp);
     const snapshot = await firestore()
       .collection(COLLECTIONS.SHOP_OWNERS)
       .where('email', '==', email)
@@ -78,7 +80,7 @@ export const verifyOtp = async (email, otp) => {
 
     const userDoc = snapshot.docs[0];
     const userData = userDoc.data();
-
+    console.log('userDoc-----------', userDoc ? userDoc : 'no userDoc');
     if (userData.otp && userData.otp === otp) {
       return {
         success: true,
@@ -89,6 +91,7 @@ export const verifyOtp = async (email, otp) => {
 
     return { success: false, message: 'Invalid OTP' };
   } catch (error) {
+    console.log('Error-----------', error);
     return {
       success: false,
       message: 'Error verifying OTP',
@@ -117,11 +120,30 @@ export const updateShop = async (uid, dataToUpdate) => {
   }
 };
 
-export const resetPassword = async email => {
+// export const resetPassword = async email => {
+//   try {
+//     await auth().sendPasswordResetEmail(email);
+//     return true;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+export const resetPassword = async (email, newPassword) => {
   try {
-    await auth().sendPasswordResetEmail(email);
-    return true;
+    console.log('---------------------');
+    // sign in again to reauthenticate (Firebase requires authentication to update password)
+    const userCredential = await auth().signInWithEmailAndPassword(
+      email,
+      newPassword,
+    );
+    const user = userCredential.user;
+
+    await user.updatePassword(newPassword);
+
+    return { success: true, message: 'Password updated successfully' };
   } catch (error) {
-    throw error;
+    console.error('RESET PASSWORD ERROR:', error);
+    return { success: false, message: error.message };
   }
 };

@@ -52,6 +52,7 @@ import EditExpertScreen from './screens/EditExpertScreen/EditExpertScreen';
 import ExpertDetailsScreen from './screens/ExpertDetailsScreen/ExpertDetailsScreen';
 import EditOffersScreen from './screens/EditOffersScreen/EditOffersScreen';
 import OfferDetailsScreen from './screens/OfferDetailsScreen/OfferDetailsScreen';
+import ResetPasswordScreen from './screens/ResetPasswordScreen/ResetPasswordScreen';
 
 const Tab = createMaterialBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -247,6 +248,14 @@ function AuthStack() {
         name="OTPVerificationScreen"
         component={OTPVerificationScreen}
       />
+      <Stack.Screen
+        name="GeneralInformationScreen"
+        component={GeneralInformationScreen}
+      />
+      <Stack.Screen
+        name="ResetPasswordScreen"
+        component={ResetPasswordScreen}
+      />
     </Stack.Navigator>
   );
 }
@@ -263,6 +272,10 @@ function OTPStack() {
       <Stack.Screen
         name="GeneralInformationScreen"
         component={GeneralInformationScreen}
+      />
+      <Stack.Screen
+        name="ResetPasswordScreen"
+        component={ResetPasswordScreen}
       />
     </Stack.Navigator>
   );
@@ -330,6 +343,10 @@ export default function App() {
         ) : (
           <MainAppStack />
         )}
+        <Stack.Screen
+          name="AddGeneralInformationScreen"
+          component={AddGeneralInformationScreen}
+        />
       </NavigationContainer>
     </GestureHandlerRootView>
   );
