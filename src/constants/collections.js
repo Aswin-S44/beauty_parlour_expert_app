@@ -7,4 +7,5 @@ export const COLLECTIONS = {
   CUSTOMERS: 'customers',
   SLOTS: 'slots',
   NOTIFICATIONS: 'notifications',
+  HOLIDAYS: 'holidays',
 };
