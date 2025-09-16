@@ -139,14 +139,6 @@ const ProfileScreen = ({ navigation }) => {
               <Icon name="location-sharp" size={20} color={primaryColor} />
               <Text style={styles.addressText}>{address ?? ''}</Text>
             </View>
-            {/* <View style={styles.addressRow}>
-              <Icon
-                name="navigate-circle-outline"
-                size={20}
-                color={primaryColor}
-              />
-              <Text style={styles.addressText}>5 KM</Text>
-            </View> */}
           </View>
         </View>
 

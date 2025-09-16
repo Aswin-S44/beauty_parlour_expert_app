@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
-import Feather from 'react-native-vector-icons/Feather';
-import { lightPurple, primaryColor } from '../../constants/colors';
+
+import { primaryColor } from '../../constants/colors';
 
 const WelcomeScreen = ({ navigation }) => {
   return (

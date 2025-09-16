@@ -10,7 +10,6 @@ import {
   Modal,
   SafeAreaView,
   Platform,
-  ActivityIndicator,
   StatusBar,
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
@@ -22,9 +21,10 @@ import { AuthContext } from '../../context/AuthContext';
 import { primaryColor } from '../../constants/colors';
 import { ScrollView } from 'react-native';
 import SlotsSkeleton from '../../components/SlotsSkeleton/SlotsSkeleton';
+import { COLLECTIONS } from '../../constants/collections';
 
 const SlotsManagementScreen = ({ navigation }) => {
-  const { user, userData } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const [selectedDate, setSelectedDate] = useState(
     moment().format('YYYY-MM-DD'),
   );
@@ -40,9 +40,8 @@ const SlotsManagementScreen = ({ navigation }) => {
 
     setLoading(true);
 
-    // React Native Firebase realtime listener
     const unsubscribe = firestore()
-      .collection('slots')
+      .collection(COLLECTIONS.SLOTS)
       .where('shopId', '==', user.uid)
       .onSnapshot(
         querySnapshot => {
@@ -79,7 +78,7 @@ const SlotsManagementScreen = ({ navigation }) => {
   const addSlotToFirestore = async slotData => {
     try {
       await firestore()
-        .collection('slots')
+        .collection(COLLECTIONS.SLOTS)
         .add({
           ...slotData,
           shopId: user.uid,
@@ -95,7 +94,7 @@ const SlotsManagementScreen = ({ navigation }) => {
   const updateSlotInFirestore = async (slotId, slotData) => {
     try {
       await firestore()
-        .collection('slots')
+        .collection(COLLECTIONS.SLOTS)
         .doc(slotId)
         .update({
           ...slotData,
@@ -110,7 +109,7 @@ const SlotsManagementScreen = ({ navigation }) => {
 
   const deleteSlotFromFirestore = async slotId => {
     try {
-      await firestore().collection('slots').doc(slotId).delete();
+      await firestore().collection(COLLECTIONS.SLOTS).doc(slotId).delete();
       return { success: true };
     } catch (error) {
       console.error('Error deleting slot:', error);
@@ -205,7 +204,6 @@ const SlotsManagementScreen = ({ navigation }) => {
     const statusColor = item.isAvailable ? '#B8E080' : '#ED5E3E';
     return (
       <View style={styles.slotItem}>
-        {console.log('item : ', item)}
         <Text
           style={styles.slotTime}
         >{`${item.startTime} - ${item.endTime}`}</Text>
@@ -251,7 +249,7 @@ const SlotsManagementScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={primaryColor} />
-      {/* Custom Header */}
+
       <View style={styles.customHeader}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -260,7 +258,7 @@ const SlotsManagementScreen = ({ navigation }) => {
           <Icon name="chevron-left" size={24} color="#FFFFFF" />
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
-        <View style={{ width: 60 }} /> {/* Spacer to balance title */}
+        <View style={{ width: 60 }} />
       </View>
       <View style={styles.contentContainer}>
         {loading ? (
@@ -341,7 +339,7 @@ const SlotsManagementScreen = ({ navigation }) => {
           </>
         )}
       </View>
-      {/* Add/Edit Slot Modal */}
+
       <Modal
         animationType="fade"
         transparent={true}
@@ -395,8 +393,6 @@ const SlotsManagementScreen = ({ navigation }) => {
     </SafeAreaView>
   );
 };
-
-// ... (keep your styles the same)
 
 const styles = StyleSheet.create({
   safeArea: {

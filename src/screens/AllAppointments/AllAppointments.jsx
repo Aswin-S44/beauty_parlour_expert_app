@@ -14,8 +14,7 @@ import { getAppointmentsByShopId } from '../../apis/services';
 import { convertFIrstCharToUpper, formatTimestamp } from '../../utils/utils';
 import EmptyComponent from '../../components/EmptyComponent/EmptyComponent';
 import ServiceCardSkeleton from '../../components/ServiceCardSkeleton/ServiceCardSkeleton';
-
-const NO_IMAGE = 'https://via.placeholder.com/150';
+import { NO_IMAGE } from '../../constants/variables';
 
 const AllAppointments = ({ navigation }) => {
   const { user } = useContext(AuthContext);

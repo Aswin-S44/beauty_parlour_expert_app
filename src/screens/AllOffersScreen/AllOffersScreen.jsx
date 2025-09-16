@@ -25,7 +25,7 @@ const AllOffersScreen = ({ navigation }) => {
   const [deleteConfirmationVisible, setDeleteConfirmationVisible] =
     useState(false);
 
-  const { user, loading } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     if (user && user.uid) {
@@ -75,7 +75,6 @@ const AllOffersScreen = ({ navigation }) => {
 
   const confirmDelete = async () => {
     if (selectedOffer && user && user.uid) {
-      console.log('selected offer : ', selectedOffer);
       await deleteOffer(selectedOffer.id, user.uid);
       setOffers(prev => prev.filter(s => s.id !== selectedOffer.id));
     }
@@ -136,22 +135,12 @@ const AllOffersScreen = ({ navigation }) => {
           ) : (
             <FlatList
               data={offers}
-              renderItem={({ item }) => (
-                // <OfferItem item={item} shopId={user.uid} />
-                <RenderOfferItem item={item} />
-              )}
-              // renderItem={renderOfferItem}
+              renderItem={({ item }) => <RenderOfferItem item={item} />}
               keyExtractor={item => item.id}
               contentContainerStyle={styles.listContainer}
             />
           )}
         </>
-        {/* <FlatList
-          data={offersData}
-          renderItem={renderOfferItem}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.listContainer}
-        /> */}
       </View>
       <View style={styles.footer}>
         <TouchableOpacity

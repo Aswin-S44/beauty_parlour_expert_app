@@ -14,12 +14,6 @@ const ConfirmationWaitingScreen = ({ navigation }) => {
         <Text style={styles.title}>Branding For Your Parlour</Text>
         <Text style={styles.description}>Waiting for Admin to onboard you</Text>
       </View>
-      {/* <TouchableOpacity
-        style={styles.signInButton}
-        onPress={() => navigation.navigate('SignIn')}
-      >
-        <Text style={styles.signInButtonText}>Back to SignIn</Text>
-      </TouchableOpacity> */}
     </SafeAreaView>
   );
 };

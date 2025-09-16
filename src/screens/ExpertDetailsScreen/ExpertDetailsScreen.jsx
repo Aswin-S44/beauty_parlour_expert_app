@@ -14,7 +14,6 @@ import { formatServiceName } from '../../utils/utils';
 
 const ExpertDetailsScreen = ({ navigation, route }) => {
   const { expert } = route.params;
-  console.log('expert----------', expert ? expert : 'no service');
 
   return (
     <View style={styles.container}>

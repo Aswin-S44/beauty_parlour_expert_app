@@ -11,11 +11,10 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { Picker } from '@react-native-picker/picker';
-import { AuthContext } from '../../context/AuthContext';
 import { updateService } from '../../apis/services';
 
 const EditServiceScreen = ({ navigation, route }) => {
@@ -34,8 +33,6 @@ const EditServiceScreen = ({ navigation, route }) => {
   const [customCategory, setCustomCategory] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
-
-  const { user } = useContext(AuthContext);
 
   const [predefinedCategories, setPredefinedCategories] = useState([
     'Hair Cut',

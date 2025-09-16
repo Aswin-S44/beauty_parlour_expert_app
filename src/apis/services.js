@@ -1,10 +1,11 @@
 import firestore from '@react-native-firebase/firestore';
-import { firestore as db } from '../config/firebase';
-import { APPOINTMENT_STATUSES } from '../constants/variables';
-
-const CLOUDINARY_URL =
-  'https://api.cloudinary.com/v1_1/personalprojectaswins/image/upload';
-const CLOUDINARY_UPLOAD_PRESET = 'cloudinary_react';
+import {
+  APPOINTMENT_STATUS_MAPPINGS,
+  APPOINTMENT_STATUSES,
+  CLOUDINARY_UPLOAD_PRESET,
+  CLOUDINARY_URL,
+} from '../constants/variables';
+import { COLLECTIONS } from '../constants/collections';
 
 export const addServices = async (shopId, data, imageUri) => {
   try {
@@ -31,7 +32,7 @@ export const addServices = async (shopId, data, imageUri) => {
     }
 
     await firestore()
-      .collection('services')
+      .collection(COLLECTIONS.SERVICES)
       .add({
         shopId: shopId,
         ...data,
@@ -48,7 +49,7 @@ export const addServices = async (shopId, data, imageUri) => {
 export const getShopServices = async shopId => {
   try {
     const querySnapshot = await firestore()
-      .collection('services')
+      .collection(COLLECTIONS.SERVICES)
       .where('shopId', '==', shopId)
       .get();
 
@@ -89,7 +90,7 @@ export const addBeautyExpert = async (shopId, data, imageUri) => {
     }
 
     await firestore()
-      .collection('beauty_experts')
+      .collection(COLLECTIONS.BEAUTY_EXPERTS)
       .add({
         shopId: shopId,
         ...data,
@@ -106,7 +107,7 @@ export const addBeautyExpert = async (shopId, data, imageUri) => {
 export const getBeautyExperts = async shopId => {
   try {
     const querySnapshot = await firestore()
-      .collection('beauty_experts')
+      .collection(COLLECTIONS.BEAUTY_EXPERTS)
       .where('shopId', '==', shopId)
       .get();
 
@@ -124,7 +125,10 @@ export const getBeautyExperts = async shopId => {
 
 export const getUserData = async uid => {
   try {
-    const docSnap = await firestore().collection('shop-owners').doc(uid).get();
+    const docSnap = await firestore()
+      .collection(COLLECTIONS.SHOP_OWNERS)
+      .doc(uid)
+      .get();
 
     if (docSnap.exists) {
       return docSnap.data();
@@ -162,7 +166,10 @@ export const updateUserData = async (uid, updateData) => {
       }
     }
 
-    await firestore().collection('shop-owners').doc(uid).update(updateData);
+    await firestore()
+      .collection(COLLECTIONS.SHOP_OWNERS)
+      .doc(uid)
+      .update(updateData);
     return true;
   } catch (error) {
     console.error('Error updating user data:', error);
@@ -200,7 +207,7 @@ export const addOffer = async (shopId, data) => {
     }
 
     await firestore()
-      .collection('offers')
+      .collection(COLLECTIONS.OFFERS)
       .add({
         shopId: shopId,
         ...data,
@@ -218,7 +225,7 @@ export const addOffer = async (shopId, data) => {
 export const getOffersByShop = async shopId => {
   try {
     const querySnapshot = await firestore()
-      .collection('offers')
+      .collection(COLLECTIONS.OFFERS)
       .where('shopId', '==', shopId)
       .get();
 
@@ -226,7 +233,7 @@ export const getOffersByShop = async shopId => {
       querySnapshot.docs.map(async offerDoc => {
         const offerData = offerDoc.data();
         const serviceSnap = await firestore()
-          .collection('services')
+          .collection(COLLECTIONS.SERVICES)
           .doc(offerData.serviceId)
           .get();
 
@@ -250,7 +257,7 @@ export const getOffersByShop = async shopId => {
 export const getUserRequests = async shopId => {
   try {
     const querySnapshot = await firestore()
-      .collection('appointments')
+      .collection(COLLECTIONS.APPOINTMENTS)
       .where('shopId', '==', shopId)
       .get();
 
@@ -266,51 +273,15 @@ export const getUserRequests = async shopId => {
   }
 };
 
-// export const getAppointmentsByShopId = async shopId => {
-//   try {
-//     const querySnapshot = await firestore()
-//       .collection('appointments')
-//       .where('shopId', '==', shopId)
-//       .where('appointmentStatus', 'in', ['confirmed', 'pending'])
-//       .get();
-
-//     const results = await Promise.all(
-//       querySnapshot.docs.map(async appointmentDoc => {
-//         const appointmentData = appointmentDoc.data();
-//         const expertId = appointmentData.expertId;
-
-//         let expertData = null;
-//         if (expertId) {
-//           const expertSnap = await firestore()
-//             .collection('beauty_experts')
-//             .doc(expertId)
-//             .get();
-//           if (expertSnap.exists) {
-//             expertData = { id: expertSnap.id, ...expertSnap.data() };
-//           }
-//         }
-
-//         return {
-//           id: appointmentDoc.id,
-//           ...appointmentData,
-//           expert: expertData,
-//         };
-//       }),
-//     );
-
-//     return results;
-//   } catch (error) {
-//     console.error('Error fetching appointments with expert data:', error);
-//     throw error;
-//   }
-// };
-
 export const getAppointmentsByShopId = async shopId => {
   try {
     const querySnapshot = await firestore()
-      .collection('appointments')
+      .collection(COLLECTIONS.APPOINTMENTS)
       .where('shopId', '==', shopId)
-      .where('appointmentStatus', 'in', ['confirmed', 'pending'])
+      .where('appointmentStatus', 'in', [
+        APPOINTMENT_STATUS_MAPPINGS.CONFIRMED,
+        APPOINTMENT_STATUS_MAPPINGS.PENDING,
+      ])
       .get();
 
     const results = await Promise.all(
@@ -323,7 +294,7 @@ export const getAppointmentsByShopId = async shopId => {
         let expertData = null;
         if (expertId) {
           const expertSnap = await firestore()
-            .collection('beauty_experts')
+            .collection(COLLECTIONS.BEAUTY_EXPERTS)
             .doc(expertId)
             .get();
           if (expertSnap.exists) {
@@ -334,7 +305,7 @@ export const getAppointmentsByShopId = async shopId => {
         const serviceData = await Promise.all(
           serviceIds.map(async serviceId => {
             const serviceSnap = await firestore()
-              .collection('services')
+              .collection(COLLECTIONS.SERVICES)
               .doc(serviceId)
               .get();
             if (serviceSnap.exists) {
@@ -347,7 +318,7 @@ export const getAppointmentsByShopId = async shopId => {
         let customerData = null;
         if (customerId) {
           const customerSnap = await firestore()
-            .collection('customers')
+            .collection(COLLECTIONS.CUSTOMERS)
             .doc(customerId)
             .get();
           if (customerSnap.exists) {
@@ -373,13 +344,13 @@ export const getAppointmentsByShopId = async shopId => {
 export const getUserPendingRequests = async shopId => {
   try {
     const querySnapshot = await firestore()
-      .collection('appointments')
+      .collection(COLLECTIONS.APPOINTMENTS)
       .where('shopId', '==', shopId)
       .where('appointmentStatus', '==', APPOINTMENT_STATUSES.PENDING)
       .get();
 
     const offersSnapshot = await firestore()
-      .collection('offers')
+      .collection(COLLECTIONS.OFFERS)
       .where('shopId', '==', shopId)
       .get();
 
@@ -397,7 +368,7 @@ export const getUserPendingRequests = async shopId => {
         let expertData = null;
         if (expertId) {
           const expertSnap = await firestore()
-            .collection('beauty_experts')
+            .collection(COLLECTIONS.BEAUTY_EXPERTS)
             .doc(expertId)
             .get();
           if (expertSnap.exists) {
@@ -408,7 +379,7 @@ export const getUserPendingRequests = async shopId => {
         const services = await Promise.all(
           serviceIds.map(async serviceId => {
             const serviceSnap = await firestore()
-              .collection('services')
+              .collection(COLLECTIONS.SERVICES)
               .doc(serviceId)
               .get();
             if (serviceSnap.exists) {
@@ -455,7 +426,9 @@ export const getUserPendingRequests = async shopId => {
 
 export const confirmAppointment = async (id, shopId) => {
   try {
-    const appointmentRef = firestore().collection('appointments').doc(id);
+    const appointmentRef = firestore()
+      .collection(COLLECTIONS.APPOINTMENTS)
+      .doc(id);
     const appointmentSnap = await appointmentRef.get();
 
     if (!appointmentSnap.exists) {
@@ -487,7 +460,7 @@ export const confirmAppointment = async (id, shopId) => {
 export const getAppointmentStats = async shopId => {
   try {
     const querySnapshot = await firestore()
-      .collection('appointments')
+      .collection(COLLECTIONS.APPOINTMENTS)
       .where('shopId', '==', shopId)
       .get();
 
@@ -501,13 +474,13 @@ export const getAppointmentStats = async shopId => {
       totalAppointments++;
 
       switch (data.appointmentStatus) {
-        case 'pending':
+        case APPOINTMENT_STATUSES.PENDING:
           pendingCount++;
           break;
-        case 'confirmed':
+        case APPOINTMENT_STATUSES.CONFIRMED:
           confirmedCount++;
           break;
-        case 'completed':
+        case APPOINTMENT_STATUSES.COMPLETED:
           completedCount++;
           break;
         default:
@@ -529,7 +502,9 @@ export const getAppointmentStats = async shopId => {
 
 export const cancelAppointment = async (id, shopId) => {
   try {
-    const appointmentRef = firestore().collection('appointments').doc(id);
+    const appointmentRef = firestore()
+      .collection(COLLECTIONS.APPOINTMENTS)
+      .doc(id);
     const appointmentSnap = await appointmentRef.get();
 
     if (!appointmentSnap.exists) {
@@ -561,7 +536,7 @@ export const cancelAppointment = async (id, shopId) => {
 export const getShopSlots = async shopId => {
   try {
     const querySnapshot = await firestore()
-      .collection('slots')
+      .collection(COLLECTIONS.SLOTS)
       .where('shopId', '==', shopId)
       .get();
 
@@ -580,7 +555,7 @@ export const getShopSlots = async shopId => {
 export const getSlotsByDate = async (shopId, date) => {
   try {
     const querySnapshot = await firestore()
-      .collection('slots')
+      .collection(COLLECTIONS.SLOTS)
       .where('shopId', '==', shopId)
       .where('date', '==', date)
       .get();
@@ -599,7 +574,7 @@ export const getSlotsByDate = async (shopId, date) => {
 
 export const deleteSlot = async (slotId, shopId) => {
   try {
-    const slotRef = firestore().collection('slots').doc(slotId);
+    const slotRef = firestore().collection(COLLECTIONS.SLOTS).doc(slotId);
     const slotSnap = await slotRef.get();
 
     if (!slotSnap.exists) {
@@ -624,7 +599,7 @@ export const deleteSlot = async (slotId, shopId) => {
 export const getNotificationsByShopId = async shopId => {
   try {
     const querySnapshot = await firestore()
-      .collection('notifications')
+      .collection(COLLECTIONS.NOTIFICATIONS)
       .where('toId', '==', shopId)
       .get();
 
@@ -632,7 +607,7 @@ export const getNotificationsByShopId = async shopId => {
       querySnapshot.docs.map(async doc => {
         const data = doc.data();
         const customerSnapshot = await firestore()
-          .collection('customers')
+          .collection(COLLECTIONS.CUSTOMERS)
           .where('uid', '==', data.fromId)
           .limit(1)
           .get();
@@ -657,7 +632,9 @@ export const getNotificationsByShopId = async shopId => {
 
 export const markNotificationAsRead = async id => {
   try {
-    const notificationRef = firestore().collection('notifications').doc(id);
+    const notificationRef = firestore()
+      .collection(COLLECTIONS.NOTIFICATIONS)
+      .doc(id);
     const docSnapshot = await notificationRef.get();
 
     if (!docSnapshot.exists) {
@@ -677,7 +654,9 @@ export const markNotificationAsRead = async id => {
 
 export const deleteService = async (serviceId, shopId) => {
   try {
-    const serviceRef = firestore().collection('services').doc(serviceId);
+    const serviceRef = firestore()
+      .collection(COLLECTIONS.SERVICES)
+      .doc(serviceId);
     const serviceSnap = await serviceRef.get();
 
     if (!serviceSnap.exists) {
@@ -749,7 +728,10 @@ export const updateService = async (uid, updateData) => {
       }
     }
 
-    await firestore().collection('services').doc(uid).update(updateData);
+    await firestore()
+      .collection(COLLECTIONS.SERVICES)
+      .doc(uid)
+      .update(updateData);
     return true;
   } catch (error) {
     console.error('Error updating user data:', error);
@@ -759,7 +741,9 @@ export const updateService = async (uid, updateData) => {
 
 export const deleteExpert = async (expertId, shopId) => {
   try {
-    const expertRef = firestore().collection('beauty_experts').doc(expertId);
+    const expertRef = firestore()
+      .collection(COLLECTIONS.BEAUTY_EXPERTS)
+      .doc(expertId);
     const expertSnap = await expertRef.get();
 
     if (!expertSnap.exists) {
@@ -803,7 +787,10 @@ export const updateBeautyExpert = async (uid, updateData) => {
       }
     }
 
-    await firestore().collection('beauty_experts').doc(uid).update(updateData);
+    await firestore()
+      .collection(COLLECTIONS.BEAUTY_EXPERTS)
+      .doc(uid)
+      .update(updateData);
     return true;
   } catch (error) {
     console.error('Error updating beauty expert:', error);
@@ -813,7 +800,7 @@ export const updateBeautyExpert = async (uid, updateData) => {
 
 export const deleteOffer = async (offerId, shopId) => {
   try {
-    const offerRef = firestore().collection('offers').doc(offerId);
+    const offerRef = firestore().collection(COLLECTIONS.OFFERS).doc(offerId);
     const offerSnap = await offerRef.get();
 
     if (!offerSnap.exists) {
@@ -837,7 +824,10 @@ export const deleteOffer = async (offerId, shopId) => {
 
 export const updateServiceOffer = async (uid, updateData) => {
   try {
-    await firestore().collection('offers').doc(uid).update(updateData);
+    await firestore()
+      .collection(COLLECTIONS.OFFERS)
+      .doc(uid)
+      .update(updateData);
     return true;
   } catch (error) {
     console.error('Error updating offer:', error);
@@ -848,7 +838,7 @@ export const updateServiceOffer = async (uid, updateData) => {
 export const getNotificationsCountByShopId = async shopId => {
   try {
     const querySnapshot = await firestore()
-      .collection('notifications')
+      .collection(COLLECTIONS.NOTIFICATIONS)
       .where('toId', '==', shopId)
       .where('isRead', '==', false)
       .get();

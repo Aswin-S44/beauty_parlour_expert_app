@@ -80,7 +80,7 @@ const SignUpScreen = ({ navigation, route }) => {
     try {
       await signup(email, password);
       setUserData({
-        isOTPVerified: false, // or whatever your initial flags should be
+        isOTPVerified: false,
       });
       navigation.navigate('OTPVerificationScreen');
     } catch (error) {

@@ -1,6 +1,7 @@
-import React, { createContext, useState, useEffect, useContext } from 'react'; // Added useContext
-import auth from '@react-native-firebase/auth'; // Changed import
-import { auth as firebaseAuth, firestore } from '../config/firebase'; // Make sure path is correct
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import auth from '@react-native-firebase/auth';
+import { auth as firebaseAuth, firestore } from '../config/firebase';
+import { COLLECTIONS } from '../constants/collections';
 
 export const AuthContext = createContext();
 
@@ -10,13 +11,12 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // React Native Firebase uses different syntax
     const unsubscribe = auth().onAuthStateChanged(async firebaseUser => {
       if (firebaseUser) {
         setUser(firebaseUser);
         try {
           const docSnap = await firestore()
-            .collection('shop-owners')
+            .collection(COLLECTIONS.SHOP_OWNERS)
             .doc(firebaseUser.uid)
             .get();
 
@@ -51,7 +51,6 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Optional: Create a hook for easier usage
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

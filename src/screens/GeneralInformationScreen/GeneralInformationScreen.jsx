@@ -46,7 +46,7 @@ const GeneralInformationScreen = ({ navigation }) => {
           setUserData({
             profileCompleted: true,
             isOnboarded: false,
-            isOTPVerified: true, // or whatever your initial flags should be
+            isOTPVerified: true,
           });
         } else {
           Alert.alert('Error', 'Error while updating profile');

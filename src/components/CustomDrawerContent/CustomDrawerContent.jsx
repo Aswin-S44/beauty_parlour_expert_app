@@ -5,7 +5,6 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { primaryColor } from '../../constants/colors';
-import { logout } from '../../apis/auth';
 import { AuthContext } from '../../context/AuthContext';
 import { AVATAR_IMAGE } from '../../constants/images';
 
@@ -31,7 +30,7 @@ const DrawerItem = ({ iconName, iconSet, label, onPress }) => {
 };
 
 const CustomDrawerContent = props => {
-  const { logout, user, userData, loading } = useContext(AuthContext);
+  const { logout, userData, loading } = useContext(AuthContext);
 
   return (
     <View style={styles.container}>

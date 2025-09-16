@@ -3,6 +3,7 @@ import firestore from '@react-native-firebase/firestore';
 import { AVATAR_IMAGE } from '../constants/images';
 import axios from 'axios';
 import { BACKEND_URL, USER_TYPES } from '../constants/variables';
+import { COLLECTIONS } from '../constants/collections';
 
 export const signup = async (email, password) => {
   try {
@@ -12,7 +13,7 @@ export const signup = async (email, password) => {
     );
 
     const user = userCredential.user;
-    await firestore().collection('shop-owners').doc(user.uid).set({
+    await firestore().collection(COLLECTIONS.SHOP_OWNERS).doc(user.uid).set({
       uid: user.uid,
       fullName: '',
       phone: '',
@@ -67,7 +68,7 @@ export const logout = async () => {
 export const verifyOtp = async (email, otp) => {
   try {
     const snapshot = await firestore()
-      .collection('shop-owners')
+      .collection(COLLECTIONS.SHOP_OWNERS)
       .where('email', '==', email)
       .get();
 
@@ -98,7 +99,10 @@ export const verifyOtp = async (email, otp) => {
 
 export const updateShop = async (uid, dataToUpdate) => {
   try {
-    await firestore().collection('shop-owners').doc(uid).update(dataToUpdate);
+    await firestore()
+      .collection(COLLECTIONS.SHOP_OWNERS)
+      .doc(uid)
+      .update(dataToUpdate);
 
     return {
       success: true,

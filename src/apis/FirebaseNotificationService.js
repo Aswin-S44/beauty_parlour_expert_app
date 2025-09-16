@@ -1,13 +1,12 @@
 import { Platform, PermissionsAndroid, Alert } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
 import { auth, firestore } from '../config/firebase';
+import { COLLECTIONS } from '../constants/collections';
 
 class FirebaseNotificationService {
-  // Request notification permissions
   static async requestNotificationPermission() {
     try {
       if (Platform.OS === 'android') {
-        // For Android 13+ (API level 33+)
         if (Platform.Version >= 33) {
           const granted = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
@@ -20,10 +19,9 @@ class FirebaseNotificationService {
           );
           return granted === PermissionsAndroid.RESULTS.GRANTED;
         }
-        // For older Android versions, permission is granted by default
+
         return true;
       } else {
-        // iOS
         const authStatus = await messaging().requestPermission();
         return (
           authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
@@ -36,7 +34,6 @@ class FirebaseNotificationService {
     }
   }
 
-  // Get FCM token
   static async getFCMToken() {
     try {
       if (Platform.OS === 'ios') {
@@ -45,7 +42,6 @@ class FirebaseNotificationService {
 
       const token = await messaging().getToken();
 
-      // Store token in Firestore for the current user
       await this.storeFCMToken(token);
 
       return token;
@@ -55,27 +51,27 @@ class FirebaseNotificationService {
     }
   }
 
-  // Store FCM token in Firestore
   static async storeFCMToken(token) {
     try {
       const currentUser = auth().currentUser;
       if (currentUser) {
-        await firestore().collection('shop-owners').doc(currentUser.uid).set(
-          {
-            fcmToken: token,
-            updatedAt: firestore.FieldValue.serverTimestamp(),
-          },
-          { merge: true },
-        );
+        await firestore()
+          .collection(COLLECTIONS.SHOP_OWNERS)
+          .doc(currentUser.uid)
+          .set(
+            {
+              fcmToken: token,
+              updatedAt: firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true },
+          );
       }
     } catch (error) {
       console.error('Error storing FCM token:', error);
     }
   }
 
-  // Setup notification handlers
   static setupNotificationHandlers() {
-    // Foreground messages
     const unsubscribe = messaging().onMessage(async remoteMessage => {
       Alert.alert(
         remoteMessage.notification?.title || 'Notification',
@@ -89,13 +85,11 @@ class FirebaseNotificationService {
       );
     });
 
-    // Notification opened from background/quit state
     messaging().onNotificationOpenedApp(remoteMessage => {
       console.log('Notification opened from background:', remoteMessage);
       // Handle navigation based on notification data
     });
 
-    // Check if app was opened by notification
     messaging()
       .getInitialNotification()
       .then(remoteMessage => {
@@ -107,7 +101,6 @@ class FirebaseNotificationService {
     return unsubscribe;
   }
 
-  // Subscribe to topics (for shop notifications)
   static async subscribeToShopTopic(shopId) {
     try {
       await messaging().subscribeToTopic(`shop_${shopId}`);
@@ -117,7 +110,6 @@ class FirebaseNotificationService {
     }
   }
 
-  // Unsubscribe from topics
   static async unsubscribeFromShopTopic(shopId) {
     try {
       await messaging().unsubscribeFromTopic(`shop_${shopId}`);

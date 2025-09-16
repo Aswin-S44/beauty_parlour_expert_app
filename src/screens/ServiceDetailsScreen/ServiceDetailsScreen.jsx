@@ -13,7 +13,6 @@ import { AVATAR_IMAGE } from '../../constants/images';
 
 const ServiceDetailsScreen = ({ navigation, route }) => {
   const { service } = route.params;
-  console.log('service----------', service ? service : 'no service');
 
   return (
     <View style={styles.container}>

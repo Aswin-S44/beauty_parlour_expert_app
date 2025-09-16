@@ -6,7 +6,6 @@ import {
   Image,
   StyleSheet,
   StatusBar,
-  Alert,
   RefreshControl,
 } from 'react-native';
 import React, { useContext, useEffect, useState, useCallback } from 'react';

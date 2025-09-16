@@ -9,7 +9,6 @@ import {
   FlatList,
   StatusBar,
   Modal,
-  TextInput,
   ActivityIndicator,
 } from 'react-native';
 import React, { useContext, useEffect, useState } from 'react';

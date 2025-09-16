@@ -22,7 +22,7 @@ const EditProfileScreen = ({ navigation }) => {
   const [imageUri, setImageUri] = useState(null);
   const [about, setAbout] = useState('');
   const [address, setAddress] = useState('');
-  const [openingHours, setOpeningHours] = useState(''); // Unified opening hours state
+  const [openingHours, setOpeningHours] = useState('');
   const [googleReviewUrl, setGoogleReviewUrl] = useState('');
   const [profileLoading, setProfileLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -41,7 +41,7 @@ const EditProfileScreen = ({ navigation }) => {
             setAbout(res.about || '');
             setAddress(res.address || '');
             setImageUri(res.profileImage || null);
-            setOpeningHours(res.openingHours || ''); // Load unified opening hours
+            setOpeningHours(res.openingHours || '');
             setGoogleReviewUrl(res.googleReviewUrl || '');
           }
         } catch (error) {
@@ -93,7 +93,7 @@ const EditProfileScreen = ({ navigation }) => {
       address: address,
       profileImage: imageUri,
       about: about,
-      openingHours: openingHours, // Save unified opening hours
+      openingHours: openingHours,
       googleReviewUrl: googleReviewUrl,
     };
     try {

@@ -1,11 +1,9 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import React from 'react';
-import { primaryColor } from '../../constants/colors';
 
 const SlotsSkeleton = () => {
   return (
     <View style={styles.container}>
-      {/* Calendar Skeleton */}
       <View style={styles.calendarSkeleton}>
         <View style={styles.calendarHeader}>
           <View style={styles.skeletonSquare} />
@@ -24,13 +22,11 @@ const SlotsSkeleton = () => {
         </View>
       </View>
 
-      {/* Date Header Skeleton */}
       <View style={styles.dateHeader}>
         <View style={styles.skeletonTextLarge} />
         <View style={styles.skeletonButton} />
       </View>
 
-      {/* Slot Items Skeleton */}
       <View style={styles.slotsContainer}>
         {Array.from({ length: 3 }).map((_, index) => (
           <View key={index} style={styles.slotItemSkeleton}>

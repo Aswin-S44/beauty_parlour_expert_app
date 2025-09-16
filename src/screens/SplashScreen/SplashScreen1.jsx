@@ -38,8 +38,8 @@ const styles = StyleSheet.create({
     marginTop: 150,
   },
   welcomeImage: {
-    width: 100, // 👈 fix: you wrote '100' as string earlier
-    height: 100, // 👈 same here
+    width: 100,
+    height: 100,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
     resizeMode: 'contain',

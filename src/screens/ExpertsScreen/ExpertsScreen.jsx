@@ -15,13 +15,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { AuthContext } from '../../context/AuthContext';
 import { deleteExpert, getBeautyExperts } from '../../apis/services';
-import {
-  formatDateTime,
-  formatServiceName,
-  formattedTimeAgo,
-  formatTimeAgo,
-  timeAgo,
-} from '../../utils/utils';
+import { formatServiceName, formatTimeAgo } from '../../utils/utils';
 
 const ExpertsScreen = ({ navigation }) => {
   const [experts, setExperts] = useState([]);

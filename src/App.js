@@ -6,7 +6,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { ActivityIndicator, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
 import HomeScreen from './screens/HomeScreen/HomeScreen';
@@ -19,7 +18,6 @@ import BookingSummaryScreen from './screens/BookingSummaryScreen/BookingSummaryS
 import AppointmentScreen from './screens/AppointmentScreen/AppointmentScreen';
 import ChangePasswordScreen from './screens/ChangePasswordScreen/ChangePasswordScreen';
 import HelpSupportScreen from './screens/HelpSupportScreen/HelpSupportScreen';
-import NearByShopsList from './screens/NearByShopsList/NearByShopsList';
 import BeautyExpertDetailsScreen from './screens/BeautyExpertDetailsScreen/BeautyExpertDetailsScreen';
 import OTPVerificationScreen from './screens/OTPVerificationScreen/OTPVerificationScreen';
 import SplashScreen from './screens/SplashScreen/SplashScreen';

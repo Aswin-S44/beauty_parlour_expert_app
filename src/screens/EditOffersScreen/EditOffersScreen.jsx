@@ -15,11 +15,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { AuthContext } from '../../context/AuthContext';
-import {
-  updateOffer,
-  getShopServices,
-  updateServiceOffer,
-} from '../../apis/services';
+import { getShopServices, updateServiceOffer } from '../../apis/services';
 import { launchImageLibrary } from 'react-native-image-picker';
 
 const EditOffersScreen = ({ navigation, route }) => {
