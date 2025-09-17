@@ -109,7 +109,7 @@ const AllAppointments = ({ navigation }) => {
         {loading && !refreshing ? (
           <ServiceCardSkeleton />
         ) : !loading && appointments.length === 0 ? (
-          <EmptyComponent />
+          <EmptyComponent title="No appointments available" />
         ) : (
           <FlatList
             data={appointments}

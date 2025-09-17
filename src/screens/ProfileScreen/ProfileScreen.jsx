@@ -18,7 +18,7 @@ import { getUserData } from '../../apis/services';
 import { AVATAR_IMAGE } from '../../constants/images';
 
 const ProfileScreen = ({ navigation }) => {
-  const { user } = useContext(AuthContext);
+  const { user, refreshUserData } = useContext(AuthContext);
   const [name, setName] = useState('');
   const [imageUri, setImageUri] = useState(null);
   const [about, setAbout] = useState('');
@@ -66,7 +66,8 @@ const ProfileScreen = ({ navigation }) => {
     setRefreshing(true);
     await fetchUserData();
     setRefreshing(false);
-  }, [fetchUserData]);
+    await refreshUserData();
+  }, [fetchUserData, refreshUserData]);
 
   const handleOpenGoogleReview = () => {
     if (googleReviewUrl) {

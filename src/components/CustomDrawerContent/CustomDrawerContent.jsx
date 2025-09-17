@@ -76,11 +76,11 @@ const CustomDrawerContent = props => {
               props.navigation.navigate('ChangePasswordScreen');
             }}
           />
-          <DrawerItem
+          {/* <DrawerItem
             label="Settings"
             iconName="settings-outline"
             onPress={() => {}}
-          />
+          /> */}
           <DrawerItem
             label="Help & Support"
             iconSet="MaterialCommunity"

@@ -9,6 +9,7 @@ import {
   Modal,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import React from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -16,6 +17,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { deleteService, getShopServices } from '../../apis/services';
 import { AuthContext } from '../../context/AuthContext';
 import { formatTimeAgo } from '../../utils/utils';
+import ServiceCardSkeleton from '../../components/ServiceCardSkeleton/ServiceCardSkeleton';
 
 const AllServicesScreen = ({ navigation }) => {
   const [services, setServices] = React.useState([]);
@@ -25,8 +27,9 @@ const AllServicesScreen = ({ navigation }) => {
   const { user } = React.useContext(AuthContext);
   const [deleteConfirmationVisible, setDeleteConfirmationVisible] =
     React.useState(false);
+  const [refreshing, setRefreshing] = React.useState(false);
 
-  const fetchServices = async () => {
+  const fetchServices = React.useCallback(async () => {
     try {
       setLoading(true);
       if (user) {
@@ -37,8 +40,9 @@ const AllServicesScreen = ({ navigation }) => {
       Alert.alert('Error', 'Could not fetch services.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [user]);
 
   React.useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -46,7 +50,12 @@ const AllServicesScreen = ({ navigation }) => {
     });
 
     return unsubscribe;
-  }, [navigation, user, fetchServices]);
+  }, [navigation, fetchServices]);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    fetchServices();
+  }, [fetchServices]);
 
   const openMenu = item => {
     setSelectedService(item);
@@ -64,7 +73,7 @@ const AllServicesScreen = ({ navigation }) => {
     }
     closeMenu();
   };
- 
+
   const handleDelete = () => {
     if (selectedService) {
       setDeleteConfirmationVisible(true);
@@ -78,7 +87,7 @@ const AllServicesScreen = ({ navigation }) => {
       setServices(prev => prev.filter(s => s.id !== selectedService.id));
     }
     setDeleteConfirmationVisible(false);
-  }; 
+  };
 
   const renderServiceItem = ({ item }) => (
     <TouchableOpacity
@@ -131,12 +140,9 @@ const AllServicesScreen = ({ navigation }) => {
 
       <View style={styles.contentContainer}>
         <Text style={styles.title}>Service List</Text>
-        {loading ? (
+        {loading && !refreshing ? (
           <>
-            {' '}
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#8e44ad" />
-            </View>
+            <ServiceCardSkeleton />
           </>
         ) : (
           <FlatList
@@ -145,6 +151,9 @@ const AllServicesScreen = ({ navigation }) => {
             keyExtractor={item => item.id}
             contentContainerStyle={styles.listContainer}
             ListEmptyComponent={ListEmptyComponent}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
           />
         )}
       </View>

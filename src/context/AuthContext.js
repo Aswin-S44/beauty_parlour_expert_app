@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import auth from '@react-native-firebase/auth';
-import { auth as firebaseAuth, firestore } from '../config/firebase';
+import { firestore } from '../config/firebase';
 import { COLLECTIONS } from '../constants/collections';
 
 export const AuthContext = createContext();
@@ -10,24 +10,34 @@ export const AuthProvider = ({ children }) => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchUserData = async firebaseUser => {
+    if (firebaseUser) {
+      try {
+        const docSnap = await firestore()
+          .collection(COLLECTIONS.SHOP_OWNERS)
+          .doc(firebaseUser.uid)
+          .get();
+
+        if (docSnap.exists) {
+          setUserData(docSnap.data());
+        } else {
+          setUserData(null); // User data not found
+        }
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+        setUserData(null);
+      }
+    } else {
+      setUserData(null);
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(async firebaseUser => {
+      setUser(firebaseUser);
       if (firebaseUser) {
-        setUser(firebaseUser);
-        try {
-          const docSnap = await firestore()
-            .collection(COLLECTIONS.SHOP_OWNERS)
-            .doc(firebaseUser.uid)
-            .get();
-
-          if (docSnap.exists) {
-            setUserData(docSnap.data());
-          }
-        } catch (err) {
-          return err;
-        }
+        await fetchUserData(firebaseUser);
       } else {
-        setUser(null);
         setUserData(null);
       }
       setLoading(false);
@@ -42,9 +52,23 @@ export const AuthProvider = ({ children }) => {
     setUserData(null);
   };
 
+  const refreshUserData = async () => {
+    if (user) {
+      await fetchUserData(user);
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, userData, logout, loading, setLoading, setUserData }}
+      value={{
+        user,
+        userData,
+        logout,
+        loading,
+        setLoading,
+        setUserData,
+        refreshUserData,
+      }}
     >
       {children}
     </AuthContext.Provider>

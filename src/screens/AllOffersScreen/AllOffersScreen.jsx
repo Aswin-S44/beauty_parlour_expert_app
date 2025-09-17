@@ -7,8 +7,9 @@ import {
   TouchableOpacity,
   StatusBar,
   Modal,
+  RefreshControl,
 } from 'react-native';
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { AuthContext } from '../../context/AuthContext';
@@ -24,30 +25,38 @@ const AllOffersScreen = ({ navigation }) => {
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [deleteConfirmationVisible, setDeleteConfirmationVisible] =
     useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const { user } = useContext(AuthContext);
 
-  useEffect(() => {
+  const fetchOffers = useCallback(async () => {
     if (user && user.uid) {
-      const fetchOffers = async () => {
-        try {
-          setOffersLoading(true);
-          const res = await getOffersByShop(user.uid);
-          setOffersLoading(false);
-
-          if (res && res.length > 0) {
-            setOffers(res);
-          }
-        } catch (err) {
-          console.error('Error fetching offers:', err);
-        } finally {
-          setOffersLoading(false);
+      try {
+        setOffersLoading(true);
+        const res = await getOffersByShop(user.uid);
+        if (res && res.length > 0) {
+          setOffers(res);
+        } else {
+          setOffers([]);
         }
-      };
-
-      fetchOffers();
+      } catch (err) {
+        console.error('Error fetching offers:', err);
+        setOffers([]);
+      } finally {
+        setOffersLoading(false);
+      }
     }
   }, [user]);
+
+  useEffect(() => {
+    fetchOffers();
+  }, [fetchOffers]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchOffers();
+    setRefreshing(false);
+  }, [fetchOffers]);
 
   const openMenu = item => {
     setSelectedOffer(item);
@@ -138,6 +147,9 @@ const AllOffersScreen = ({ navigation }) => {
               renderItem={({ item }) => <RenderOfferItem item={item} />}
               keyExtractor={item => item.id}
               contentContainerStyle={styles.listContainer}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
             />
           )}
         </>

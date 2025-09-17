@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,8 @@ import {
   StatusBar,
   TextInput,
   ScrollView,
-  Alert,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { primaryColor } from '../../constants/colors';
@@ -18,6 +18,7 @@ import {
   EmailAuthProvider,
 } from 'firebase/auth';
 import { auth } from '../../config/firebase';
+import { AuthContext } from '../../context/AuthContext';
 
 const PasswordInput = ({
   label,
@@ -60,53 +61,74 @@ const ChangePasswordScreen = ({ navigation }) => {
     new: true,
     confirm: true,
   });
+  const { user, logout } = useContext(AuthContext);
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalSuccess, setModalSuccess] = useState(false);
 
   const toggleSecureEntry = field => {
     setPasswords(prev => ({ ...prev, [field]: !prev[field] }));
   };
 
+  const showModal = (message, success) => {
+    setModalMessage(message);
+    setModalSuccess(success);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    if (modalSuccess) {
+      logout();
+    }
+  };
+
   const handleChangePassword = async () => {
     if (!oldPassword || !newPassword || !confirmPassword) {
-      Alert.alert('Error', 'Please fill all fields');
+      showModal('Please fill all fields', false);
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'New passwords do not match');
+      showModal('New passwords do not match', false);
       return;
     }
 
     if (newPassword.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      showModal('Password must be at least 6 characters', false);
       return;
     }
 
     setLoading(true);
 
     try {
-      const user = auth.currentUser;
-
-      if (user && user.email) {
+      const currentUser = auth.currentUser;
+      console.log('currentUser-----------', user?.email, oldPassword);
+      if (user && user?.email) {
         const credential = EmailAuthProvider.credential(
           user.email,
           oldPassword,
         );
         await reauthenticateWithCredential(user, credential);
         await updatePassword(user, newPassword);
-        Alert.alert('Success', 'Password changed successfully');
-        navigation.goBack();
+        showModal('Password changed successfully', true);
+      } else {
+        showModal(
+          'No user is currently signed in or user email not found.',
+          false,
+        );
       }
     } catch (error) {
       if (error.code === 'auth/wrong-password') {
-        Alert.alert('Error', 'Current password is incorrect');
+        showModal('Current password is incorrect', false);
       } else if (error.code === 'auth/requires-recent-login') {
-        Alert.alert('Error', 'Please sign in again to change your password');
+        showModal('Please sign in again to change your password', false);
       } else {
-        Alert.alert('Error', error.message);
+        showModal(error.message, false);
       }
     } finally {
       setLoading(false);
@@ -164,6 +186,29 @@ const ChangePasswordScreen = ({ navigation }) => {
           </TouchableOpacity>
         </ScrollView>
       </View>
+
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={closeModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Ionicons
+                name={modalSuccess ? 'checkmark-circle' : 'close-circle'}
+                size={70}
+                color={modalSuccess ? primaryColor : '#FF3B30'}
+              />
+            </View>
+            <Text style={styles.modalMessage}>{modalMessage}</Text>
+            <TouchableOpacity style={styles.modalButton} onPress={closeModal}>
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -239,6 +284,45 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   changeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 25,
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  modalHeader: {
+    marginBottom: 20,
+  },
+  modalMessage: {
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 25,
+    color: '#333',
+    fontWeight: '500',
+  },
+  modalButton: {
+    backgroundColor: primaryColor,
+    paddingVertical: 12,
+    paddingHorizontal: 50,
+    borderRadius: 15,
+  },
+  modalButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '500',

@@ -124,7 +124,7 @@ const AllNotificationScreen = ({ navigation }) => {
         {loading ? (
           <AllNotificationsScreenSkeleton />
         ) : !loading && notifications.length === 0 ? (
-          <EmptyComponent />
+          <EmptyComponent title='No notifications available' />
         ) : (
           <FlatList
             data={notifications}

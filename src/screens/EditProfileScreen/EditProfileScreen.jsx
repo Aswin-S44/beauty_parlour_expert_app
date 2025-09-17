@@ -17,7 +17,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { getUserData, updateUserData } from '../../apis/services';
 
 const EditProfileScreen = ({ navigation }) => {
-  const { user } = useContext(AuthContext);
+  const { user, refreshUserData } = useContext(AuthContext);
   const [name, setName] = useState('');
   const [imageUri, setImageUri] = useState(null);
   const [about, setAbout] = useState('');
@@ -98,7 +98,9 @@ const EditProfileScreen = ({ navigation }) => {
     };
     try {
       await updateUserData(user.uid, updatedData);
+      await refreshUserData();
       setToastMessage('Profile updated successfully!');
+      navigation.goBack();
     } catch (error) {
       console.error('Error updating profile:', error);
       setToastMessage('Failed to update profile.');

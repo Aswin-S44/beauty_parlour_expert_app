@@ -18,6 +18,7 @@ import {
   getNotificationsCountByShopId,
 } from '../../apis/services';
 import moment from 'moment';
+import Toast from 'react-native-toast-message';
 
 const HomeScreen = ({ navigation }) => {
   const { user } = useContext(AuthContext);
@@ -270,6 +271,7 @@ const HomeScreen = ({ navigation }) => {
           </Text>
         </View>
       </View>
+      <Toast />
     </ScrollView>
   );
 };

@@ -273,14 +273,15 @@ const AppointmentRequestsScreen = ({ navigation }) => {
         source={require('../../assets/images/home_bg-1.png')}
         style={styles.headerBackground}
       >
+        <View style={styles.overlay} />
         <View style={styles.header}>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
             <Ionicons name="chevron-back" size={24} color="#fff" />
             <Text style={styles.backButtonText}>Back</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </ImageBackground>
 
@@ -289,7 +290,7 @@ const AppointmentRequestsScreen = ({ navigation }) => {
         {loading ? (
           <ServiceCardSkeleton />
         ) : !loading && userRequests.length === 0 ? (
-          <EmptyComponent />
+          <EmptyComponent title="No user requests available" />
         ) : (
           <FlatList
             data={userRequests}
@@ -524,6 +525,10 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     marginBottom: 20,
     fontSize: 15,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(128, 0, 128, 0.5)',
   },
 });
 
