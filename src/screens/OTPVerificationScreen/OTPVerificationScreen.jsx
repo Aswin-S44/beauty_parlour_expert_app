@@ -15,7 +15,7 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { primaryColor } from '../../constants/colors';
 import { AuthContext } from '../../context/AuthContext';
-import { updateShop, verifyOtp } from '../../apis/auth';
+import { resentOTP, updateShop, verifyOtp } from '../../apis/auth';
 
 export const resetPassword = async email => {
   try {
@@ -42,12 +42,11 @@ const OTPVerificationScreen = ({ navigation, route }) => {
   const handleVerifyOTP = async () => {
     setIsVerifying(true);
     const otpValue = Object.values(otp).join('');
-    console.log('===============');
 
     try {
       if (user && user.email && user.uid) {
         const res = await verifyOtp(user?.email, otpValue);
-        console.log('RES****************', res ? res : 'no res');
+
         if (res && res.success) {
           const uidToUpdate = user?.uid || res.userData.uid; // fallback if user is not signed in
           await updateShop(uidToUpdate, { isOTPVerified: true });
@@ -55,15 +54,26 @@ const OTPVerificationScreen = ({ navigation, route }) => {
             navigation.navigate('GeneralInformationScreen');
           }
         } else {
-          Alert.alert('Invalid OTP');
+          Alert.alert('Invalid OTP','Please verify your otp');
         }
       }
     } catch (error) {
-      console.log('Eror---------', error);
       Alert.alert('Error', 'An error occurred during OTP verification.');
       return error;
     } finally {
       setIsVerifying(false);
+    }
+  };
+
+  const handleResentOTP = async () => {
+    if (user && user.email) {
+      try {
+        const res = await resentOTP(user?.email);
+        setOtp({ 1: '', 2: '', 3: '', 4: '', 5: '', 6: '' });
+      } catch (error) {
+        console.log('Error while resent otp : ', error);
+        setError(error);
+      }
     }
   };
 
@@ -89,7 +99,7 @@ const OTPVerificationScreen = ({ navigation, route }) => {
         <Text style={styles.infoText}>Enter OTP Sent To:</Text>
         <View style={styles.resendContainer}>
           <Text style={styles.resendText}>Didn't get OTP code? </Text>
-          <TouchableOpacity disabled={isVerifying}>
+          <TouchableOpacity disabled={isVerifying} onPress={handleResentOTP}>
             <Text style={styles.resendLink}>RESEND</Text>
           </TouchableOpacity>
         </View>

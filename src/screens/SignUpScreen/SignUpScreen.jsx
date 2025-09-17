@@ -82,7 +82,8 @@ const SignUpScreen = ({ navigation, route }) => {
       setUserData({
         isOTPVerified: false,
       });
-      navigation.navigate('OTPVerificationScreen');
+      // navigation.navigate('OTPVerificationScreen');
+      navigation.replace('OTPVerificationScreen', { email });
     } catch (error) {
       setSignupError(error.message);
     } finally {

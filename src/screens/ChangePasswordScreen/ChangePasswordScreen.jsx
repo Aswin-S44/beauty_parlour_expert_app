@@ -107,7 +107,7 @@ const ChangePasswordScreen = ({ navigation }) => {
 
     try {
       const currentUser = auth.currentUser;
-      console.log('currentUser-----------', user?.email, oldPassword);
+
       if (user && user?.email) {
         const credential = EmailAuthProvider.credential(
           user.email,

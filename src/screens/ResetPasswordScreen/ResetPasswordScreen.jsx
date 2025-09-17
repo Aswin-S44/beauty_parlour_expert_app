@@ -61,7 +61,6 @@ const ResetPasswordScreen = ({ navigation, route }) => {
   };
 
   const handleResetPassword = async () => {
-    console.log('===========');
     if (!newPassword || !confirmPassword) {
       Alert.alert('Error', 'Please fill all fields');
       return;
@@ -76,7 +75,6 @@ const ResetPasswordScreen = ({ navigation, route }) => {
     }
     setLoading(true);
     try {
-      console.log('&&&&&&&&&&&&');
       const result = await resetPassword(email, newPassword);
       if (result.success) {
         Alert.alert('Success', result.message);

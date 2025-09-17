@@ -35,7 +35,6 @@ export const signup = async (email, password) => {
         userType: USER_TYPES.BEAUTY_SHOP,
       }),
     ]).then(results => {
-      console.log('OTP send results:', results);
       return results;
     });
 
@@ -67,8 +66,6 @@ export const logout = async () => {
 
 export const verifyOtp = async (email, otp) => {
   try {
-    console.log('EMAIL------------', email);
-    console.log('OTP-------------', otp);
     const snapshot = await firestore()
       .collection(COLLECTIONS.SHOP_OWNERS)
       .where('email', '==', email)
@@ -80,7 +77,7 @@ export const verifyOtp = async (email, otp) => {
 
     const userDoc = snapshot.docs[0];
     const userData = userDoc.data();
-    console.log('userDoc-----------', userDoc ? userDoc : 'no userDoc');
+
     if (userData.otp && userData.otp === otp) {
       return {
         success: true,
@@ -91,7 +88,6 @@ export const verifyOtp = async (email, otp) => {
 
     return { success: false, message: 'Invalid OTP' };
   } catch (error) {
-    console.log('Error-----------', error);
     return {
       success: false,
       message: 'Error verifying OTP',
@@ -131,7 +127,6 @@ export const updateShop = async (uid, dataToUpdate) => {
 
 export const resetPassword = async (email, newPassword) => {
   try {
-    console.log('---------------------');
     // sign in again to reauthenticate (Firebase requires authentication to update password)
     const userCredential = await auth().signInWithEmailAndPassword(
       email,
@@ -146,4 +141,16 @@ export const resetPassword = async (email, newPassword) => {
     console.error('RESET PASSWORD ERROR:', error);
     return { success: false, message: error.message };
   }
+};
+
+export const resentOTP = async email => {
+  console.log('CLICKED--------------', email ? email : 'no email');
+  const res = await axios.post(
+    `https://beauty-parlor-app-backend.onrender.com/api/v1/user/send-otp`,
+    {
+      email,
+      userType: USER_TYPES.BEAUTY_SHOP,
+    },
+  );
+  console.log('RESET OTP RES==================', res ? res : 'no res');
 };

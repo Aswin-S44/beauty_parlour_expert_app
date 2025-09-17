@@ -288,7 +288,7 @@ export default function App() {
   const [fcmToken, setFcmToken] = useState('');
 
   useEffect(() => {
-    if (user) {
+    if (user && userData?.isOnboarded) {
       const initializeApp = async () => {
         try {
           FirebaseNotificationService.setupNotificationHandlers();

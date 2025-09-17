@@ -36,8 +36,6 @@ const sendOtp = async email => {
       }),
     ]);
 
-    console.log('results==============', results);
-
     const successResult = results.find(
       result =>
         result.status === 'fulfilled' &&
