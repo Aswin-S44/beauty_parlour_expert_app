@@ -8,6 +8,8 @@ export const APPOINTMENT_STATUSES = {
 export const BACKEND_URL =
   'https://beauty-parlor-app-backend.onrender.com/api/v1/user';
 
+// export const BACKEND_URL = 'http://10.130.97.171:5000/api/v1/user';
+
 export const USER_TYPES = {
   CUSTOMER: 'CUSTOMER',
   BEAUTY_SHOP: 'BEAUTY_SHOP',

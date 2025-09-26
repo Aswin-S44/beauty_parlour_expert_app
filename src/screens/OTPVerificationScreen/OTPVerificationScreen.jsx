@@ -16,6 +16,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { primaryColor } from '../../constants/colors';
 import { AuthContext } from '../../context/AuthContext';
 import { resentOTP, updateShop, verifyOtp } from '../../apis/auth';
+import auth from '@react-native-firebase/auth';
 
 export const resetPassword = async email => {
   try {
@@ -38,23 +39,24 @@ const OTPVerificationScreen = ({ navigation, route }) => {
   const [isVerifying, setIsVerifying] = useState(false);
 
   const { user, userData, loading } = useContext(AuthContext);
+  const emailFromRoute = route.params?.email || user?.email;
 
   const handleVerifyOTP = async () => {
     setIsVerifying(true);
     const otpValue = Object.values(otp).join('');
 
     try {
-      if (user && user.email && user.uid) {
-        const res = await verifyOtp(user?.email, otpValue);
-
+      if (emailFromRoute) {
+        const res = await verifyOtp(emailFromRoute, otpValue);
+        console.log('res---------', res ? res : 'no res');
         if (res && res.success) {
-          const uidToUpdate = user?.uid || res.userData.uid; // fallback if user is not signed in
+          const uidToUpdate = user?.uid || res.userData.uid;
           await updateShop(uidToUpdate, { isOTPVerified: true });
           if (user?.uid) {
             navigation.navigate('GeneralInformationScreen');
           }
         } else {
-          Alert.alert('Invalid OTP','Please verify your otp');
+          Alert.alert('Invalid OTP', 'Invalid OTP');
         }
       }
     } catch (error) {
@@ -66,13 +68,14 @@ const OTPVerificationScreen = ({ navigation, route }) => {
   };
 
   const handleResentOTP = async () => {
-    if (user && user.email) {
+    if (emailFromRoute) {
       try {
-        const res = await resentOTP(user?.email);
+        await resentOTP(emailFromRoute);
         setOtp({ 1: '', 2: '', 3: '', 4: '', 5: '', 6: '' });
+        Alert.alert('OTP Resent', 'A new OTP has been sent to your email.');
       } catch (error) {
         console.log('Error while resent otp : ', error);
-        setError(error);
+        Alert.alert('Error', 'Failed to resend OTP. Please try again.');
       }
     }
   };
@@ -132,6 +135,7 @@ const OTPVerificationScreen = ({ navigation, route }) => {
                       refs[index - 1].current.focus();
                     }
                   }}
+                  value={otp[digit]}
                   editable={!isVerifying}
                 />
               </View>
@@ -142,7 +146,7 @@ const OTPVerificationScreen = ({ navigation, route }) => {
         <TouchableOpacity
           style={styles.createButton}
           onPress={handleVerifyOTP}
-          disabled={isVerifying}
+          disabled={isVerifying || Object.values(otp).join('').length !== 6}
         >
           {isVerifying ? (
             <ActivityIndicator color="#fff" />

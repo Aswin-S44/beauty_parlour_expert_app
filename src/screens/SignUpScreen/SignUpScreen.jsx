@@ -78,12 +78,12 @@ const SignUpScreen = ({ navigation, route }) => {
 
     setIsLoading(true);
     try {
-      await signup(email, password);
-      setUserData({
-        isOTPVerified: false,
+      await signup(email, password).then(() => {
+        setUserData({
+          isOTPVerified: false,
+        });
+        navigation.replace('OTPVerificationScreen', { email });
       });
-      // navigation.navigate('OTPVerificationScreen');
-      navigation.replace('OTPVerificationScreen', { email });
     } catch (error) {
       setSignupError(error.message);
     } finally {
@@ -218,31 +218,32 @@ const SignUpScreen = ({ navigation, route }) => {
             ) : null}
           </View>
 
-          <TouchableOpacity
-            style={styles.termsContainer}
-            onPress={() => {
-              setAcceptedTerms(!acceptedTerms);
-              if (termsError) validateFields();
-            }}
-          >
-            <Ionicons
-              name={acceptedTerms ? 'checkbox' : 'square-outline'}
-              size={22}
-              color={acceptedTerms ? primaryColor : '#888'}
-            />
+          <View style={styles.termsRow}>
+            <TouchableOpacity
+              onPress={() => {
+                setAcceptedTerms(!acceptedTerms);
+                if (termsError) validateFields();
+              }}
+              style={styles.checkboxTouchArea}
+            >
+              <Ionicons
+                name={acceptedTerms ? 'checkbox' : 'square-outline'}
+                size={22}
+                color={acceptedTerms ? primaryColor : '#888'}
+              />
+            </TouchableOpacity>
             <Text style={styles.termsText}>
               I accept the{' '}
-              <TouchableOpacity
-                style={{}}
+              <Text
+                style={styles.termsLink}
                 onPress={() => {
                   navigation.navigate('PrivacyPolicyScreen');
                 }}
               >
-                {' '}
-                <Text style={styles.termsLink}>policy and privacy</Text>
-              </TouchableOpacity>
+                policy and privacy
+              </Text>
             </Text>
-          </TouchableOpacity>
+          </View>
           {termsError ? (
             <Text style={styles.errorTextTerms}>{termsError}</Text>
           ) : null}
@@ -368,14 +369,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginLeft: 5,
   },
-  termsContainer: {
+  termsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 5,
     marginTop: 5,
+    marginLeft: 5,
+  },
+  checkboxTouchArea: {
+    paddingRight: 10,
+    paddingVertical: 5,
+    marginLeft: -5,
   },
   termsText: {
-    marginLeft: 10,
     fontSize: 14,
     color: '#555',
   },

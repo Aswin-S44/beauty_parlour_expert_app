@@ -20,7 +20,6 @@ import ChangePasswordScreen from './screens/ChangePasswordScreen/ChangePasswordS
 import HelpSupportScreen from './screens/HelpSupportScreen/HelpSupportScreen';
 import BeautyExpertDetailsScreen from './screens/BeautyExpertDetailsScreen/BeautyExpertDetailsScreen';
 import OTPVerificationScreen from './screens/OTPVerificationScreen/OTPVerificationScreen';
-import SplashScreen from './screens/SplashScreen/SplashScreen';
 import SplashScreen1 from './screens/SplashScreen/SplashScreen1';
 import OnboardingScreen from './screens/OnboardingScreen/OnboardingScreen';
 import WelcomeScreen from './screens/WelcomeScreen/WelcomeScreen';
@@ -226,7 +225,6 @@ function MainAppStack() {
 function AuthStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="SignIn" component={SignInScreen} />
@@ -239,7 +237,6 @@ function AuthStack() {
         name="PrivacyPolicyScreen"
         component={PrivacyPolicyScreen}
       />
-
       <Stack.Screen
         name="ConfirmationWaitingScreen"
         component={ConfirmationWaitingScreen}
@@ -284,7 +281,6 @@ function OTPStack() {
 export default function App() {
   const { user, userData, loading } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(false);
-
   const [fcmToken, setFcmToken] = useState('');
 
   useEffect(() => {
@@ -292,15 +288,12 @@ export default function App() {
       const initializeApp = async () => {
         try {
           FirebaseNotificationService.setupNotificationHandlers();
-
           const hasPermission =
             await FirebaseNotificationService.requestNotificationPermission();
-
           if (hasPermission) {
             const token = await FirebaseNotificationService.getFCMToken();
             setFcmToken(token);
           }
-
           setIsLoading(false);
         } catch (error) {
           console.error('App initialization error:', error);
@@ -321,7 +314,7 @@ export default function App() {
         unsubscribeAuth();
       };
     }
-  }, [user]);
+  }, [user, userData]);
 
   if (loading) {
     return <SplashScreen1 />;
@@ -340,13 +333,11 @@ export default function App() {
           userData?.profileCompleted &&
           userData?.isOTPVerified ? (
           <ConfirmationWaitingScreen />
-        ) : (
+        ) : userData ? (
           <MainAppStack />
+        ) : (
+          <AuthStack />
         )}
-        <Stack.Screen
-          name="AddGeneralInformationScreen"
-          component={AddGeneralInformationScreen}
-        />
       </NavigationContainer>
     </GestureHandlerRootView>
   );

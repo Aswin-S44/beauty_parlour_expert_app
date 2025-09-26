@@ -13,37 +13,53 @@ export const AuthProvider = ({ children }) => {
   const fetchUserData = async firebaseUser => {
     if (firebaseUser) {
       try {
-        const docSnap = await firestore()
+        const docRef = firestore()
           .collection(COLLECTIONS.SHOP_OWNERS)
-          .doc(firebaseUser.uid)
-          .get();
+          .doc(firebaseUser.uid);
 
-        if (docSnap.exists) {
-          setUserData(docSnap.data());
-        } else {
-          setUserData(null); // User data not found
-        }
+        const unsubscribeSnapshot = docRef.onSnapshot(docSnap => {
+          if (docSnap.exists) {
+            setUserData(docSnap.data());
+          } else {
+            setUserData(null);
+          }
+        });
+
+        return unsubscribeSnapshot;
       } catch (err) {
         console.error('Error fetching user data:', err);
         setUserData(null);
+        return () => {};
       }
     } else {
       setUserData(null);
+      return () => {};
     }
   };
 
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged(async firebaseUser => {
-      setUser(firebaseUser);
-      if (firebaseUser) {
-        await fetchUserData(firebaseUser);
-      } else {
-        setUserData(null);
-      }
-      setLoading(false);
-    });
+    let unsubscribeAuth;
+    let unsubscribeFirestore = () => {};
 
-    return unsubscribe;
+    const setupAuthListener = async () => {
+      unsubscribeAuth = auth().onAuthStateChanged(async firebaseUser => {
+        setUser(firebaseUser);
+        if (firebaseUser) {
+          unsubscribeFirestore = await fetchUserData(firebaseUser);
+        } else {
+          setUserData(null);
+          unsubscribeFirestore();
+        }
+        setLoading(false);
+      });
+    };
+
+    setupAuthListener();
+
+    return () => {
+      unsubscribeAuth();
+      unsubscribeFirestore();
+    };
   }, []);
 
   const logout = () => {
@@ -54,7 +70,7 @@ export const AuthProvider = ({ children }) => {
 
   const refreshUserData = async () => {
     if (user) {
-      await fetchUserData(user);
+      // Re-fetch data if needed, but the snapshot listener should handle updates automatically
     }
   };
 

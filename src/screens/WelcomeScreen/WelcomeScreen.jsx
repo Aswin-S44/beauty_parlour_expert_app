@@ -7,12 +7,20 @@ import {
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 
 import { primaryColor } from '../../constants/colors';
 
 const WelcomeScreen = ({ navigation }) => {
+  const lighterPrimaryColor = '#FBCDFF';
+
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={[primaryColor, lighterPrimaryColor]}
+      style={styles.container}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
       <StatusBar backgroundColor={primaryColor} barStyle="light-content" />
       <Image
         source={require('../../assets/images/splash_logo.png')}
@@ -34,14 +42,13 @@ const WelcomeScreen = ({ navigation }) => {
           <Text style={styles.signUpButtonText}>SIGN UP</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: primaryColor,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -86,8 +93,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   welcomeImage: {
-    width: '100',
-    height: '100',
+    width: 100,
+    height: 100,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
   },
