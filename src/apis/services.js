@@ -2,10 +2,14 @@ import firestore from '@react-native-firebase/firestore';
 import {
   APPOINTMENT_STATUS_MAPPINGS,
   APPOINTMENT_STATUSES,
+  APPOINTMENT_TYPES,
+  BACKEND_URL,
   CLOUDINARY_UPLOAD_PRESET,
   CLOUDINARY_URL,
+  NOTIFICATION_TYPES,
 } from '../constants/variables';
 import { COLLECTIONS } from '../constants/collections';
+import axios from 'axios';
 
 export const addServices = async (shopId, data, imageUri) => {
   try {
@@ -424,6 +428,54 @@ export const getUserPendingRequests = async shopId => {
   }
 };
 
+export const createNotification = async (fromId, toId, message) => {
+  try {
+    const notificationData = {
+      fromId,
+      toId,
+      notificationType: NOTIFICATION_TYPES.APPOINTMENT_ACCEPTED,
+      createdAt: new Date(),
+      isRead: false,
+      message,
+    };
+    console.log('notificationData------------', notificationData);
+
+    const docRef = await firestore()
+      .collection('notifications')
+      .add(notificationData);
+
+    return {
+      success: true,
+      id: docRef.id,
+      message: 'notification created successfully',
+    };
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    return {
+      success: false,
+      message: error.message,
+    };
+  }
+};
+
+export const sendAppointmentNofification = async (
+  customerId,
+  shopId,
+  appointmentType,
+) => {
+  try {
+    const url = `${BACKEND_URL}/appointment`;
+    const res = await axios.post(url, {
+      customerId,
+      shopId,
+      appointmentType,
+    });
+    console.log('notification res---------------', res ? res : 'no res');
+  } catch (error) {
+    console.log('Error whilel sending notification : ', error);
+  }
+};
+
 export const confirmAppointment = async (id, shopId) => {
   try {
     const appointmentRef = firestore()
@@ -441,14 +493,26 @@ export const confirmAppointment = async (id, shopId) => {
       throw new Error('Appointment does not belong to this shop');
     }
 
-    if (appointmentData.appointmentStatus !== 'pending') {
-      throw new Error('Appointment is not in pending status');
-    }
-
+    // if (appointmentData.appointmentStatus !== 'pending') {
+    //   throw new Error('Appointment is not in pending status');
+    // }
+    console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
     await appointmentRef.update({
       appointmentStatus: APPOINTMENT_STATUSES.CONFIRMED,
       confirmedAt: new Date(),
     });
+
+    await sendAppointmentNofification(
+      appointmentData.customerId,
+      shopId,
+      APPOINTMENT_TYPES.BOOKING_ACCEPTED,
+    );
+
+    await createNotification(
+      shopId,
+      appointmentData.customerId,
+      'Your booking accepted',
+    );
 
     return { success: true, message: 'Appointment confirmed successfully' };
   } catch (error) {
@@ -525,6 +589,12 @@ export const cancelAppointment = async (id, shopId) => {
       appointmentStatus: APPOINTMENT_STATUSES.CANCELLED,
       cancelledAt: new Date(),
     });
+
+    await sendAppointmentNofification(
+      appointmentData.customerId,
+      shopId,
+      APPOINTMENT_TYPES.BOOKING_REJECTED,
+    );
 
     return { success: true, message: 'Appointment cancelled successfully' };
   } catch (error) {

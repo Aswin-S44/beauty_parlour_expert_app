@@ -18,6 +18,7 @@ import { getNotificationsByShopId } from '../../apis/services';
 import AllNotificationsScreenSkeleton from '../AllNotificationsScreenSkeleton/AllNotificationsScreenSkeleton';
 import EmptyComponent from '../../components/EmptyComponent/EmptyComponent';
 import { AVATAR_IMAGE } from '../../constants/images';
+import { getNotificationTitle } from '../../constants/variables';
 
 const AllNotificationScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
@@ -78,7 +79,7 @@ const AllNotificationScreen = ({ navigation }) => {
           styles.notificationItem,
           item.isRead && styles.readNotification,
         ]}
-        onPress={() => handleNotificationPress(item)}
+        // onPress={() => handleNotificationPress(item)}
       >
         <Image
           source={{
@@ -88,9 +89,10 @@ const AllNotificationScreen = ({ navigation }) => {
         />
         <View style={styles.notificationContent}>
           <Text style={styles.notificationTitle}>
-            {item.notificationType === 'appointment_request'
+            {/* {item.notificationType === 'appointment_request'
               ? 'Appointment Request'
-              : 'Notification'}
+              : 'Notification'} */}
+            Appointment request
           </Text>
           <Text style={styles.notificationMessage}>{item.message}</Text>
           <Text style={styles.notificationTime}>
@@ -124,7 +126,7 @@ const AllNotificationScreen = ({ navigation }) => {
         {loading ? (
           <AllNotificationsScreenSkeleton />
         ) : !loading && notifications.length === 0 ? (
-          <EmptyComponent title='No notifications available' />
+          <EmptyComponent title="No notifications available" />
         ) : (
           <FlatList
             data={notifications}

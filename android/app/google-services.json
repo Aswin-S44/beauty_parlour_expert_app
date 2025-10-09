@@ -12,7 +12,20 @@
           "package_name": "saloon.beauty.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "583572822214-97if179dl5hltbmvt4ghj1kta3mbcj48.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "saloon.beauty.app",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "583572822214-cb5fja5eqke0sev8h5qnh9lb0d37jti1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDtvIbIPsZsfMWG9xKQKNM9ufLP43gHiSg"
@@ -20,7 +33,49 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "583572822214-cb5fja5eqke0sev8h5qnh9lb0d37jti1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:583572822214:android:43848eced030a8d2869fc7",
+        "android_client_info": {
+          "package_name": "saloon.beauty.customer.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "583572822214-oa8ihfncv56mmq4c0kg2sqp1qofdjueg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "saloon.beauty.customer.app",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "583572822214-cb5fja5eqke0sev8h5qnh9lb0d37jti1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtvIbIPsZsfMWG9xKQKNM9ufLP43gHiSg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "583572822214-cb5fja5eqke0sev8h5qnh9lb0d37jti1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

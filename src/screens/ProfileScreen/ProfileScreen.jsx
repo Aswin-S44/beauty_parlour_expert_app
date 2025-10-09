@@ -16,6 +16,7 @@ import { primaryColor } from '../../constants/colors';
 import { AuthContext } from '../../context/AuthContext';
 import { getUserData } from '../../apis/services';
 import { AVATAR_IMAGE } from '../../constants/images';
+import StarRating from '../../components/StarRating/StarRating';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, refreshUserData } = useContext(AuthContext);
@@ -29,7 +30,8 @@ const ProfileScreen = ({ navigation }) => {
   const [profileLoading, setProfileLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const initialImage = AVATAR_IMAGE;
-  const [openingHours, setOpeningHours] = useState(null);
+  const [openingHours, setOpeningHours] = useState([]);
+  const [totalRating, setTotalRating] = useState(0);
 
   const imageSource = imageUri ? { uri: imageUri } : initialImage;
 
@@ -38,15 +40,16 @@ const ProfileScreen = ({ navigation }) => {
       setProfileLoading(true);
       try {
         const res = await getUserData(user.uid);
+        console.log('');
         if (res) {
           setName(res.parlourName || '');
           setAbout(res.about || '');
           setAddress(res.address || '');
           setImageUri(res.profileImage || null);
-          setOpeningHoursMonWed(res.openingHoursMonWed || '');
-          setOpeningHoursFriSat(res.openingHoursFriSat || '');
-          setGoogleReviewUrl(res.googleReviewUrl || '');
+
+          setGoogleReviewUrl(res.googleReviewUrl || 'Not added');
           setOpeningHours(res.openingHours);
+          setTotalRating(res.totalRating);
         }
       } catch (error) {
         console.error('Failed to fetch user data:', error);
@@ -106,29 +109,30 @@ const ProfileScreen = ({ navigation }) => {
           <Image source={imageSource} style={styles.avatar} />
           {/* <Text style={styles.title}>CEO, Beauty Girls Parlour</Text> */}
           <View style={styles.ratingContainer}>
-            <FontAwesomeIcon name="star" size={20} color="#FFD700" />
-            <FontAwesomeIcon name="star" size={20} color="#FFD700" />
-            <FontAwesomeIcon name="star" size={20} color="#FFD700" />
-            <FontAwesomeIcon name="star" size={20} color="#FFD700" />
-            <FontAwesomeIcon name="star" size={20} color="#FFD700" />
-            <Text style={styles.ratingText}> 5 (130)</Text>
+            <StarRating rating={totalRating} />
           </View>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>About</Text>
-          <Text style={styles.sectionText}>{about ?? ''}</Text>
+          <Text style={styles.sectionText}>
+            {about?.trim() == '' ? 'Not added' : about}
+          </Text>
         </View>
 
         <View style={styles.section}>
+          {console.log('OPENING HOURS===========', openingHours)}
           <Text style={styles.sectionTitle}>Opening Hours</Text>
           <View style={styles.hoursRow}>
-            {!openingHours ? (
+            {openingHours?.length === 0 ? (
               <Text>Not added</Text>
             ) : (
-              <>
-                <Text style={styles.sectionText}>{openingHours}</Text>
-              </>
+              openingHours?.map((hour, index) => (
+                <View key={index} style={styles.bulletRow}>
+                  <Text style={styles.bullet}>•</Text>
+                  <Text style={styles.sectionText}>{hour}</Text>
+                </View>
+              ))
             )}
           </View>
         </View>
@@ -153,7 +157,7 @@ const ProfileScreen = ({ navigation }) => {
             {!googleReviewUrl ? (
               <Text style={styles.reviewButtonText}>Not added</Text>
             ) : (
-              <Text style={styles.reviewButtonText}>{googleReviewUrl}</Text>
+              <Text style={styles.reviewButtonText}>Google Review</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -247,14 +251,27 @@ const styles = StyleSheet.create({
   },
   sectionText: {
     fontSize: 15,
-    color: '#666',
+    color: '#888',
     lineHeight: 22,
   },
   hoursRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
     marginBottom: 5,
   },
+  bulletRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 3,
+  },
+  bullet: {
+    marginRight: 6,
+    fontSize: 20,
+    color: primaryColor,
+  },
+  sectionText: {
+    fontSize: 16,
+  },
+
   addressContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',

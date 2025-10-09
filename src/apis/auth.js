@@ -5,6 +5,18 @@ import axios from 'axios';
 import { BACKEND_URL, USER_TYPES } from '../constants/variables';
 import { COLLECTIONS } from '../constants/collections';
 
+export const resentOTP = async email => {
+  try {
+    const res = await axios.post(`${BACKEND_URL}/send-otp`, {
+      email,
+      userType: USER_TYPES.BEAUTY_SHOP,
+    });
+    console.log('RESEND OTP RES---------', res ? res : 'no res');
+  } catch (error) {
+    console.log('Error while resending OTP : ', error);
+  }
+};
+
 export const signup = async (email, password) => {
   try {
     const userCredential = await auth().createUserWithEmailAndPassword(
@@ -27,16 +39,19 @@ export const signup = async (email, password) => {
       isOTPVerified: false,
       accountInitiated: true,
       profileCompleted: false,
+      emailVerified: false,
+      openingHours: [],
+      otp: '123456', // for development only
     });
 
-    Promise.allSettled([
-      axios.post(BACKEND_URL + `/send-otp`, {
-        email,
-        userType: USER_TYPES.BEAUTY_SHOP,
-      }),
-    ]).then(results => {
-      return results;
-    });
+    // Promise.allSettled([
+    //   axios.post(BACKEND_URL + `/send-otp`, {
+    //     email,
+    //     userType: USER_TYPES.BEAUTY_SHOP,
+    //   }),
+    // ]).then(results => {
+    //   return results;
+    // });
 
     return userCredential.user;
   } catch (error) {
@@ -141,14 +156,4 @@ export const resetPassword = async (email, newPassword) => {
     console.error('RESET PASSWORD ERROR:', error);
     return { success: false, message: error.message };
   }
-};
-
-export const resentOTP = async email => {
-  await axios.post(
-    `https://beauty-parlor-app-backend.onrender.com/api/v1/user/send-otp`,
-    {
-      email,
-      userType: USER_TYPES.BEAUTY_SHOP,
-    },
-  );
 };

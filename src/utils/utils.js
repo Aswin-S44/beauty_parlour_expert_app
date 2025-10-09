@@ -1,5 +1,7 @@
+import axios from 'axios';
 import { format, formatDistanceToNow, isValid } from 'date-fns';
-
+import { GOOGLE_MAPS_API_KEY } from '@env';
+const apiKey = GOOGLE_MAPS_API_KEY;
 export function formatFirestoreTimestamp(timestamp) {
   if (!timestamp?.seconds) return '';
 
@@ -96,4 +98,88 @@ export const formatServiceName = str => {
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+};
+
+export const getLatLngFromShortUrl = async shortUrl => {
+  const response = await fetch(shortUrl, { redirect: 'follow' });
+  const finalUrl = response.url;
+  const match = finalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (match) {
+    return { latitude: parseFloat(match[1]), longitude: parseFloat(match[2]) };
+  }
+  return null;
+};
+
+const getPlaceId = async (latitude, longitude) => {
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+  const res = await fetch(url);
+  const data = await res.json();
+
+  if (data && data?.results[0]?.place_id) {
+    return data?.results[0]?.place_id;
+  } else {
+    return null;
+  }
+};
+
+export const getTotalRating = async placeId => {
+  //const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,reviews&key=${apiKey}`;
+  const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,reviews&key=${apiKey}`;
+  console.log('URL------------', url);
+  try {
+    const res = await axios.get(url);
+    const reviewResponse = {
+      rating: 0,
+      reviews: [],
+    };
+    if (res && res.data && res.data?.result) {
+      return res.data.result;
+    } else {
+      return reviewResponse;
+    }
+  } catch (error) {
+    return error;
+  }
+};
+
+export const getPlaceIdFromName = async name => {
+  // name = 'Aura Ladies and Kids Beauty Parlour and Bridal Studio';
+
+  let url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${name}&inputtype=textquery&fields=place_id&key=${apiKey}`;
+  const res = await fetch(url);
+  const data = await res.json();
+
+  if (data) {
+    return data.candidates[0].place_id;
+  }
+};
+
+export const getLatLngFromAddress = async (name, address) => {
+  const apiUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+    address,
+  )}&key=${apiKey}`;
+  const res = await fetch(apiUrl);
+  const data = await res.json();
+
+  if (data.results.length > 0) {
+    const { lat, lng } = data.results[0].geometry.location;
+    let placeId = null;
+    if (lat && lng) {
+      placeId = await getPlaceIdFromName(name);
+    }
+    let totalRating = 0;
+    if (placeId) {
+      totalRating = await getTotalRating(placeId);
+    }
+    if (totalRating.rating) {
+      totalRating = totalRating.rating;
+    }
+
+    return {
+      coordinates: { latitude: lat, longitude: lng },
+      placeId,
+      totalRating,
+    };
+  }
+  return null;
 };

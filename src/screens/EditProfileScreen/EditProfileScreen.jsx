@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   StatusBar,
   ActivityIndicator,
+  FlatList,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { primaryColor } from '../../constants/colors';
@@ -22,7 +23,8 @@ const EditProfileScreen = ({ navigation }) => {
   const [imageUri, setImageUri] = useState(null);
   const [about, setAbout] = useState('');
   const [address, setAddress] = useState('');
-  const [openingHours, setOpeningHours] = useState('');
+  const [openingHours, setOpeningHours] = useState([]);
+  const [newOpeningHour, setNewOpeningHour] = useState('');
   const [googleReviewUrl, setGoogleReviewUrl] = useState('');
   const [profileLoading, setProfileLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -41,7 +43,7 @@ const EditProfileScreen = ({ navigation }) => {
             setAbout(res.about || '');
             setAddress(res.address || '');
             setImageUri(res.profileImage || null);
-            setOpeningHours(res.openingHours || '');
+            setOpeningHours(res.openingHours || []);
             setGoogleReviewUrl(res.googleReviewUrl || '');
           }
         } catch (error) {
@@ -82,6 +84,20 @@ const EditProfileScreen = ({ navigation }) => {
         }
       },
     );
+  };
+
+  const addOpeningHour = () => {
+    if (
+      newOpeningHour.trim() &&
+      !openingHours.includes(newOpeningHour.trim())
+    ) {
+      setOpeningHours([...openingHours, newOpeningHour.trim()]);
+      setNewOpeningHour('');
+    }
+  };
+
+  const removeOpeningHour = hourToRemove => {
+    setOpeningHours(openingHours.filter(hour => hour !== hourToRemove));
   };
 
   const handleEditProfile = async () => {
@@ -170,12 +186,34 @@ const EditProfileScreen = ({ navigation }) => {
 
           <View style={styles.inputSection}>
             <Text style={styles.label}>Opening Hours</Text>
-            <TextInput
-              style={styles.input}
-              value={openingHours}
-              onChangeText={setOpeningHours}
-              placeholder="e.g., Mon - Sat: 8:00 am - 12:00 pm"
-            />
+            <View style={styles.hourInputContainer}>
+              <TextInput
+                style={[styles.input, styles.hourTextInput]}
+                value={newOpeningHour}
+                onChangeText={setNewOpeningHour}
+                placeholder="e.g., Mon - Sat: 8:00 am - 12:00 pm"
+                onSubmitEditing={addOpeningHour}
+              />
+              <TouchableOpacity
+                onPress={addOpeningHour}
+                style={styles.addHourButton}
+              >
+                <Icon name="add-circle" size={30} color={primaryColor} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.hourChipsContainer}>
+              {openingHours.map((hour, index) => (
+                <View key={index} style={styles.hourChip}>
+                  <Text style={styles.hourChipText}>{hour}</Text>
+                  <TouchableOpacity
+                    onPress={() => removeOpeningHour(hour)}
+                    style={styles.removeHourButton}
+                  >
+                    <Icon name="close-circle" size={20} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
           </View>
 
           <View style={styles.inputSection}>
@@ -281,6 +319,40 @@ const styles = StyleSheet.create({
   textArea: {
     height: 100,
     textAlignVertical: 'top',
+  },
+  hourInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  hourTextInput: {
+    flex: 1,
+    marginRight: 10,
+  },
+  addHourButton: {
+    padding: 5,
+  },
+  hourChipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  hourChip: {
+    flexDirection: 'row',
+    backgroundColor: primaryColor,
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginRight: 8,
+    marginBottom: 8,
+    alignItems: 'center',
+  },
+  hourChipText: {
+    color: '#fff',
+    fontSize: 14,
+    marginRight: 5,
+  },
+  removeHourButton: {
+    marginLeft: 5,
   },
   loadingOverlay: {
     position: 'absolute',

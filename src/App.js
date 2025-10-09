@@ -32,7 +32,7 @@ import ExpertsScreen from './screens/ExpertsScreen/ExpertsScreen';
 import AddExpertScreeen from './screens/AddExpertScreeen/AddExpertScreeen';
 import AllOffersScreen from './screens/AllOffersScreen/AllOffersScreen';
 import AddOffersScreen from './screens/AddOffersScreen/AddOffersScreen';
-import AddGeneralInformationScreen from './screens/AddGeneralInformationScreen/AddGeneralInformationScreen';
+// import AddGeneralInformationScreen from './screens/AddGeneralInformationScreen/AddGeneralInformationScreen';
 import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen/PrivacyPolicyScreen';
 import { AuthContext } from './context/AuthContext';
 import { primaryColor } from './constants/colors';
@@ -42,7 +42,7 @@ import ConfirmationWaitingScreen from './screens/ConfirmationWaitingScreen/Confi
 import GeneralInformationScreen from './screens/GeneralInformationScreen/GeneralInformationScreen';
 import SlotsManagementScreen from './screens/SlotsManagementScreen/SlotsManagementScreen';
 import FirebaseNotificationService from './apis/FirebaseNotificationService';
-import { auth } from './config/firebase';
+import { auth } from './config/firebase'; // Ensure this imports the firebase auth instance
 import AllNotificationScreen from './screens/AllNotificationScreen/AllNotificationScreen';
 import NofificationDetailsScreen from './screens/NofificationDetailsScreen/NofificationDetailsScreen';
 import EditServicesScreen from './screens/EditServicesScreen/EditServicesScreen';
@@ -202,21 +202,17 @@ function MainAppStack() {
         name="NofificationDetailsScreen"
         component={NofificationDetailsScreen}
       />
-
       <Stack.Screen name="EditServiceScreen" component={EditServicesScreen} />
       <Stack.Screen
         name="ServiceDetailsScreen"
         component={ServiceDetailsScreen}
       />
-
       <Stack.Screen name="EditExpertScreen" component={EditExpertScreen} />
       <Stack.Screen
         name="ExpertDetailsScreen"
         component={ExpertDetailsScreen}
       />
-
       <Stack.Screen name="EditOffersScreen" component={EditOffersScreen} />
-
       <Stack.Screen name="OfferDetailsScreen" component={OfferDetailsScreen} />
     </Stack.Navigator>
   );
@@ -229,10 +225,10 @@ function AuthStack() {
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="SignIn" component={SignInScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
-      <Stack.Screen
+      {/* <Stack.Screen
         name="AddGeneralInformationScreen"
         component={AddGeneralInformationScreen}
-      />
+      /> */}
       <Stack.Screen
         name="PrivacyPolicyScreen"
         component={PrivacyPolicyScreen}
@@ -241,6 +237,7 @@ function AuthStack() {
         name="ConfirmationWaitingScreen"
         component={ConfirmationWaitingScreen}
       />
+      {/* OTPVerificationScreen should primarily be in OTPStack or be navigable from AuthStack if needed */}
       <Stack.Screen
         name="OTPVerificationScreen"
         component={OTPVerificationScreen}
@@ -264,12 +261,14 @@ function OTPStack() {
         name="OTPVerificationScreen"
         component={OTPVerificationScreen}
       />
-      <Stack.Screen name="SignIn" component={SignInScreen} />
-      <Stack.Screen name="SignUp" component={SignUpScreen} />
+      {/* Include GeneralInformationScreen in OTPStack if it's the next step after OTP verification for new users */}
       <Stack.Screen
         name="GeneralInformationScreen"
         component={GeneralInformationScreen}
       />
+      {/* Potentially allow navigation back to SignIn/SignUp from OTP if user abandons */}
+      <Stack.Screen name="SignIn" component={SignInScreen} />
+      <Stack.Screen name="SignUp" component={SignUpScreen} />
       <Stack.Screen
         name="ResetPasswordScreen"
         component={ResetPasswordScreen}
@@ -279,14 +278,16 @@ function OTPStack() {
 }
 
 export default function App() {
-  const { user, userData, loading } = useContext(AuthContext);
-  const [isLoading, setIsLoading] = useState(false);
+  const { user, userData, loading, setLoading } = useContext(AuthContext);
   const [fcmToken, setFcmToken] = useState('');
 
   useEffect(() => {
+    // This effect runs whenever user or userData changes, or when app is loaded.
+    // We only want to set up FCM when a user is logged in AND onboarded.
     if (user && userData?.isOnboarded) {
-      const initializeApp = async () => {
+      const initializeAppNotifications = async () => {
         try {
+          // Initialize Firebase Notification Service
           FirebaseNotificationService.setupNotificationHandlers();
           const hasPermission =
             await FirebaseNotificationService.requestNotificationPermission();
@@ -294,51 +295,62 @@ export default function App() {
             const token = await FirebaseNotificationService.getFCMToken();
             setFcmToken(token);
           }
-          setIsLoading(false);
         } catch (error) {
-          console.error('App initialization error:', error);
-          setIsLoading(false);
+          console.error('App notification initialization error:', error);
         }
       };
 
-      initializeApp();
+      initializeAppNotifications();
 
-      const unsubscribeAuth = auth().onAuthStateChanged(async user => {
-        if (user) {
-          const token = await FirebaseNotificationService.getFCMToken();
-          setFcmToken(token);
-        }
-      });
+      // Listener for when the Firebase auth token refreshes
+      const unsubscribeAuthTokenRefresh = auth().onAuthStateChanged(
+        async currentUser => {
+          if (currentUser) {
+            const token = await FirebaseNotificationService.getFCMToken();
+            setFcmToken(token);
+          }
+        },
+      );
 
       return () => {
-        unsubscribeAuth();
+        unsubscribeAuthTokenRefresh();
       };
     }
-  }, [user, userData]);
+  }, [user?.uid]); // Depend on user and userData to re-run when these change
 
   if (loading) {
     return <SplashScreen1 />;
   }
 
+  // Define navigation logic clearly
+  let currentStack;
+
+  if (!user) {
+    // No user authenticated
+    currentStack = <AuthStack />;
+  } else if (!userData) {
+    // User exists in Firebase auth, but userData hasn't loaded from Firestore yet,
+    // or the user's document doesn't exist (e.g., just signed up).
+    // Show splash screen or a generic loading indicator here.
+    // It's crucial that `AuthContext` ensures `userData` is populated or `null` quickly.
+    currentStack = <SplashScreen1 />; // Or another loading component
+  } else if (!userData.isOTPVerified) {
+    // User is authenticated but OTP is not verified
+    currentStack = <OTPStack />;
+  } else if (!userData.isOnboarded && !userData.profileCompleted) {
+    // OTP is verified, but user needs to complete general info
+    currentStack = <GeneralInformationScreen />;
+  } else if (!userData.isOnboarded && userData.profileCompleted) {
+    // General info completed, but waiting for admin confirmation
+    currentStack = <ConfirmationWaitingScreen />;
+  } else {
+    // User is fully authenticated, OTP verified, onboarded, and profile completed
+    currentStack = <MainAppStack />;
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <NavigationContainer>
-        {!user ? (
-          <AuthStack />
-        ) : !userData?.isOTPVerified ? (
-          <OTPStack />
-        ) : !userData?.isOnboarded && !userData?.profileCompleted ? (
-          <GeneralInformationScreen />
-        ) : !userData?.isOnboarded &&
-          userData?.profileCompleted &&
-          userData?.isOTPVerified ? (
-          <ConfirmationWaitingScreen />
-        ) : userData ? (
-          <MainAppStack />
-        ) : (
-          <AuthStack />
-        )}
-      </NavigationContainer>
+      <NavigationContainer>{currentStack}</NavigationContainer>
     </GestureHandlerRootView>
   );
 }

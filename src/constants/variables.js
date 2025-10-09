@@ -26,3 +26,27 @@ export const APPOINTMENT_STATUS_MAPPINGS = {
 };
 
 export const NO_IMAGE = 'https://via.placeholder.com/150';
+
+export const NOTIFICATION_TYPES = {
+  APPOINTMENT_REQUEST: 'appointment_request',
+  STATUS_CHANGE_REMINDER: 'status_change_reminder',
+  WELCOME_NOTIFICATION: 'welcome_notification',
+  APPOINTMENT_ACCEPTED: 'appointment_accepted',
+};
+
+export const APPOINTMENT_TYPES = {
+  BOOKING_ACCEPTED: 'BOOKING_ACCEPTED',
+  BOOKING_REJECTED: 'BOOKING_REJECTED',
+  BOOKING_REQUEST_SENT: 'BOOKING_REQUEST_SENT',
+};
+
+
+export const getNotificationTitle = notificationType => {
+  if (notificationType == APPOINTMENT_TYPES.BOOKING_ACCEPTED) {
+    return 'Booking accepted';
+  } else if (notificationType == APPOINTMENT_TYPES.BOOKING_REJECTED) {
+    return 'Booking rejected';
+  } else if (notificationType == APPOINTMENT_TYPES.BOOKING_REQUEST_SENT) {
+    return 'New booking Request';
+  }
+};

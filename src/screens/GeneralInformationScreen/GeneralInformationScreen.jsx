@@ -14,41 +14,64 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { primaryColor } from '../../constants/colors';
 import { updateShop } from '../../apis/auth';
 import { AuthContext, useAuth } from '../../context/AuthContext';
+import {
+  getLatLngFromAddress,
+  getLatLngFromShortUrl,
+  getPlaceIdFromName,
+} from '../../utils/utils';
 
 const GeneralInformationScreen = ({ navigation }) => {
   const [parlourName, setParlourName] = useState('');
   const [address, setAddress] = useState('');
+  const [locationUrl, setLocationUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const { setUserData } = useAuth();
 
   const { user, userData } = useContext(AuthContext);
 
   const handleAddGeneralInformation = async () => {
+    console.log('--------------------------');
     if (!parlourName.trim() || !address.trim()) {
       Alert.alert('Error', 'Please fill all fields');
       return;
     }
 
     setLoading(true);
+    console.log('33333333333333')
+    const { coordinates, placeId, totalRating } = await getLatLngFromAddress(
+      parlourName,
+      locationUrl,
+    );
+
+    // await getPlaceIdFromName(parlourName);
 
     try {
+      console.log('2222222222222222s')
       if (user && user.uid) {
         const dataToUpdate = {
           address: address.trim(),
           parlourName: parlourName.trim(),
           profileCompleted: true,
+          geolocation: coordinates
+            ? coordinates
+            : { latitude: null, longitude: null },
+          placeId,
+          totalRating,
+          googleReviewUrl: locationUrl,
         };
+
+        console.log('dataToUpdate================', dataToUpdate);
 
         const res = await updateShop(user.uid, dataToUpdate);
 
         if (res && res.success) {
-          Alert.alert('Success', 'Successfully updated profile');
+          // Alert.alert('Success', 'Successfully updated profile');
           setUserData({
             profileCompleted: true,
             isOnboarded: false,
             isOTPVerified: true,
           });
-          navigation.navigate('ConfirmationWaitingScreen');
+          // navigation.navigate('ConfirmationWaitingScreen');
         } else {
           Alert.alert('Error', 'Error while updating profile');
         }
@@ -94,11 +117,27 @@ const GeneralInformationScreen = ({ navigation }) => {
             <Text style={styles.inputLabel}>Address</Text>
             <View style={styles.inputContainer}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, styles.textArea]}
                 placeholder="58 Street - al dulha london -USA"
                 placeholderTextColor="#888"
                 value={address}
                 onChangeText={setAddress}
+                multiline={true}
+                numberOfLines={10}
+                textAlignVertical="top"
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Location Url</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="https://maps.app.goo"
+                placeholderTextColor="#888"
+                value={locationUrl}
+                onChangeText={setLocationUrl}
               />
             </View>
           </View>
@@ -106,7 +145,7 @@ const GeneralInformationScreen = ({ navigation }) => {
           <TouchableOpacity
             style={[styles.createButton, loading && styles.disabledButton]}
             onPress={handleAddGeneralInformation}
-            disabled={loading}
+            // disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
@@ -212,6 +251,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: primaryColor,
     fontWeight: '500',
+  },
+  textArea: {
+    height: 120, // Set height for textarea feel
+    paddingTop: 12, // Extra top padding
   },
 });
 
