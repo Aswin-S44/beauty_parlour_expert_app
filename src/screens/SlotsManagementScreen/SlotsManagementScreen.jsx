@@ -12,7 +12,6 @@ import {
   Platform,
   StatusBar,
   Switch,
-  ScrollView,
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import moment from 'moment';
@@ -498,6 +497,82 @@ const SlotsManagementScreen = ({ navigation }) => {
 
   const isSelectedDateHoliday = holidays[selectedDate];
 
+  const ListHeaderComponent = () => (
+    <>
+      <Text style={styles.sectionHeader}>Manage Booking Slots</Text>
+
+      <View style={styles.calendarContainer}>
+        <Calendar
+          onDayPress={onDayPress}
+          markedDates={markedDates}
+          markingType={'custom'}
+          theme={{
+            backgroundColor: '#FFFFFF',
+            calendarBackground: '#FFFFFF',
+            textSectionTitleColor: primaryColor,
+            selectedDayBackgroundColor: primaryColor,
+            selectedDayTextColor: '#ffffff',
+            todayTextColor: '#6200EE',
+            dayTextColor: '#2d4150',
+            textDisabledColor: '#d9e1e8',
+            dotColor: primaryColor,
+            selectedDotColor: '#ffffff',
+            arrowColor: primaryColor,
+            monthTextColor: '#2d4150',
+            indicatorColor: primaryColor,
+            textDayFontWeight: '300',
+            textMonthFontWeight: 'bold',
+            textDayHeaderFontWeight: '500',
+            textDayFontSize: 16,
+            textMonthFontSize: 18,
+            textDayHeaderFontSize: 14,
+          }}
+        />
+      </View>
+
+      <View style={styles.holidayToggleContainer}>
+        <Text style={styles.holidayToggleText}>
+          {isSelectedDateHoliday ? 'Marked as Holiday' : 'Mark as Holiday'}
+        </Text>
+        <Switch
+          trackColor={{ false: '#767577', true: '#FFC107' }}
+          thumbColor={isSelectedDateHoliday ? '#F57F17' : '#f4f3f4'}
+          ios_backgroundColor="#3e3e3e"
+          onValueChange={handleToggleHoliday}
+          value={isSelectedDateHoliday}
+        />
+      </View>
+
+      <View style={styles.repeatSlotsDailyContainer}>
+        <Text style={styles.repeatSlotsDailyText}>
+          Repeat all slots for this day daily (from{' '}
+          {moment(selectedDate).format('MMM Do')})
+        </Text>
+        <Switch
+          trackColor={{ false: '#767577', true: primaryColor }}
+          thumbColor={repeatSlotsDaily ? primaryColor : '#f4f3f4'}
+          ios_backgroundColor="#3e3e3e"
+          onValueChange={handleRepeatSlotsDailyToggle}
+          value={repeatSlotsDaily}
+        />
+      </View>
+
+      <View style={styles.slotListHeader}>
+        <Text style={styles.slotListHeaderText}>
+          Slots for {moment(selectedDate).format('MMMM Do, YYYY')}
+        </Text>
+        <TouchableOpacity
+          onPress={openAddSlotModal}
+          style={styles.addSlotButton}
+          disabled={isSelectedDateHoliday}
+        >
+          <Icon name="plus" size={18} color="#FFFFFF" style={styles.addIcon} />
+          <Text style={styles.addSlotButtonText}>Add Slot</Text>
+        </TouchableOpacity>
+      </View>
+    </>
+  );
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={primaryColor} />
@@ -516,88 +591,13 @@ const SlotsManagementScreen = ({ navigation }) => {
         {loading ? (
           <SlotsSkeleton />
         ) : (
-          <>
-            <Text style={styles.sectionHeader}>Manage Booking Slots</Text>
-
-            <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-              <View style={styles.calendarContainer}>
-                <Calendar
-                  onDayPress={onDayPress}
-                  markedDates={markedDates}
-                  markingType={'custom'}
-                  theme={{
-                    backgroundColor: '#FFFFFF',
-                    calendarBackground: '#FFFFFF',
-                    textSectionTitleColor: primaryColor,
-                    selectedDayBackgroundColor: primaryColor,
-                    selectedDayTextColor: '#ffffff',
-                    todayTextColor: '#6200EE',
-                    dayTextColor: '#2d4150',
-                    textDisabledColor: '#d9e1e8',
-                    dotColor: primaryColor,
-                    selectedDotColor: '#ffffff',
-                    arrowColor: primaryColor,
-                    monthTextColor: '#2d4150',
-                    indicatorColor: primaryColor,
-                    textDayFontWeight: '300',
-                    textMonthFontWeight: 'bold',
-                    textDayHeaderFontWeight: '500',
-                    textDayFontSize: 16,
-                    textMonthFontSize: 18,
-                    textDayHeaderFontSize: 14,
-                  }}
-                />
-              </View>
-
-              <View style={styles.holidayToggleContainer}>
-                <Text style={styles.holidayToggleText}>
-                  {isSelectedDateHoliday
-                    ? 'Marked as Holiday'
-                    : 'Mark as Holiday'}
-                </Text>
-                <Switch
-                  trackColor={{ false: '#767577', true: '#FFC107' }}
-                  thumbColor={isSelectedDateHoliday ? '#F57F17' : '#f4f3f4'}
-                  ios_backgroundColor="#3e3e3e"
-                  onValueChange={handleToggleHoliday}
-                  value={isSelectedDateHoliday}
-                />
-              </View>
-
-              <View style={styles.repeatSlotsDailyContainer}>
-                <Text style={styles.repeatSlotsDailyText}>
-                  Repeat all slots for this day daily (from{' '}
-                  {moment(selectedDate).format('MMM Do')})
-                </Text>
-                <Switch
-                  trackColor={{ false: '#767577', true: primaryColor }}
-                  thumbColor={repeatSlotsDaily ? primaryColor : '#f4f3f4'}
-                  ios_backgroundColor="#3e3e3e"
-                  onValueChange={handleRepeatSlotsDailyToggle}
-                  value={repeatSlotsDaily}
-                />
-              </View>
-
-              <View style={styles.slotListHeader}>
-                <Text style={styles.slotListHeaderText}>
-                  Slots for {moment(selectedDate).format('MMMM Do, YYYY')}
-                </Text>
-                <TouchableOpacity
-                  onPress={openAddSlotModal}
-                  style={styles.addSlotButton}
-                  disabled={isSelectedDateHoliday}
-                >
-                  <Icon
-                    name="plus"
-                    size={18}
-                    color="#FFFFFF"
-                    style={styles.addIcon}
-                  />
-                  <Text style={styles.addSlotButtonText}>Add Slot</Text>
-                </TouchableOpacity>
-              </View>
-
-              {isSelectedDateHoliday ? (
+          <FlatList
+            data={isSelectedDateHoliday ? [] : slots[selectedDate] || []}
+            renderItem={renderSlotItem}
+            keyExtractor={item => item.id}
+            ListHeaderComponent={ListHeaderComponent}
+            ListEmptyComponent={
+              isSelectedDateHoliday ? (
                 <View style={styles.emptySlotsContainer}>
                   <Icon name="weather-sunny-alert" size={40} color="#FFC107" />
                   <Text style={[styles.emptySlotsText, { color: '#DAA520' }]}>
@@ -608,30 +608,23 @@ const SlotsManagementScreen = ({ navigation }) => {
                   </Text>
                 </View>
               ) : (
-                <FlatList
-                  data={slots[selectedDate] || []}
-                  renderItem={renderSlotItem}
-                  keyExtractor={item => item.id}
-                  ListEmptyComponent={
-                    <View style={styles.emptySlotsContainer}>
-                      <Icon
-                        name="calendar-remove-outline"
-                        size={40}
-                        color="#B0B0B0"
-                      />
-                      <Text style={styles.emptySlotsText}>
-                        No slots configured for this date.
-                      </Text>
-                      <Text style={styles.emptySlotsSubText}>
-                        Tap "Add Slot" to create new availability.
-                      </Text>
-                    </View>
-                  }
-                  style={styles.slotsList}
-                />
-              )}
-            </ScrollView>
-          </>
+                <View style={styles.emptySlotsContainer}>
+                  <Icon
+                    name="calendar-remove-outline"
+                    size={40}
+                    color="#B0B0B0"
+                  />
+                  <Text style={styles.emptySlotsText}>
+                    No slots configured for this date.
+                  </Text>
+                  <Text style={styles.emptySlotsSubText}>
+                    Tap "Add Slot" to create new availability.
+                  </Text>
+                </View>
+              )
+            }
+            contentContainerStyle={styles.slotsListContent}
+          />
         )}
       </View>
 
@@ -908,8 +901,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
-  slotsList: {
-    flex: 1,
+  slotsListContent: {
+    paddingBottom: 20,
   },
   slotItem: {
     backgroundColor: '#FFFFFF',
