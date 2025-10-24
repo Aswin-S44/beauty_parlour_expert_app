@@ -41,7 +41,7 @@ const CustomDrawerContent = props => {
             style={styles.avatar}
           />
           <Text style={styles.userName}>{userData?.parlourName ?? ''}</Text>
-          <Text style={styles.userPhone}>{userData?.phone ?? ''}</Text>
+          <Text style={styles.userPhone}>{userData?.email ?? ''}</Text>
         </View>
 
         <View style={styles.drawerSection}>
