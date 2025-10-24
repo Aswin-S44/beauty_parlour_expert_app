@@ -184,9 +184,29 @@ const SlotsManagementScreen = ({ navigation }) => {
       return;
     }
 
+    const newStartTimeFormatted = startMoment.format('HH:mm');
+    const newEndTimeFormatted = endMoment.format('HH:mm');
+
+    const currentSlotsForDate = slots[selectedDate] || [];
+
+    const isDuplicate = currentSlotsForDate.some(
+      slot =>
+        slot.startTime === newStartTimeFormatted &&
+        slot.endTime === newEndTimeFormatted &&
+        (!editingSlot || slot.id !== editingSlot.id),
+    );
+
+    if (isDuplicate) {
+      Alert.alert(
+        'Slot Exists',
+        `A slot with the time ${newStartTimeFormatted} - ${newEndTimeFormatted} already exists for this date.`,
+      );
+      return;
+    }
+
     const baseSlotData = {
-      startTime: startMoment.format('HH:mm'),
-      endTime: endMoment.format('HH:mm'),
+      startTime: newStartTimeFormatted,
+      endTime: newEndTimeFormatted,
       isAvailable: true,
       isRecurring: false,
     };
@@ -204,7 +224,7 @@ const SlotsManagementScreen = ({ navigation }) => {
       setModalVisible(false);
       setEditingSlot(null);
       setStartTime(new Date());
-      setEndTime(new Date());
+      setEndTime(new Date(new Date().setHours(new Date().getHours() + 1)));
     } catch (error) {
       Alert.alert('Error', 'Failed to save slot. Please try again.');
     }
