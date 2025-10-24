@@ -17,6 +17,7 @@ import { deleteOffer, getOffersByShop } from '../../apis/services';
 import ServiceCardSkeleton from '../../components/ServiceCardSkeleton/ServiceCardSkeleton';
 import EmptyComponent from '../../components/EmptyComponent/EmptyComponent';
 import { formatFirestoreTimestamp } from '../../utils/utils';
+import { useFocusEffect } from '@react-navigation/native';
 
 const AllOffersScreen = ({ navigation }) => {
   const [offers, setOffers] = useState([]);
@@ -48,9 +49,11 @@ const AllOffersScreen = ({ navigation }) => {
     }
   }, [user]);
 
-  useEffect(() => {
-    fetchOffers();
-  }, [fetchOffers]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchOffers();
+    }, [fetchOffers]),
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

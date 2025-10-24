@@ -22,14 +22,6 @@
           }
         },
         {
-          "client_id": "583572822214-9pp3pu24j94l0jmubg7ell0ehk0j7vl8.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "saloon.beauty.app",
-            "certificate_hash": "dd3845f30cf43f44b27b3273e06b1c0ec3b4621d"
-          }
-        },
-        {
           "client_id": "583572822214-cb5fja5eqke0sev8h5qnh9lb0d37jti1.apps.googleusercontent.com",
           "client_type": 3
         }

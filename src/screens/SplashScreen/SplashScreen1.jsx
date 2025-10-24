@@ -19,7 +19,7 @@ const SplashScreen = () => {
     </LinearGradient>
   );
 };
-
+ 
 const styles = StyleSheet.create({
   container: {
     flex: 1,

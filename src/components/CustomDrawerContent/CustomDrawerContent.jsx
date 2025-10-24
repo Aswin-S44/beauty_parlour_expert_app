@@ -7,7 +7,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { primaryColor } from '../../constants/colors';
 import { AuthContext } from '../../context/AuthContext';
 import { AVATAR_IMAGE } from '../../constants/images';
-
+ 
 const DrawerItem = ({ iconName, iconSet, label, onPress }) => {
   const IconComponent =
     iconSet === 'MaterialCommunity'
@@ -63,19 +63,19 @@ const CustomDrawerContent = props => {
 
           <DrawerItem
             label="Add Service Offer"
-            iconSet="MaterialCommunity"
+            iconSet="MaterialCommunity"getNotificationTitle
             iconName="playlist-plus"
             onPress={() => {
               props.navigation.navigate('AllOffersScreen');
             }}
           />
-          <DrawerItem
+          {/* <DrawerItem
             label="Change Password"
             iconName="sync-outline"
             onPress={() => {
               props.navigation.navigate('ChangePasswordScreen');
             }}
-          />
+          /> */}
           {/* <DrawerItem
             label="Settings"
             iconName="settings-outline"

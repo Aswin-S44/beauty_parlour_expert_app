@@ -7,6 +7,7 @@ import {
   StatusBar,
   RefreshControl,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { AuthContext } from '../../context/AuthContext';
@@ -15,6 +16,8 @@ import { convertFIrstCharToUpper, formatTimestamp } from '../../utils/utils';
 import EmptyComponent from '../../components/EmptyComponent/EmptyComponent';
 import ServiceCardSkeleton from '../../components/ServiceCardSkeleton/ServiceCardSkeleton';
 import { NO_IMAGE } from '../../constants/variables';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const AllAppointments = ({ navigation }) => {
   const { user } = useContext(AuthContext);
@@ -29,7 +32,11 @@ const AllAppointments = ({ navigation }) => {
       setLoading(false);
       if (res) {
         setAppointments(res);
+      } else {
+        setAppointments([]);
       }
+    } else {
+      setAppointments([]);
     }
   }, [user]);
 
@@ -53,6 +60,8 @@ const AllAppointments = ({ navigation }) => {
         return styles.statusCompleted;
       case 'cancelled':
         return styles.statusCancelled;
+      case 'rejected':
+        return styles.statusRejected;
       default:
         return styles.statusDefault;
     }
@@ -101,6 +110,22 @@ const AllAppointments = ({ navigation }) => {
           style={styles.headerImage}
         />
         <View style={styles.overlay} />
+        {/* <TouchableOpacity onPress={onRefresh} style={styles.refreshIcon}>
+          <Icon name="refresh" size={28} color="#fff" />
+        </TouchableOpacity> */}
+
+        <TouchableOpacity
+          style={styles.refreshIcon}
+          onPress={onRefresh}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Ionicons name="refresh" size={24} color="#fff" />
+          )}
+          <Text style={styles.refreshButtonText}>Refresh</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.contentContainer}>
@@ -147,6 +172,17 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(128, 0, 128, 0.5)',
+  },
+  refreshIcon: {
+    position: 'absolute',
+    top: StatusBar.currentHeight + 10,
+    right: 20,
+    zIndex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    flexDirection: 'row',
   },
   contentContainer: {
     flex: 1,
@@ -231,6 +267,23 @@ const styles = StyleSheet.create({
   },
   statusCancelled: {
     backgroundColor: '#dc3545',
+  },
+  statusRejected: {
+    backgroundColor: '#EB411E',
+  },
+  refreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+  },
+  refreshButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    marginLeft: 5,
+    fontWeight: '500',
   },
 });
 

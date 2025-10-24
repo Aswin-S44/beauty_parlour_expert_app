@@ -30,23 +30,44 @@ const GeneralInformationScreen = ({ navigation }) => {
   const { user, userData } = useContext(AuthContext);
 
   const handleAddGeneralInformation = async () => {
-    console.log('--------------------------');
-    if (!parlourName.trim() || !address.trim()) {
+    if (!parlourName.trim() || !address.trim() || !locationUrl.trim()) {
       Alert.alert('Error', 'Please fill all fields');
       return;
     }
 
+    if (parlourName.trim().length > 50) {
+      Alert.alert('Error', 'Parlour Name cannot exceed 50 characters');
+      return;
+    }
+
+    if (address.trim().length > 100) {
+      Alert.alert('Error', 'Address cannot exceed 100 characters');
+      return;
+    }
+
+    const urlRegex = /^(ftp|http|https):\/\/[^ "]+$/;
+    if (!urlRegex.test(locationUrl.trim())) {
+      Alert.alert('Error', 'Please enter a valid Location URL');
+      return;
+    }
+
     setLoading(true);
-    console.log('33333333333333')
+
     const { coordinates, placeId, totalRating } = await getLatLngFromAddress(
       parlourName,
       locationUrl,
     );
 
-    // await getPlaceIdFromName(parlourName);
+    if (!coordinates) {
+      setLoading(false);
+      Alert.alert(
+        'Error',
+        'Something went wrong, please try again later or check your location URL.',
+      );
+      return;
+    }
 
     try {
-      console.log('2222222222222222s')
       if (user && user.uid) {
         const dataToUpdate = {
           address: address.trim(),
@@ -60,18 +81,14 @@ const GeneralInformationScreen = ({ navigation }) => {
           googleReviewUrl: locationUrl,
         };
 
-        console.log('dataToUpdate================', dataToUpdate);
-
         const res = await updateShop(user.uid, dataToUpdate);
 
         if (res && res.success) {
-          // Alert.alert('Success', 'Successfully updated profile');
           setUserData({
             profileCompleted: true,
             isOnboarded: false,
             isOTPVerified: true,
           });
-          // navigation.navigate('ConfirmationWaitingScreen');
         } else {
           Alert.alert('Error', 'Error while updating profile');
         }
@@ -109,6 +126,7 @@ const GeneralInformationScreen = ({ navigation }) => {
                 autoCapitalize="none"
                 value={parlourName}
                 onChangeText={setParlourName}
+                maxLength={50}
               />
             </View>
           </View>
@@ -125,6 +143,7 @@ const GeneralInformationScreen = ({ navigation }) => {
                 multiline={true}
                 numberOfLines={10}
                 textAlignVertical="top"
+                maxLength={100}
               />
             </View>
           </View>
@@ -138,6 +157,7 @@ const GeneralInformationScreen = ({ navigation }) => {
                 placeholderTextColor="#888"
                 value={locationUrl}
                 onChangeText={setLocationUrl}
+                autoCapitalize="none"
               />
             </View>
           </View>
@@ -145,7 +165,7 @@ const GeneralInformationScreen = ({ navigation }) => {
           <TouchableOpacity
             style={[styles.createButton, loading && styles.disabledButton]}
             onPress={handleAddGeneralInformation}
-            // disabled={loading}
+            disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
@@ -253,8 +273,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   textArea: {
-    height: 120, // Set height for textarea feel
-    paddingTop: 12, // Extra top padding
+    height: 120,
+    paddingTop: 12,
   },
 });
 

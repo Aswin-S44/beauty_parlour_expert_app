@@ -46,12 +46,17 @@ export const convertFIrstCharToUpper = s => {
 };
 
 export const formatDate = dateString => {
-  const date = new Date(dateString);
-  if (!isValid(date)) {
-    return '-';
-  }
+  if (!dateString) return '-';
 
-  return format(date, 'dd MMMM yyyy');
+  const parts = dateString.split('-'); // expecting 'DD-MM-YYYY'
+  if (parts.length !== 3) return '-';
+
+  const [day, month, year] = parts.map(Number);
+  const date = new Date(year, month - 1, day); // month is 0-indexed
+
+  if (!isValid(date)) return '-';
+
+  return format(date, 'dd MMM yyyy'); // e.g. 31 Oct 2025
 };
 
 export const formatTimeAgo = createdAt => {
@@ -155,31 +160,49 @@ export const getPlaceIdFromName = async name => {
 };
 
 export const getLatLngFromAddress = async (name, address) => {
-  const apiUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-    address,
-  )}&key=${apiKey}`;
-  const res = await fetch(apiUrl);
-  const data = await res.json();
+  try {
+    const apiUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+      address,
+    )}&key=${apiKey}`;
+    const res = await fetch(apiUrl);
+    const data = await res.json();
+    console.log('data------------', data ? data : 'no data');
+    if (data.results.length > 0) {
+      const { lat, lng } = data.results[0].geometry.location;
+      let placeId = null;
+      if (lat && lng) {
+        placeId = await getPlaceIdFromName(name);
+      }
+      let totalRating = 0;
+      if (placeId) {
+        totalRating = await getTotalRating(placeId);
+      }
+      if (totalRating.rating) {
+        totalRating = totalRating.rating;
+      }
 
-  if (data.results.length > 0) {
-    const { lat, lng } = data.results[0].geometry.location;
-    let placeId = null;
-    if (lat && lng) {
-      placeId = await getPlaceIdFromName(name);
+      return {
+        coordinates: { latitude: lat, longitude: lng },
+        placeId,
+        totalRating,
+      };
     }
-    let totalRating = 0;
-    if (placeId) {
-      totalRating = await getTotalRating(placeId);
-    }
-    if (totalRating.rating) {
-      totalRating = totalRating.rating;
-    }
-
     return {
-      coordinates: { latitude: lat, longitude: lng },
-      placeId,
-      totalRating,
+      coordinates: null,
+      placeId: null,
+      totalRating: null,
     };
+  } catch (error) {
+    console.log('Error-------------', error);
   }
-  return null;
+};
+
+export const generateRandomName = () => {
+  const chars =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
 };

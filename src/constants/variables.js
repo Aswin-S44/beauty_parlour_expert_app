@@ -3,6 +3,7 @@ export const APPOINTMENT_STATUSES = {
   CONFIRMED: 'confirmed',
   CANCELLED: 'cancelled',
   COMPLETED: 'completed',
+  REJECT: 'rejected',
 };
 
 export const BACKEND_URL =
@@ -23,6 +24,7 @@ export const CLOUDINARY_UPLOAD_PRESET = 'cloudinary_react';
 export const APPOINTMENT_STATUS_MAPPINGS = {
   CONFIRMED: 'confirmed',
   PENDING: 'pending',
+  REJECT: 'rejected',
 };
 
 export const NO_IMAGE = 'https://via.placeholder.com/150';
@@ -39,7 +41,6 @@ export const APPOINTMENT_TYPES = {
   BOOKING_REJECTED: 'BOOKING_REJECTED',
   BOOKING_REQUEST_SENT: 'BOOKING_REQUEST_SENT',
 };
-
 
 export const getNotificationTitle = notificationType => {
   if (notificationType == APPOINTMENT_TYPES.BOOKING_ACCEPTED) {

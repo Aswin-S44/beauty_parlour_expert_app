@@ -143,101 +143,97 @@ const ExpertsScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <>
-        <View style={styles.contentContainer}>
-          <Text style={styles.title}>Expert List</Text>
+      <View style={styles.contentContainer}>
+        <Text style={styles.title}>Expert List</Text>
 
-          {loading ? (
-            <ServiceCardSkeleton />
-          ) : !loading && experts.length == 0 ? (
-            <EmptyComponent title="No experts available" />
-          ) : (
-            <>
-              <FlatList
-                data={experts}
-                renderItem={renderExpertItem}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.listContainer}
-                ListEmptyComponent={ListEmptyComponent}
-                refreshControl={
-                  <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={onRefresh}
-                    colors={['#8e44ad']}
-                  />
-                }
+        {loading ? (
+          <ServiceCardSkeleton />
+        ) : (
+          <FlatList
+            data={experts}
+            renderItem={renderExpertItem}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.listContainer}
+            ListEmptyComponent={
+              experts.length === 0 ? ListEmptyComponent : null
+            }
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#8e44ad']}
               />
-            </>
-          )}
-        </View>
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => navigation.navigate('AddExpertScreeen')}
-          >
-            <Text style={styles.addButtonText}>ADD NEW BEAUTY EXPERT +</Text>
-          </TouchableOpacity>
-        </View>
+            }
+          />
+        )}
+      </View>
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => navigation.navigate('AddExpertScreeen')}
+        >
+          <Text style={styles.addButtonText}>ADD NEW BEAUTY EXPERT +</Text>
+        </TouchableOpacity>
+      </View>
 
-        <Modal
-          transparent={true}
-          visible={isMenuVisible}
-          animationType="fade"
-          onRequestClose={closeMenu}
+      <Modal
+        transparent={true}
+        visible={isMenuVisible}
+        animationType="fade"
+        onRequestClose={closeMenu}
+      >
+        <TouchableOpacity
+          style={styles.modalBackdrop}
+          activeOpacity={1}
+          onPressOut={closeMenu}
         >
-          <TouchableOpacity
-            style={styles.modalBackdrop}
-            activeOpacity={1}
-            onPressOut={closeMenu}
-          >
-            <View style={styles.menuContainer}>
-              <TouchableOpacity style={styles.menuItem} onPress={handleEdit}>
-                <Icon name="pencil-outline" size={22} color="#555" />
-                <Text style={styles.menuItemText}>Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem} onPress={handleDelete}>
-                <Icon name="trash-outline" size={22} color="#ff3b30" />
-                <Text style={[styles.menuItemText, { color: '#ff3b30' }]}>
-                  Delete
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </Modal>
-        <Modal
-          transparent={true}
-          visible={deleteConfirmationVisible}
-          animationType="fade"
-          onRequestClose={() => setDeleteConfirmationVisible(false)}
-        >
-          <TouchableOpacity
-            style={styles.centeredView}
-            activeOpacity={1}
-            onPressOut={() => setDeleteConfirmationVisible(false)}
-          >
-            <View style={styles.modalView}>
-              <View style={styles.modalIconContainer}>
-                <Icon name="checkmark-circle" size={60} color="#8e44ad" />
-              </View>
-              <Text style={styles.modalText}>
-                Are you sure you want to delete {selectedExpert?.expertName}?
+          <View style={styles.menuContainer}>
+            <TouchableOpacity style={styles.menuItem} onPress={handleEdit}>
+              <Icon name="pencil-outline" size={22} color="#555" />
+              <Text style={styles.menuItemText}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuItem} onPress={handleDelete}>
+              <Icon name="trash-outline" size={22} color="#ff3b30" />
+              <Text style={[styles.menuItemText, { color: '#ff3b30' }]}>
+                Delete
               </Text>
-              <TouchableOpacity
-                style={[styles.button, styles.buttonConfirm]}
-                onPress={confirmDelete}
-              >
-                <Text style={styles.textStyle}>DELETE</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.buttonCancel]}
-                onPress={() => setDeleteConfirmationVisible(false)}
-              >
-                <Text style={styles.cancelText}>CANCEL</Text>
-              </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+      <Modal
+        transparent={true}
+        visible={deleteConfirmationVisible}
+        animationType="fade"
+        onRequestClose={() => setDeleteConfirmationVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.centeredView}
+          activeOpacity={1}
+          onPressOut={() => setDeleteConfirmationVisible(false)}
+        >
+          <View style={styles.modalView}>
+            <View style={styles.modalIconContainer}>
+              <Icon name="checkmark-circle" size={60} color="#8e44ad" />
             </View>
-          </TouchableOpacity>
-        </Modal>
-      </>
+            <Text style={styles.modalText}>
+              Are you sure you want to delete {selectedExpert?.expertName}?
+            </Text>
+            <TouchableOpacity
+              style={[styles.button, styles.buttonConfirm]}
+              onPress={confirmDelete}
+            >
+              <Text style={styles.textStyle}>DELETE</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.buttonCancel]}
+              onPress={() => setDeleteConfirmationVisible(false)}
+            >
+              <Text style={styles.cancelText}>CANCEL</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };

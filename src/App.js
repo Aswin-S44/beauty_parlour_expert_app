@@ -52,6 +52,8 @@ import ExpertDetailsScreen from './screens/ExpertDetailsScreen/ExpertDetailsScre
 import EditOffersScreen from './screens/EditOffersScreen/EditOffersScreen';
 import OfferDetailsScreen from './screens/OfferDetailsScreen/OfferDetailsScreen';
 import ResetPasswordScreen from './screens/ResetPasswordScreen/ResetPasswordScreen';
+import { StyleSheet } from 'react-native';
+import { getPendingRequestsCount } from './apis/services';
 
 const Tab = createMaterialBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -280,11 +282,14 @@ function OTPStack() {
 export default function App() {
   const { user, userData, loading, setLoading } = useContext(AuthContext);
   const [fcmToken, setFcmToken] = useState('');
+  const [timeoutReached, setTimeoutReached] = useState(false);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
 
   useEffect(() => {
     // This effect runs whenever user or userData changes, or when app is loaded.
     // We only want to set up FCM when a user is logged in AND onboarded.
-    if (user && userData?.isOnboarded) {
+    if (user && userData?.isOnboarded && !userData.fcmToken) {
+      console.log('USER DATA ONBOARDER----------', userData);
       const initializeAppNotifications = async () => {
         try {
           // Initialize Firebase Notification Service
@@ -316,37 +321,69 @@ export default function App() {
         unsubscribeAuthTokenRefresh();
       };
     }
-  }, [user?.uid]); // Depend on user and userData to re-run when these change
+  }, [user?.uid, userData]); // Depend on user and userData to re-run when these change
 
-  if (loading) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // After 5 seconds, if still loading, mark timeoutReached as true
+      setTimeoutReached(true);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading && !timeoutReached) {
     return <SplashScreen1 />;
   }
 
   // Define navigation logic clearly
   let currentStack;
 
+  let curentScreen = 'no screen';
+
   if (!user) {
     // No user authenticated
     currentStack = <AuthStack />;
-  } else if (!userData) {
+    curentScreen = 'auth';
+  } else if (!userData && !timeoutReached) {
     // User exists in Firebase auth, but userData hasn't loaded from Firestore yet,
     // or the user's document doesn't exist (e.g., just signed up).
     // Show splash screen or a generic loading indicator here.
     // It's crucial that `AuthContext` ensures `userData` is populated or `null` quickly.
     currentStack = <SplashScreen1 />; // Or another loading component
-  } else if (!userData.isOTPVerified) {
+    curentScreen = 'splash';
+  } else if (!userData && timeoutReached) {
+    currentStack = <AuthStack />;
+    curentScreen = 'auth2';
+  } else if (userData.emailVerified && !userData.profileCompleted) {
     // User is authenticated but OTP is not verified
-    currentStack = <OTPStack />;
+    currentStack = <GeneralInformationScreen />;
   } else if (!userData.isOnboarded && !userData.profileCompleted) {
     // OTP is verified, but user needs to complete general info
     currentStack = <GeneralInformationScreen />;
+    curentScreen = 'general information';
   } else if (!userData.isOnboarded && userData.profileCompleted) {
     // General info completed, but waiting for admin confirmation
     currentStack = <ConfirmationWaitingScreen />;
-  } else {
+    curentScreen = 'confirmation';
+  }
+  else if (userData.isOnboarded) {
     // User is fully authenticated, OTP verified, onboarded, and profile completed
     currentStack = <MainAppStack />;
+    curentScreen = 'main';
   }
+  else {
+    // User is fully authenticated, OTP verified, onboarded, and profile completed
+    currentStack = <MainAppStack />;
+    curentScreen = 'main';
+  }
+
+  console.log('CURRENT SCREN-----------------', curentScreen);
+
+  // console.log(
+  //   'CURRENT STACK----------',
+  //   currentStack ? currentStack : 'no currentStack',
+  // );
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -354,3 +391,19 @@ export default function App() {
     </GestureHandlerRootView>
   );
 }
+const styles = StyleSheet.create({
+  badge: {
+    position: 'absolute',
+    top: -5,
+    right: -10,
+    backgroundColor: 'red',
+    color: 'white',
+    fontSize: 10,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    lineHeight: 18, // Center text vertically
+  },
+});

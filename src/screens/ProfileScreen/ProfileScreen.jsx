@@ -19,7 +19,7 @@ import { AVATAR_IMAGE } from '../../constants/images';
 import StarRating from '../../components/StarRating/StarRating';
 
 const ProfileScreen = ({ navigation }) => {
-  const { user, refreshUserData } = useContext(AuthContext);
+  const { user, refreshUserData, userData } = useContext(AuthContext);
   const [name, setName] = useState('');
   const [imageUri, setImageUri] = useState(null);
   const [about, setAbout] = useState('');
@@ -34,32 +34,24 @@ const ProfileScreen = ({ navigation }) => {
   const [totalRating, setTotalRating] = useState(0);
 
   const imageSource = imageUri ? { uri: imageUri } : initialImage;
-
+  console.log('USER DATA----------', userData);
   const fetchUserData = useCallback(async () => {
-    if (user && user.uid) {
+    if (userData) {
+      refreshUserData();
       setProfileLoading(true);
-      try {
-        const res = await getUserData(user.uid);
-        console.log('');
-        if (res) {
-          setName(res.parlourName || '');
-          setAbout(res.about || '');
-          setAddress(res.address || '');
-          setImageUri(res.profileImage || null);
 
-          setGoogleReviewUrl(res.googleReviewUrl || 'Not added');
-          setOpeningHours(res.openingHours);
-          setTotalRating(res.totalRating);
-        }
-      } catch (error) {
-        console.error('Failed to fetch user data:', error);
-      } finally {
-        setProfileLoading(false);
-      }
+      setName(userData.parlourName || '');
+      setAbout(userData.about || '');
+      setAddress(userData.address || '');
+      setImageUri(userData.profileImage || null);
+
+      setGoogleReviewUrl(userData.googleReviewUrl || 'Not added');
+      setOpeningHours(userData.openingHours);
+      setTotalRating(userData.totalRating);
     } else {
       setProfileLoading(false);
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     fetchUserData();
@@ -73,7 +65,7 @@ const ProfileScreen = ({ navigation }) => {
   }, [fetchUserData, refreshUserData]);
 
   const handleOpenGoogleReview = () => {
-    if (googleReviewUrl) {
+    if (userData?.googleReviewUrl) {
       Linking.openURL(googleReviewUrl).catch(err =>
         console.error('Failed to open URL:', err),
       );
@@ -105,18 +97,21 @@ const ProfileScreen = ({ navigation }) => {
           >
             <FontAwesomeIcon name="pencil" size={22} color={primaryColor} />
           </TouchableOpacity>
-          <Text style={styles.name}>{name ?? '_'}</Text>
-          <Image source={imageSource} style={styles.avatar} />
+          <Text style={styles.name}>{userData?.parlourName ?? '_'}</Text>
+          <Image
+            source={{ uri: userData?.profileImage ?? AVATAR_IMAGE }}
+            style={styles.avatar}
+          />
           {/* <Text style={styles.title}>CEO, Beauty Girls Parlour</Text> */}
           <View style={styles.ratingContainer}>
-            <StarRating rating={totalRating} />
+            <StarRating rating={userData?.totalRating ?? 0} />
           </View>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>About</Text>
           <Text style={styles.sectionText}>
-            {about?.trim() == '' ? 'Not added' : about}
+            {userData?.about?.trim() == '' ? 'Not added' : userData?.about}
           </Text>
         </View>
 
@@ -124,10 +119,10 @@ const ProfileScreen = ({ navigation }) => {
           {console.log('OPENING HOURS===========', openingHours)}
           <Text style={styles.sectionTitle}>Opening Hours</Text>
           <View style={styles.hoursRow}>
-            {openingHours?.length === 0 ? (
+            {userData?.openingHours?.length === 0 ? (
               <Text>Not added</Text>
             ) : (
-              openingHours?.map((hour, index) => (
+              userData?.openingHours?.map((hour, index) => (
                 <View key={index} style={styles.bulletRow}>
                   <Text style={styles.bullet}>•</Text>
                   <Text style={styles.sectionText}>{hour}</Text>
@@ -142,7 +137,7 @@ const ProfileScreen = ({ navigation }) => {
           <View style={styles.addressContainer}>
             <View style={styles.addressRow}>
               <Icon name="location-sharp" size={20} color={primaryColor} />
-              <Text style={styles.addressText}>{address ?? ''}</Text>
+              <Text style={styles.addressText}>{userData?.address ?? ''}</Text>
             </View>
           </View>
         </View>
@@ -154,7 +149,7 @@ const ProfileScreen = ({ navigation }) => {
             style={styles.reviewButton}
           >
             <FontAwesomeIcon name="google" size={20} color="#DB4437" />
-            {!googleReviewUrl ? (
+            {!userData?.googleReviewUrl ? (
               <Text style={styles.reviewButtonText}>Not added</Text>
             ) : (
               <Text style={styles.reviewButtonText}>Google Review</Text>

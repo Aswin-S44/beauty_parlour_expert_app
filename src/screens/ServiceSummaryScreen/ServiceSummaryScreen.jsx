@@ -7,6 +7,7 @@ import {
   StyleSheet,
   StatusBar,
   Modal,
+  Linking,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { primaryColor } from '../../constants/colors';
@@ -14,6 +15,7 @@ import { useRoute } from '@react-navigation/native';
 import { formatDate, formatServiceName } from '../../utils/utils';
 import { Image } from 'react-native';
 import { AVATAR_IMAGE } from '../../constants/images';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const Row = ({ label, value }) => (
   <View style={styles.row}>
@@ -43,6 +45,7 @@ const AmountRow = ({ service, qty, price, isBold = false }) => (
 const ServiceSummaryScreen = ({ navigation }) => {
   const route = useRoute();
   const { item } = route.params;
+  console.log('ITEM-------------', item ? item : 'no item');
 
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -56,6 +59,14 @@ const ServiceSummaryScreen = ({ navigation }) => {
         return styles.statusCancelled;
       default:
         return styles.statusDefault;
+    }
+  };
+
+  const handleCall = phoneNumber => {
+    if (phoneNumber && phoneNumber.trim() !== '') {
+      Linking.openURL(`tel:${phoneNumber}`);
+    } else {
+      alert('Phone number not available');
     }
   };
 
@@ -113,7 +124,7 @@ const ServiceSummaryScreen = ({ navigation }) => {
                 : '-'}
             </Text>
           </View>
-
+                
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Appointment Details</Text>
             <Row
@@ -134,6 +145,53 @@ const ServiceSummaryScreen = ({ navigation }) => {
                   : '-'}
               </Text>
             </View>
+          </View>
+          {console.log('ITEM-------------', item ? item : 'no item')}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Customer Details</Text>
+            <Row
+              label="Name"
+              value={
+                item.customer ? item.customer?.fullName ?? 'Unavailable' : '_'
+              }
+            />
+            {/* <Row
+              label="Phone number"
+              value={
+                item.customer?.phone?.trim() == ''
+                  ? 'Unavailable'
+                  : item.customer?.phone
+              }
+            /> */}
+            <View style={styles.row}>
+              <Text style={styles.text}>Phone</Text>
+              {item.customer?.phone?.trim() == '' ? (
+                <Text>Unavailable</Text>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    onPress={() => {
+                      handleCall(item.customer?.phone.trim());
+                    }}
+                    style={styles.iconButton}
+                  >
+                    <View style={styles.row}>
+                      <Text style={{ left: -20 }}>{item.customer?.phone}</Text>
+                      <Icon name="call" size={22} color="green" />
+                    </View>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+
+            <Row
+              label="Email"
+              value={
+                item.customer?.email?.trim() == ''
+                  ? 'Unavailable'
+                  : item.customer?.email
+              }
+            />
           </View>
 
           <View style={styles.section}>
@@ -157,12 +215,14 @@ const ServiceSummaryScreen = ({ navigation }) => {
                 </Text>
               </View>
               {item.services.map((service, index) => (
-                <AmountRow
-                  key={index}
-                  service={service.serviceName ?? '-'}
-                  qty={service?.qty ?? 1}
-                  price={service?.servicePrice ?? '-'}
-                />
+                <>
+                  <AmountRow
+                    key={index}
+                    service={service.serviceName ?? '-'}
+                    qty={service?.qty ?? 1}
+                    price={service?.servicePrice ?? '-'}
+                  />
+                </>
               ))}
             </View>
 
@@ -177,11 +237,19 @@ const ServiceSummaryScreen = ({ navigation }) => {
                 0,
               )}
             />
-            {item.offerAvailable && (
+            {item?.offers?.length > 0 && (
               <AmountRow
                 service="Discount by offer"
-                qty={item.service?.qty ?? 1}
-                price={item.offerPrice}
+                qty={item?.offers?.length ?? 1}
+                price={item?.offers[0]?.offerPrice ?? 0}
+              />
+            )}
+
+            {item?.offerAvailable && (
+              <AmountRow
+                service="Discount by offer"
+                qty={1}
+                price={item?.offerPrice ?? 0}
               />
             )}
 
@@ -190,7 +258,13 @@ const ServiceSummaryScreen = ({ navigation }) => {
             <AmountRow
               service="Total"
               qty={item.services[0]?.qty ?? 1}
-              price={item.totalAmount}
+              price={
+                item?.offers?.length > 0
+                  ? (item.services[0]?.servicePrice ?? 0) -
+                    (item.offers[0]?.offerPrice ?? 0)
+                  : (item.services[0]?.servicePrice ?? 0) -
+                    (item?.offerPrice ?? 0)
+              }
               isBold={true}
             />
           </View>

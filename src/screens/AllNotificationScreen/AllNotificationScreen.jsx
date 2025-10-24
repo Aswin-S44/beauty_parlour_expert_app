@@ -19,7 +19,7 @@ import AllNotificationsScreenSkeleton from '../AllNotificationsScreenSkeleton/Al
 import EmptyComponent from '../../components/EmptyComponent/EmptyComponent';
 import { AVATAR_IMAGE } from '../../constants/images';
 import { getNotificationTitle } from '../../constants/variables';
-
+ 
 const AllNotificationScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -79,7 +79,7 @@ const AllNotificationScreen = ({ navigation }) => {
           styles.notificationItem,
           item.isRead && styles.readNotification,
         ]}
-        // onPress={() => handleNotificationPress(item)}
+        onPress={() => handleNotificationPress(item)}
       >
         <Image
           source={{

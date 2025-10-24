@@ -18,6 +18,7 @@ import { Calendar } from 'react-native-calendars';
 import moment from 'moment';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import firestore from '@react-native-firebase/firestore';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { AuthContext } from '../../context/AuthContext';
 import { primaryColor } from '../../constants/colors';
@@ -32,8 +33,10 @@ const SlotsManagementScreen = ({ navigation }) => {
   const [slots, setSlots] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
   const [editingSlot, setEditingSlot] = useState(null);
-  const [startTimeInput, setStartTimeInput] = useState('');
-  const [endTimeInput, setEndTimeInput] = useState('');
+  const [startTime, setStartTime] = useState(new Date());
+  const [endTime, setEndTime] = useState(new Date());
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [repeatSlotsDaily, setRepeatSlotsDaily] = useState(false);
   const [holidays, setHolidays] = useState({});
@@ -174,22 +177,8 @@ const SlotsManagementScreen = ({ navigation }) => {
   };
 
   const handleAddOrUpdateSlot = async () => {
-    if (!startTimeInput || !endTimeInput) {
-      Alert.alert('Missing Info', 'Please enter both start and end times.');
-      return;
-    }
-
-    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-    if (!timeRegex.test(startTimeInput) || !timeRegex.test(endTimeInput)) {
-      Alert.alert(
-        'Invalid Format',
-        'Please use HH:MM format for times (e.g., 09:00, 14:30).',
-      );
-      return;
-    }
-
-    const startMoment = moment(startTimeInput, 'HH:mm');
-    const endMoment = moment(endTimeInput, 'HH:mm');
+    const startMoment = moment(startTime);
+    const endMoment = moment(endTime);
 
     if (endMoment.isSameOrBefore(startMoment)) {
       Alert.alert('Invalid Time', 'End time must be after start time.');
@@ -197,8 +186,8 @@ const SlotsManagementScreen = ({ navigation }) => {
     }
 
     const baseSlotData = {
-      startTime: startTimeInput,
-      endTime: endTimeInput,
+      startTime: startMoment.format('HH:mm'),
+      endTime: endMoment.format('HH:mm'),
       isAvailable: true,
       isRecurring: false,
     };
@@ -215,8 +204,8 @@ const SlotsManagementScreen = ({ navigation }) => {
 
       setModalVisible(false);
       setEditingSlot(null);
-      setStartTimeInput('');
-      setEndTimeInput('');
+      setStartTime(new Date());
+      setEndTime(new Date());
     } catch (error) {
       Alert.alert('Error', 'Failed to save slot. Please try again.');
     }
@@ -224,15 +213,15 @@ const SlotsManagementScreen = ({ navigation }) => {
 
   const openAddSlotModal = () => {
     setEditingSlot(null);
-    setStartTimeInput('');
-    setEndTimeInput('');
+    setStartTime(new Date());
+    setEndTime(new Date(new Date().setHours(new Date().getHours() + 1)));
     setModalVisible(true);
   };
 
   const openEditSlotModal = slot => {
     setEditingSlot(slot);
-    setStartTimeInput(slot.startTime);
-    setEndTimeInput(slot.endTime);
+    setStartTime(moment(slot.startTime, 'HH:mm').toDate());
+    setEndTime(moment(slot.endTime, 'HH:mm').toDate());
     setModalVisible(true);
   };
 
@@ -402,6 +391,20 @@ const SlotsManagementScreen = ({ navigation }) => {
       console.error('Error repeating slots daily:', error);
       Alert.alert('Error', 'Failed to repeat slots daily. Please try again.');
       setRepeatSlotsDaily(false);
+    }
+  };
+
+  const onStartTimeChange = (event, selectedTime) => {
+    setShowStartTimePicker(Platform.OS === 'ios');
+    if (selectedTime) {
+      setStartTime(selectedTime);
+    }
+  };
+
+  const onEndTimeChange = (event, selectedTime) => {
+    setShowEndTimePicker(Platform.OS === 'ios');
+    if (selectedTime) {
+      setEndTime(selectedTime);
     }
   };
 
@@ -644,24 +647,43 @@ const SlotsManagementScreen = ({ navigation }) => {
               {editingSlot ? 'Edit Slot' : 'Create New Slot'}
             </Text>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Start Time (HH:MM e.g., 10:00)"
-              placeholderTextColor="#888"
-              value={startTimeInput}
-              onChangeText={setStartTimeInput}
-              keyboardType="default"
-              maxLength={5}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="End Time (HH:MM e.g., 11:00)"
-              placeholderTextColor="#888"
-              value={endTimeInput}
-              onChangeText={setEndTimeInput}
-              keyboardType="default"
-              maxLength={5}
-            />
+            <TouchableOpacity
+              onPress={() => setShowStartTimePicker(true)}
+              style={styles.timeInputButton}
+            >
+              <Text style={styles.timeInputButtonText}>
+                Start Time: {moment(startTime).format('HH:mm')}
+              </Text>
+              <Icon name="clock-outline" size={24} color={primaryColor} />
+            </TouchableOpacity>
+            {showStartTimePicker && (
+              <DateTimePicker
+                value={startTime}
+                mode="time"
+                is24Hour={true}
+                display="spinner"
+                onChange={onStartTimeChange}
+              />
+            )}
+
+            <TouchableOpacity
+              onPress={() => setShowEndTimePicker(true)}
+              style={styles.timeInputButton}
+            >
+              <Text style={styles.timeInputButtonText}>
+                End Time: {moment(endTime).format('HH:mm')}
+              </Text>
+              <Icon name="clock-outline" size={24} color={primaryColor} />
+            </TouchableOpacity>
+            {showEndTimePicker && (
+              <DateTimePicker
+                value={endTime}
+                mode="time"
+                is24Hour={true}
+                display="spinner"
+                onChange={onEndTimeChange}
+              />
+            )}
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
@@ -979,7 +1001,10 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 25,
   },
-  input: {
+  timeInputButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     width: '100%',
     height: 50,
     borderColor: '#E0E0E0',
@@ -987,9 +1012,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 15,
     marginBottom: 15,
+    backgroundColor: '#F9F9F9',
+  },
+  timeInputButtonText: {
     fontSize: 16,
     color: '#333',
-    backgroundColor: '#F9F9F9',
   },
   modalButtons: {
     flexDirection: 'row',

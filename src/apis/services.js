@@ -10,6 +10,7 @@ import {
 } from '../constants/variables';
 import { COLLECTIONS } from '../constants/collections';
 import axios from 'axios';
+import { NO_IMAGE } from '../constants/images';
 
 export const addServices = async (shopId, data, imageUri) => {
   try {
@@ -285,15 +286,21 @@ export const getAppointmentsByShopId = async shopId => {
       .where('appointmentStatus', 'in', [
         APPOINTMENT_STATUS_MAPPINGS.CONFIRMED,
         APPOINTMENT_STATUS_MAPPINGS.PENDING,
+        APPOINTMENT_STATUS_MAPPINGS.REJECT,
       ])
       .get();
+
+    const offerSnap = await firestore()
+      .collection(COLLECTIONS.OFFERS)
+      .where('shopId', '==', shopId)
+      .get();
+
+    const offers = offerSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     const results = await Promise.all(
       querySnapshot.docs.map(async appointmentDoc => {
         const appointmentData = appointmentDoc.data();
-        const expertId = appointmentData.expertId;
-        const serviceIds = appointmentData.serviceIds || [];
-        const customerId = appointmentData.customerId;
+        const { expertId, serviceIds = [], customerId } = appointmentData;
 
         let expertData = null;
         if (expertId) {
@@ -301,9 +308,8 @@ export const getAppointmentsByShopId = async shopId => {
             .collection(COLLECTIONS.BEAUTY_EXPERTS)
             .doc(expertId)
             .get();
-          if (expertSnap.exists) {
+          if (expertSnap.exists)
             expertData = { id: expertSnap.id, ...expertSnap.data() };
-          }
         }
 
         const serviceData = await Promise.all(
@@ -312,10 +318,9 @@ export const getAppointmentsByShopId = async shopId => {
               .collection(COLLECTIONS.SERVICES)
               .doc(serviceId)
               .get();
-            if (serviceSnap.exists) {
-              return { id: serviceSnap.id, ...serviceSnap.data() };
-            }
-            return null;
+            return serviceSnap.exists
+              ? { id: serviceSnap.id, ...serviceSnap.data() }
+              : null;
           }),
         );
 
@@ -323,19 +328,21 @@ export const getAppointmentsByShopId = async shopId => {
         if (customerId) {
           const customerSnap = await firestore()
             .collection(COLLECTIONS.CUSTOMERS)
-            .doc(customerId)
+            .doc(customerId.trim())
             .get();
-          if (customerSnap.exists) {
+          if (customerSnap.exists)
             customerData = { id: customerSnap.id, ...customerSnap.data() };
-          }
         }
+
+        const shopOffers = offers.filter(o => o.shopId === shopId);
 
         return {
           id: appointmentDoc.id,
           ...appointmentData,
           expert: expertData,
-          services: serviceData.filter(service => service !== null),
+          services: serviceData.filter(s => s !== null),
           customer: customerData,
+          offers: shopOffers,
         };
       }),
     );
@@ -345,8 +352,241 @@ export const getAppointmentsByShopId = async shopId => {
     throw error;
   }
 };
+
+// export const getAppointmentsByShopId = async shopId => {
+//   try {
+//     const querySnapshot = await firestore()
+//       .collection(COLLECTIONS.APPOINTMENTS)
+//       .where('shopId', '==', shopId)
+//       .where('appointmentStatus', 'in', [
+//         APPOINTMENT_STATUS_MAPPINGS.CONFIRMED,
+//         APPOINTMENT_STATUS_MAPPINGS.PENDING,
+//       ])
+//       .get();
+
+//     const offerSnap = await firestore()
+//       .collection(COLLECTIONS.OFFERS)
+//       .where('shopId', '==', shopId)
+//       .get();
+
+//     const offers = offerSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+//     const results = await Promise.all(
+//       querySnapshot.docs.map(async appointmentDoc => {
+//         const appointmentData = appointmentDoc.data();
+//         const expertId = appointmentData.expertId;
+//         const serviceIds = appointmentData.serviceIds || [];
+//         const customerId = appointmentData.customerId;
+//         console.log('CUSTOMER ID----------', customerId);
+
+//         let expertData = null;
+//         if (expertId) {
+//           const expertSnap = await firestore()
+//             .collection(COLLECTIONS.BEAUTY_EXPERTS)
+//             .doc(expertId)
+//             .get();
+//           if (expertSnap.exists) {
+//             expertData = { id: expertSnap.id, ...expertSnap.data() };
+//           }
+//         }
+
+//         const serviceData = await Promise.all(
+//           serviceIds.map(async serviceId => {
+//             const serviceSnap = await firestore()
+//               .collection(COLLECTIONS.SERVICES)
+//               .doc(serviceId)
+//               .get();
+//             if (serviceSnap.exists) {
+//               return { id: serviceSnap.id, ...serviceSnap.data() };
+//             }
+//             return null;
+//           }),
+//         );
+
+//         let customerData = null;
+//         if (customerId) {
+//           const customerSnap = await firestore()
+//             .collection(COLLECTIONS.CUSTOMERS)
+//             .doc(customerId)
+//             .get();
+//           if (customerSnap.exists) {
+//             customerData = { id: customerSnap.id, ...customerSnap.data() };
+//           }
+//         }
+
+//         const shopOffers = offers.filter(o => o.shopId === shopId);
+
+//         return {
+//           id: appointmentDoc.id,
+//           ...appointmentData,
+//           expert: expertData,
+//           services: serviceData.filter(service => service !== null),
+//           customer: customerData,
+//           offers: shopOffers,
+//         };
+//       }),
+//     );
+
+//     return results;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+// export const getAppointmentsByShopId = async shopId => {
+//   try {
+//     const querySnapshot = await firestore()
+//       .collection(COLLECTIONS.APPOINTMENTS)
+//       .where('shopId', '==', shopId)
+//       .where('appointmentStatus', 'in', [
+//         APPOINTMENT_STATUS_MAPPINGS.CONFIRMED,
+//         APPOINTMENT_STATUS_MAPPINGS.PENDING,
+//       ])
+//       .get();
+
+//     const results = await Promise.all(
+//       querySnapshot.docs.map(async appointmentDoc => {
+//         const appointmentData = appointmentDoc.data();
+//         const expertId = appointmentData.expertId;
+//         const serviceIds = appointmentData.serviceIds || [];
+//         const customerId = appointmentData.customerId;
+
+//         let expertData = null;
+//         if (expertId) {
+//           const expertSnap = await firestore()
+//             .collection(COLLECTIONS.BEAUTY_EXPERTS)
+//             .doc(expertId)
+//             .get();
+//           if (expertSnap.exists) {
+//             expertData = { id: expertSnap.id, ...expertSnap.data() };
+//           }
+//         }
+
+//         const serviceData = await Promise.all(
+//           serviceIds.map(async serviceId => {
+//             const serviceSnap = await firestore()
+//               .collection(COLLECTIONS.SERVICES)
+//               .doc(serviceId)
+//               .get();
+//             if (serviceSnap.exists) {
+//               return { id: serviceSnap.id, ...serviceSnap.data() };
+//             }
+//             return null;
+//           }),
+//         );
+
+//         let customerData = null;
+//         if (customerId) {
+//           const customerSnap = await firestore()
+//             .collection(COLLECTIONS.CUSTOMERS)
+//             .doc(customerId)
+//             .get();
+//           if (customerSnap.exists) {
+//             customerData = { id: customerSnap.id, ...customerSnap.data() };
+//           }
+//         }
+
+//         return {
+//           id: appointmentDoc.id,
+//           ...appointmentData,
+//           expert: expertData,
+//           services: serviceData.filter(service => service !== null),
+//           customer: customerData,
+//         };
+//       }),
+//     );
+
+//     return results;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+// export const getUserPendingRequests = async shopId => {
+//   try {
+//     const querySnapshot = await firestore()
+//       .collection(COLLECTIONS.APPOINTMENTS)
+//       .where('shopId', '==', shopId)
+//       .where('appointmentStatus', '==', APPOINTMENT_STATUSES.PENDING)
+//       .get();
+
+//     const offersSnapshot = await firestore()
+//       .collection(COLLECTIONS.OFFERS)
+//       .where('shopId', '==', shopId)
+//       .get();
+
+//     const shopOffers = offersSnapshot.docs.map(doc => ({
+//       id: doc.id,
+//       ...doc.data(),
+//     }));
+
+//     const results = await Promise.all(
+//       querySnapshot.docs.map(async appointmentDoc => {
+//         const appointmentData = appointmentDoc.data();
+//         const expertId = appointmentData.expertId;
+//         const serviceIds = appointmentData.serviceIds || [];
+
+//         let expertData = null;
+//         if (expertId) {
+//           const expertSnap = await firestore()
+//             .collection(COLLECTIONS.BEAUTY_EXPERTS)
+//             .doc(expertId)
+//             .get();
+//           if (expertSnap.exists) {
+//             expertData = { id: expertSnap.id, ...expertSnap.data() };
+//           }
+//         }
+
+//         const services = await Promise.all(
+//           serviceIds.map(async serviceId => {
+//             const serviceSnap = await firestore()
+//               .collection(COLLECTIONS.SERVICES)
+//               .doc(serviceId)
+//               .get();
+//             if (serviceSnap.exists) {
+//               return { id: serviceSnap.id, ...serviceSnap.data() };
+//             }
+//             return null;
+//           }),
+//         );
+
+//         const validServices = services.filter(service => service !== null);
+
+//         let offerAvailable = false;
+//         let offerPrice = null;
+
+//         if (serviceIds.length > 0 && shopOffers.length > 0) {
+//           const applicableOffers = shopOffers.filter(offer =>
+//             serviceIds.includes(offer.serviceId),
+//           );
+
+//           if (applicableOffers.length > 0) {
+//             offerAvailable = true;
+//             offerPrice =
+//               applicableOffers[0].price || applicableOffers[0].offerPrice;
+//           }
+//         }
+
+//         return {
+//           id: appointmentDoc.id,
+//           ...appointmentData,
+//           expert: expertData,
+//           services: validServices,
+//           offerAvailable,
+//           ...(offerAvailable && { offerPrice }),
+//         };
+//       }),
+//     );
+
+//     return results;
+//   } catch (error) {
+//     console.error('Error fetching appointments with expert data:', error);
+//     throw error;
+//   }
+// };
+
 export const getUserPendingRequests = async shopId => {
   try {
+    console.log('SHOP ID-----------', shopId);
     const querySnapshot = await firestore()
       .collection(COLLECTIONS.APPOINTMENTS)
       .where('shopId', '==', shopId)
@@ -366,8 +606,7 @@ export const getUserPendingRequests = async shopId => {
     const results = await Promise.all(
       querySnapshot.docs.map(async appointmentDoc => {
         const appointmentData = appointmentDoc.data();
-        const expertId = appointmentData.expertId;
-        const serviceIds = appointmentData.serviceIds || [];
+        const { expertId, serviceIds = [], customerId } = appointmentData;
 
         let expertData = null;
         if (expertId) {
@@ -375,9 +614,8 @@ export const getUserPendingRequests = async shopId => {
             .collection(COLLECTIONS.BEAUTY_EXPERTS)
             .doc(expertId)
             .get();
-          if (expertSnap.exists) {
+          if (expertSnap.exists)
             expertData = { id: expertSnap.id, ...expertSnap.data() };
-          }
         }
 
         const services = await Promise.all(
@@ -386,14 +624,23 @@ export const getUserPendingRequests = async shopId => {
               .collection(COLLECTIONS.SERVICES)
               .doc(serviceId)
               .get();
-            if (serviceSnap.exists) {
-              return { id: serviceSnap.id, ...serviceSnap.data() };
-            }
-            return null;
+            return serviceSnap.exists
+              ? { id: serviceSnap.id, ...serviceSnap.data() }
+              : null;
           }),
         );
 
-        const validServices = services.filter(service => service !== null);
+        const validServices = services.filter(s => s !== null);
+
+        let customerData = null;
+        if (customerId) {
+          const customerSnap = await firestore()
+            .collection(COLLECTIONS.CUSTOMERS)
+            .doc(customerId.trim())
+            .get();
+          if (customerSnap.exists)
+            customerData = { id: customerSnap.id, ...customerSnap.data() };
+        }
 
         let offerAvailable = false;
         let offerPrice = null;
@@ -402,7 +649,6 @@ export const getUserPendingRequests = async shopId => {
           const applicableOffers = shopOffers.filter(offer =>
             serviceIds.includes(offer.serviceId),
           );
-
           if (applicableOffers.length > 0) {
             offerAvailable = true;
             offerPrice =
@@ -414,6 +660,7 @@ export const getUserPendingRequests = async shopId => {
           id: appointmentDoc.id,
           ...appointmentData,
           expert: expertData,
+          customer: customerData,
           services: validServices,
           offerAvailable,
           ...(offerAvailable && { offerPrice }),
@@ -423,12 +670,17 @@ export const getUserPendingRequests = async shopId => {
 
     return results;
   } catch (error) {
-    console.error('Error fetching appointments with expert data:', error);
+    console.error('Error fetching pending appointments:', error);
     throw error;
   }
 };
-
-export const createNotification = async (fromId, toId, message) => {
+export const createNotification = async (
+  fromId,
+  toId,
+  message,
+  shopName,
+  profileImage,
+) => {
   try {
     const notificationData = {
       fromId,
@@ -437,6 +689,8 @@ export const createNotification = async (fromId, toId, message) => {
       createdAt: new Date(),
       isRead: false,
       message,
+      shopName,
+      profileImage,
     };
     console.log('notificationData------------', notificationData);
 
@@ -476,7 +730,12 @@ export const sendAppointmentNofification = async (
   }
 };
 
-export const confirmAppointment = async (id, shopId) => {
+export const confirmAppointment = async (
+  id,
+  shopId,
+  shopName = null,
+  profileImage,
+) => {
   try {
     const appointmentRef = firestore()
       .collection(COLLECTIONS.APPOINTMENTS)
@@ -507,11 +766,18 @@ export const confirmAppointment = async (id, shopId) => {
       shopId,
       APPOINTMENT_TYPES.BOOKING_ACCEPTED,
     );
+    let message = 'Your booking accepted';
+
+    // if (shopName) {
+    //   message = `${shopName} accepted your booking`;
+    // }
 
     await createNotification(
       shopId,
       appointmentData.customerId,
-      'Your booking accepted',
+      message,
+      shopName,
+      profileImage,
     );
 
     return { success: true, message: 'Appointment confirmed successfully' };
@@ -564,7 +830,7 @@ export const getAppointmentStats = async shopId => {
   }
 };
 
-export const cancelAppointment = async (id, shopId) => {
+export const rejectAppointment = async (id, shopId) => {
   try {
     const appointmentRef = firestore()
       .collection(COLLECTIONS.APPOINTMENTS)
@@ -586,7 +852,7 @@ export const cancelAppointment = async (id, shopId) => {
     }
 
     await appointmentRef.update({
-      appointmentStatus: APPOINTMENT_STATUSES.CANCELLED,
+      appointmentStatus: APPOINTMENT_STATUSES.REJECT,
       cancelledAt: new Date(),
     });
 
@@ -666,30 +932,155 @@ export const deleteSlot = async (slotId, shopId) => {
   }
 };
 
-export const getNotificationsByShopId = async shopId => {
+// export const getNotificationsByCustomerId = async userId => {
+//   try {
+//     const querySnapshot = await firestore()
+//       .collection('notifications')
+//       .where('toId', '==', userId)
+//       .get();
+
+//     if (querySnapshot.empty) return [];
+
+//     const notifications = await Promise.all(
+//       querySnapshot.docs.map(async doc => {
+//         const data = doc.data();
+
+//         const shopSnapshot = await firestore()
+//           .collection('shop-owners')
+//           .doc(data.fromId)
+//           .get();
+
+//         const shop = shopSnapshot.exists ? shopSnapshot.data() : null;
+
+//         const appointmentSnapshot = await firestore()
+//           .collection('appointments')
+//           .doc(data.appointmentId)
+//           .get();
+
+//         let appointment = null;
+//         let services = [];
+
+//         if (appointmentSnapshot.exists) {
+//           appointment = appointmentSnapshot.data();
+
+//           const servicePromises = appointment.serviceIds.map(async sid => {
+//             const serviceDoc = await firestore()
+//               .collection('services')
+//               .doc(sid)
+//               .get();
+//             return serviceDoc.exists
+//               ? { id: serviceDoc.id, ...serviceDoc.data() }
+//               : null;
+//           });
+
+//           services = (await Promise.all(servicePromises)).filter(Boolean);
+//         }
+
+//         return {
+//           id: doc.id,
+//           ...data,
+//           shop: shop
+//             ? {
+//                 parlourName: shop.parlourName || '',
+//                 geolocation: shop.geolocation || null,
+//                 address: shop.address || '',
+//                 profileImage: shop.profileImage || DEFAULT_AVATAR,
+//               }
+//             : null,
+//           appointment: appointment
+//             ? {
+//                 appointmentStatus: appointment.appointmentStatus,
+//                 selectedDate: appointment.selectedDate,
+//                 selectedTime: appointment.selectedTime,
+//                 totalAmount: appointment.totalAmount,
+//               }
+//             : null,
+//           services,
+//         };
+//       }),
+//     );
+
+//     return notifications;
+//   } catch (error) {
+//     console.error('Error fetching notifications:', error);
+//     return [];
+//   }
+// };
+
+export const getNotificationsByShopId = async userId => {
   try {
     const querySnapshot = await firestore()
-      .collection(COLLECTIONS.NOTIFICATIONS)
-      .where('toId', '==', shopId)
+      .collection('notifications')
+      .where('toId', '==', userId)
       .get();
+
+    if (querySnapshot.empty) return [];
 
     const notifications = await Promise.all(
       querySnapshot.docs.map(async doc => {
         const data = doc.data();
-        const customerSnapshot = await firestore()
-          .collection(COLLECTIONS.CUSTOMERS)
-          .where('uid', '==', data.fromId)
-          .limit(1)
+
+        const shopSnapshot = await firestore()
+          .collection('shop-owners')
+          .doc(data.fromId)
           .get();
 
-        const customer = !customerSnapshot.empty
-          ? {
-              id: customerSnapshot.docs[0].id,
-              ...customerSnapshot.docs[0].data(),
-            }
-          : null;
+        const shop = shopSnapshot.exists ? shopSnapshot.data() : null;
 
-        return { id: doc.id, ...data, customer };
+        let appointment = null;
+        let services = [];
+
+        if (data.appointmentId) {
+          const appointmentSnapshot = await firestore()
+            .collection('appointments')
+            .doc(data.appointmentId)
+            .get();
+
+          if (appointmentSnapshot.exists) {
+            appointment = appointmentSnapshot.data();
+            console.log(
+              'APPOINTMENT==============',
+              appointment ? appointment : 'no appoinmtne',
+            );
+            if (Array.isArray(appointment?.serviceIds)) {
+              const servicePromises =
+                appointment &&
+                appointment?.serviceIds?.length > 0 &&
+                appointment?.serviceIds.map(async sid => {
+                  const serviceDoc = await firestore()
+                    .collection('services')
+                    .doc(sid)
+                    .get();
+                  return serviceDoc.exists
+                    ? { id: serviceDoc.id, ...serviceDoc.data() }
+                    : null;
+                });
+              services = (await Promise.all(servicePromises)).filter(Boolean);
+            }
+          }
+        }
+
+        return {
+          id: doc.id,
+          ...data,
+          shop: shop
+            ? {
+                parlourName: shop.parlourName || '',
+                geolocation: shop.geolocation || null,
+                address: shop.address || '',
+                profileImage: shop.profileImage || DEFAULT_AVATAR,
+              }
+            : null,
+          appointment: appointment
+            ? {
+                appointmentStatus: appointment.appointmentStatus,
+                selectedDate: appointment.selectedDate,
+                selectedTime: appointment.selectedTime,
+                totalAmount: appointment.totalAmount,
+              }
+            : null,
+          services,
+        };
       }),
     );
 
@@ -917,5 +1308,19 @@ export const getNotificationsCountByShopId = async shopId => {
   } catch (error) {
     console.error('Error fetching notifications:', error);
     return 0;
+  }
+};
+
+export const getPendingRequestsCount = async shopId => {
+  try {
+    const querySnapshot = await firestore()
+      .collection(COLLECTIONS.APPOINTMENTS)
+      .where('shopId', '==', shopId)
+      .where('appointmentStatus', '==', APPOINTMENT_STATUSES.PENDING)
+      .get();
+
+    return querySnapshot?.size ?? 0;
+  } catch (error) {
+    console.log('Eror while fetching penging request count : ', error);
   }
 };

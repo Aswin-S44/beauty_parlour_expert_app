@@ -16,7 +16,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { primaryColor } from '../../constants/colors';
 import { AuthContext } from '../../context/AuthContext';
 import {
-  cancelAppointment,
+  rejectAppointment,
   confirmAppointment,
   getUserPendingRequests,
 } from '../../apis/services';
@@ -24,15 +24,16 @@ import { formatTimestamp } from '../../utils/utils';
 import ServiceCardSkeleton from '../../components/ServiceCardSkeleton/ServiceCardSkeleton';
 import EmptyComponent from '../../components/EmptyComponent/EmptyComponent';
 
+const NO_IMAGE = 'https://via.placeholder.com/50';
+
 const AppointmentRequestsScreen = ({ navigation }) => {
-  const { user } = useContext(AuthContext);
+  const { user, userData } = useContext(AuthContext);
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [userRequests, setUserRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [cancellationReason, setCancellationReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
@@ -44,14 +45,16 @@ const AppointmentRequestsScreen = ({ navigation }) => {
   const fetchRequests = async () => {
     try {
       setLoading(true);
+
       const res = await getUserPendingRequests(user.uid);
-      if (res && res.length > 0) {
+      if (res && Array.isArray(res)) {
         setUserRequests(res);
       } else {
         setUserRequests([]);
       }
     } catch (err) {
       console.error('Error fetching user requests:', err);
+      setUserRequests([]);
     } finally {
       setLoading(false);
     }
@@ -64,27 +67,31 @@ const AppointmentRequestsScreen = ({ navigation }) => {
 
   const handleCancelPress = item => {
     setSelectedRequest(item);
-    setCancellationReason('');
     setCancelModalVisible(true);
   };
 
   const handleAcceptAppointment = async (appointmentId, shopId) => {
     try {
       setConfirming(true);
-      await confirmAppointment(appointmentId, shopId);
+      await confirmAppointment(
+        appointmentId,
+        shopId,
+        userData?.parlourName,
+        userData?.profileImage,
+      );
       setAcceptModalVisible(false);
       await fetchRequests();
     } catch (error) {
-      return error;
+      console.error('Error confirming appointment:', error);
     } finally {
       setConfirming(false);
     }
   };
 
-  const handleCancelAppointment = async (appointmentId, shopId) => {
+  const handleRejectAppointment = async (appointmentId, shopId) => {
     try {
       setCancelling(true);
-      await cancelAppointment(appointmentId, shopId);
+      await rejectAppointment(appointmentId, shopId);
       setCancelModalVisible(false);
       await fetchRequests();
     } catch (error) {
@@ -126,7 +133,7 @@ const AppointmentRequestsScreen = ({ navigation }) => {
           onPress={() => handleCancelPress(item)}
           style={[styles.button, styles.cancelButton]}
         >
-          <Text style={styles.cancelButtonText}>Cancel</Text>
+          <Text style={styles.cancelButtonText}>Reject</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -234,13 +241,13 @@ const AppointmentRequestsScreen = ({ navigation }) => {
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Reason for Cancellation</Text>
-          <Text>Do you want to cancel the appointment request ?</Text>
+          <Text style={styles.modalTitle}>Reason for Reject</Text>
+          <Text>Do you want to reject the appointment request ?</Text>
           <View style={styles.modalActions}>
             <TouchableOpacity
               style={styles.modalAcceptButton}
               onPress={() => {
-                handleCancelAppointment(
+                handleRejectAppointment(
                   selectedRequest.id,
                   selectedRequest.shopId,
                 );
@@ -275,21 +282,26 @@ const AppointmentRequestsScreen = ({ navigation }) => {
       >
         <View style={styles.overlay} />
         <View style={styles.header}>
-          {/* <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
+          <TouchableOpacity
+            style={styles.refreshButton}
+            onPress={fetchRequests}
+            disabled={loading}
           >
-            <Ionicons name="chevron-back" size={24} color="#fff" />
-            <Text style={styles.backButtonText}>Back</Text>
-          </TouchableOpacity> */}
+            {loading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Ionicons name="refresh" size={24} color="#fff" />
+            )}
+            <Text style={styles.refreshButtonText}>Refresh</Text>
+          </TouchableOpacity>
         </View>
       </ImageBackground>
 
       <View style={styles.contentContainer}>
         <Text style={styles.title}>User Request</Text>
-        {loading ? (
+        {loading && userRequests.length === 0 ? (
           <ServiceCardSkeleton />
-        ) : !loading && userRequests.length === 0 ? (
+        ) : userRequests.length === 0 ? (
           <EmptyComponent title="No user requests available" />
         ) : (
           <FlatList
@@ -321,15 +333,21 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     marginTop: 20,
+    alignItems: 'flex-end',
   },
-  backButton: {
+  refreshButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
   },
-  backButtonText: {
+  refreshButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
     marginLeft: 5,
+    fontWeight: '500',
   },
   contentContainer: {
     flex: 1,
@@ -515,16 +533,6 @@ const styles = StyleSheet.create({
     color: primaryColor,
     fontSize: 16,
     fontWeight: '500',
-  },
-  reasonInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 10,
-    height: 100,
-    textAlignVertical: 'top',
-    marginBottom: 20,
-    fontSize: 15,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,

@@ -178,6 +178,7 @@ const AddExpertScreen = ({ navigation }) => {
             searchPlaceholderTextColor="#999"
             zIndex={3000}
             zIndexInverse={1000}
+            listMode="SCROLLVIEW"
           />
           {errors.specialist && (
             <Text style={styles.errorText}>{errors.specialist}</Text>
