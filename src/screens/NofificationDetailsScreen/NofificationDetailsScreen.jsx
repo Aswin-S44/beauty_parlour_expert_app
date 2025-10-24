@@ -17,28 +17,45 @@ import {
   markNotificationAsRead,
   confirmAppointment,
   rejectAppointment,
+  getNotificationDetails,
 } from '../../apis/services';
 import { NO_IMAGE } from '../../constants/variables';
 import { primaryColor } from '../../constants/colors';
-import { AuthContext } from '../../context/AuthContext'; // Assuming AuthContext provides user info
+import { AuthContext } from '../../context/AuthContext';
 
 const NofificationDetailsScreen = ({ route, navigation }) => {
-  const { notification } = route.params;
-  const { user } = useContext(AuthContext); // Get user from AuthContext
+  const { notificationId } = route.params;
+  const { user, userData } = useContext(AuthContext);
 
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [notificationDetails, setNotificationDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (notification && notification.id && !notification.isRead) {
+    if (notificationId) {
+      const fetchNotification = async () => {
+        setLoading(true);
+        let res = await getNotificationDetails(notificationId);
+        if (res) {
+          setNotificationDetails(res);
+        }
+        setLoading(false);
+      };
+      fetchNotification();
+    }
+  }, [notificationId]);
+
+  useEffect(() => {
+    if (notificationId) {
       const updateNotification = async () => {
-        await markNotificationAsRead(notification.id);
+        await markNotificationAsRead(notificationId);
       };
       updateNotification();
     }
-  }, [notification]);
+  }, [notificationId]);
 
   const formatDate = (seconds, nanoseconds) => {
     if (seconds === undefined || nanoseconds === undefined) {
@@ -60,12 +77,19 @@ const NofificationDetailsScreen = ({ route, navigation }) => {
   const handleAcceptAppointment = async () => {
     try {
       setConfirming(true);
-      if (notification?.appointmentId && notification?.toId) {
-        await confirmAppointment(notification.appointmentId, notification.toId);
+      if (
+        notificationDetails &&
+        notificationDetails?.appointmentId &&
+        notificationDetails?.toId
+      ) {
+        await confirmAppointment(
+          notificationDetails?.appointmentId,
+          notificationDetails?.toId,
+          userData?.parlourName,
+          userData?.profileImage,
+        );
         setAcceptModalVisible(false);
-        navigation.goBack(); // Or navigate to a success screen
-      } else {
-        console.error('Missing appointmentId or shopId for confirmation');
+        navigation.goBack();
       }
     } catch (error) {
       console.error('Error confirming appointment:', error);
@@ -77,12 +101,17 @@ const NofificationDetailsScreen = ({ route, navigation }) => {
   const handleRejectAppointment = async () => {
     try {
       setCancelling(true);
-      if (notification?.appointmentId && notification?.toId) {
-        await rejectAppointment(notification.appointmentId, notification.toId);
+      if (
+        notificationDetails &&
+        notificationDetails?.appointmentId &&
+        notificationDetails?.toId
+      ) {
+        await rejectAppointment(
+          notificationDetails?.appointmentId,
+          notificationDetails?.toId,
+        );
         setCancelModalVisible(false);
-        navigation.goBack(); // Or navigate to a success screen
-      } else {
-        console.error('Missing appointmentId or shopId for rejection');
+        navigation.goBack();
       }
     } catch (error) {
       console.error('Error canceling appointment:', error);
@@ -104,13 +133,13 @@ const NofificationDetailsScreen = ({ route, navigation }) => {
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Date</Text>
             <Text style={styles.detailValue}>
-              {notification?.appointment?.selectedDate || 'N/A'}
+              {notificationDetails?.appointment?.selectedDate || 'N/A'}
             </Text>
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Time</Text>
             <Text style={styles.detailValue}>
-              {notification?.appointment?.selectedTime || 'N/A'}
+              {notificationDetails?.appointment?.selectedTime || 'N/A'}
             </Text>
           </View>
 
@@ -120,23 +149,25 @@ const NofificationDetailsScreen = ({ route, navigation }) => {
             <Text style={styles.amountHeader}>Quantity</Text>
             <Text style={styles.amountHeader}>Price</Text>
           </View>
-          {notification?.services &&
-            notification.services.map((service, index) => (
-              <View key={service.id || index} style={styles.amountRow}>
-                <Text style={styles.serviceText}>
-                  {service.serviceName || 'N/A'}
-                </Text>
-                <Text style={styles.serviceText}>{service?.qty || 1}</Text>
-                <Text style={styles.serviceText}>
-                  ₹{service.servicePrice * (service.qty || 1) || '0'}
-                </Text>
-              </View>
-            ))}
+          {notificationDetails?.appointment?.services &&
+            notificationDetails?.appointment?.services?.map(
+              (service, index) => (
+                <View key={service.id || index} style={styles.amountRow}>
+                  <Text style={styles.serviceText}>
+                    {service.serviceName || 'N/A'}
+                  </Text>
+                  <Text style={styles.serviceText}>{service?.qty || 1}</Text>
+                  <Text style={styles.serviceText}>
+                    ₹{service.servicePrice * (service.qty || 1) || '0'}
+                  </Text>
+                </View>
+              ),
+            )}
           <View style={styles.lineSeparator} />
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Total</Text>
             <Text style={styles.summaryValue}>
-              ₹{notification?.appointment?.totalAmount || '0'}
+              ₹{notificationDetails?.appointment?.totalAmount || '0'}
             </Text>
           </View>
           <View style={styles.modalActions}>
@@ -201,7 +232,15 @@ const NofificationDetailsScreen = ({ route, navigation }) => {
   );
 
   const isAppointmentRequest =
-    notification.notificationType === 'appointment_request';
+    notificationDetails?.notificationType === 'appointment_request';
+
+  if (loading || !notificationDetails) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={primaryColor} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -227,25 +266,25 @@ const NofificationDetailsScreen = ({ route, navigation }) => {
           <View style={styles.card}>
             <Image
               source={{
-                uri: notification?.customer?.profileImage || NO_IMAGE,
+                uri: notificationDetails?.customer?.profileImage || NO_IMAGE,
               }}
               style={styles.profileImage}
             />
             <Text style={styles.customerName}>
-              {notification.customer?.fullName || 'N/A'}
+              {notificationDetails?.customer?.fullName || 'Unavailable'}
             </Text>
             <Text style={styles.notificationMessage}>
-              "{notification.message || 'No message provided.'}"
+              "{notificationDetails?.message || 'No message provided.'}"
             </Text>
 
             <View style={styles.detailRow}>
               <Text style={styles.label}>Notification Type:</Text>
               <Text style={styles.value}>
-                {notification.notificationType
-                  ? notification.notificationType
+                {notificationDetails?.notificationType
+                  ? notificationDetails?.notificationType
                       .replace(/_/g, ' ')
                       .replace(/\b\w/g, char => char.toUpperCase())
-                  : 'N/A'}
+                  : 'Unavailable'}
               </Text>
             </View>
 
@@ -253,25 +292,13 @@ const NofificationDetailsScreen = ({ route, navigation }) => {
               <Text style={styles.label}>Received On:</Text>
               <Text style={styles.value}>
                 {formatDate(
-                  notification.createdAt?._seconds,
-                  notification.createdAt?._nanoseconds,
+                  notificationDetails?.createdAt?._seconds,
+                  notificationDetails?.createdAt?._nanoseconds,
                 )}
               </Text>
             </View>
 
-            {notification.shop && (
-              <View style={styles.customerInfo}>
-                <Text style={styles.customerInfoTitle}>Shop Details</Text>
-                <View style={styles.detailRow}>
-                  <Text style={styles.label}>Address:</Text>
-                  <Text style={styles.value}>
-                    {notification.shop.address || 'N/A'}
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            {notification.appointment && (
+            {notificationDetails?.appointment && (
               <View style={styles.customerInfo}>
                 <Text style={styles.customerInfoTitle}>
                   Appointment Details
@@ -279,8 +306,8 @@ const NofificationDetailsScreen = ({ route, navigation }) => {
                 <View style={styles.detailRow}>
                   <Text style={styles.label}>Status:</Text>
                   <Text style={styles.value}>
-                    {notification.appointment.appointmentStatus
-                      ? notification.appointment.appointmentStatus.replace(
+                    {notificationDetails?.appointment?.appointmentStatus
+                      ? notificationDetails?.appointment?.appointmentStatus.replace(
                           /\b\w/g,
                           char => char.toUpperCase(),
                         )
@@ -290,42 +317,49 @@ const NofificationDetailsScreen = ({ route, navigation }) => {
                 <View style={styles.detailRow}>
                   <Text style={styles.label}>Date:</Text>
                   <Text style={styles.value}>
-                    {notification.appointment.selectedDate || 'N/A'}
+                    {notificationDetails?.appointment?.selectedDate || 'N/A'}
                   </Text>
                 </View>
                 <View style={styles.detailRow}>
                   <Text style={styles.label}>Time:</Text>
                   <Text style={styles.value}>
-                    {notification.appointment.selectedTime || 'N/A'}
+                    {notificationDetails?.appointment?.selectedTime || 'N/A'}
                   </Text>
                 </View>
                 <View style={styles.detailRow}>
                   <Text style={styles.label}>Total Amount:</Text>
                   <Text style={styles.value}>
-                    ₹{notification.appointment.totalAmount || '0'}
+                    ₹{notificationDetails?.appointment?.totalAmount || '0'}
                   </Text>
                 </View>
               </View>
             )}
 
-            {notification.services && notification.services.length > 0 && (
-              <View style={styles.customerInfo}>
-                <Text style={styles.customerInfoTitle}>Services Booked</Text>
-                {notification.services.map((service, index) => (
-                  <View key={service.id || index} style={styles.serviceItem}>
-                    <Text style={styles.serviceName}>
-                      {service.serviceName || 'N/A'}
-                    </Text>
-                    <Text style={styles.servicePrice}>
-                      ₹{service.servicePrice || '0'}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
+            {notificationDetails?.appointment?.services &&
+              notificationDetails?.appointment?.services?.length > 0 && (
+                <View style={styles.customerInfo}>
+                  <Text style={styles.customerInfoTitle}>Services Booked</Text>
+                  {notificationDetails?.appointment?.services?.map(
+                    (service, index) => (
+                      <View
+                        key={service.id || index}
+                        style={styles.serviceItem}
+                      >
+                        <Text style={styles.serviceName}>
+                          {service?.serviceName || 'N/A'}
+                        </Text>
+                        <Text style={styles.servicePrice}>
+                          ₹{service?.servicePrice || '0'}
+                        </Text>
+                      </View>
+                    ),
+                  )}
+                </View>
+              )}
 
             {isAppointmentRequest &&
-              notification.appointment?.appointmentStatus === 'pending' && (
+              notificationDetails?.appointment?.appointmentStatus ===
+                'pending' && (
                 <View style={styles.actionButtonsContainer}>
                   <TouchableOpacity
                     onPress={handleAcceptPress}
@@ -354,6 +388,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
   },
   header: {
     height: Platform.OS === 'ios' ? 120 : 100,

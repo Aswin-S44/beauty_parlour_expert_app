@@ -19,6 +19,8 @@ import {
 } from '../../apis/services';
 import moment from 'moment';
 import Toast from 'react-native-toast-message';
+import firestore from '@react-native-firebase/firestore';
+import { COLLECTIONS } from '../../constants/collections';
 
 const HomeScreen = ({ navigation }) => {
   const { user } = useContext(AuthContext);
@@ -34,10 +36,21 @@ const HomeScreen = ({ navigation }) => {
   useEffect(() => {
     if (user && user.uid) {
       const fetchNotificationCount = async () => {
-        const res = await getNotificationsCountByShopId(user.uid);
-        if (res) {
-          setNotificationCount(res);
-        }
+        const unsubscribe = firestore()
+          .collection(COLLECTIONS.NOTIFICATIONS)
+          .where('toId', '==', user.uid)
+          .where('isRead', '==', false)
+          .onSnapshot(
+            snapshot => {
+              setNotificationCount(snapshot.size);
+            },
+            error => {
+              console.error('Error fetching notifications:', error);
+              setNotificationCount(0);
+            },
+          );
+
+        return () => unsubscribe();
       };
       fetchNotificationCount();
     }

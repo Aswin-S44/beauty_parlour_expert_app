@@ -19,7 +19,7 @@ import AllNotificationsScreenSkeleton from '../AllNotificationsScreenSkeleton/Al
 import EmptyComponent from '../../components/EmptyComponent/EmptyComponent';
 import { AVATAR_IMAGE } from '../../constants/images';
 import { getNotificationTitle } from '../../constants/variables';
- 
+
 const AllNotificationScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -30,6 +30,7 @@ const AllNotificationScreen = ({ navigation }) => {
     if (user && user.uid) {
       setLoading(true);
       const res = await getNotificationsByShopId(user.uid);
+
       setLoading(false);
       setNotifications(res || []);
     }
@@ -50,7 +51,9 @@ const AllNotificationScreen = ({ navigation }) => {
       item.id === notification.id ? { ...item, isRead: true } : item,
     );
     setNotifications(updatedNotifications);
-    navigation.navigate('NofificationDetailsScreen', { notification });
+    navigation.navigate('NofificationDetailsScreen', {
+      notificationId: notification?.id,
+    });
   };
 
   const deleteNotification = id => {
@@ -83,7 +86,7 @@ const AllNotificationScreen = ({ navigation }) => {
       >
         <Image
           source={{
-            uri: item.customer?.profileImage || AVATAR_IMAGE,
+            uri: item?.profileImage || AVATAR_IMAGE,
           }}
           style={styles.avatar}
         />

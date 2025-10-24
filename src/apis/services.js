@@ -681,6 +681,13 @@ export const createNotification = async (
   profileImage,
 ) => {
   try {
+    console.log('================', {
+      fromId,
+      toId,
+      message,
+      shopName,
+      profileImage,
+    });
     const notificationData = {
       fromId,
       toId,
@@ -929,7 +936,28 @@ export const deleteSlot = async (slotId, shopId) => {
   }
 };
 
-// export const getNotificationsByCustomerId = async userId => {
+export const getNotificationsByShopId = async userId => {
+  try {
+    const querySnapshot = await firestore()
+      .collection('notifications')
+      .where('toId', '==', userId)
+      .get();
+
+    if (querySnapshot.empty) return [];
+
+    const notifications = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    return notifications;
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    return [];
+  }
+};
+
+// export const getNotificationsByShopId = async userId => {
 //   try {
 //     const querySnapshot = await firestore()
 //       .collection('notifications')
@@ -949,28 +977,34 @@ export const deleteSlot = async (slotId, shopId) => {
 
 //         const shop = shopSnapshot.exists ? shopSnapshot.data() : null;
 
-//         const appointmentSnapshot = await firestore()
-//           .collection('appointments')
-//           .doc(data.appointmentId)
-//           .get();
-
 //         let appointment = null;
 //         let services = [];
 
-//         if (appointmentSnapshot.exists) {
-//           appointment = appointmentSnapshot.data();
+//         if (data.appointmentId) {
+//           const appointmentSnapshot = await firestore()
+//             .collection('appointments')
+//             .doc(data.appointmentId)
+//             .get();
 
-//           const servicePromises = appointment.serviceIds.map(async sid => {
-//             const serviceDoc = await firestore()
-//               .collection('services')
-//               .doc(sid)
-//               .get();
-//             return serviceDoc.exists
-//               ? { id: serviceDoc.id, ...serviceDoc.data() }
-//               : null;
-//           });
+//           if (appointmentSnapshot.exists) {
+//             appointment = appointmentSnapshot.data();
 
-//           services = (await Promise.all(servicePromises)).filter(Boolean);
+//             if (Array.isArray(appointment?.serviceIds)) {
+//               const servicePromises =
+//                 appointment &&
+//                 appointment?.serviceIds?.length > 0 &&
+//                 appointment?.serviceIds.map(async sid => {
+//                   const serviceDoc = await firestore()
+//                     .collection('services')
+//                     .doc(sid)
+//                     .get();
+//                   return serviceDoc.exists
+//                     ? { id: serviceDoc.id, ...serviceDoc.data() }
+//                     : null;
+//                 });
+//               services = (await Promise.all(servicePromises)).filter(Boolean);
+//             }
+//           }
 //         }
 
 //         return {
@@ -1003,87 +1037,6 @@ export const deleteSlot = async (slotId, shopId) => {
 //     return [];
 //   }
 // };
-
-export const getNotificationsByShopId = async userId => {
-  try {
-    const querySnapshot = await firestore()
-      .collection('notifications')
-      .where('toId', '==', userId)
-      .get();
-
-    if (querySnapshot.empty) return [];
-
-    const notifications = await Promise.all(
-      querySnapshot.docs.map(async doc => {
-        const data = doc.data();
-
-        const shopSnapshot = await firestore()
-          .collection('shop-owners')
-          .doc(data.fromId)
-          .get();
-
-        const shop = shopSnapshot.exists ? shopSnapshot.data() : null;
-
-        let appointment = null;
-        let services = [];
-
-        if (data.appointmentId) {
-          const appointmentSnapshot = await firestore()
-            .collection('appointments')
-            .doc(data.appointmentId)
-            .get();
-
-          if (appointmentSnapshot.exists) {
-            appointment = appointmentSnapshot.data();
-
-            if (Array.isArray(appointment?.serviceIds)) {
-              const servicePromises =
-                appointment &&
-                appointment?.serviceIds?.length > 0 &&
-                appointment?.serviceIds.map(async sid => {
-                  const serviceDoc = await firestore()
-                    .collection('services')
-                    .doc(sid)
-                    .get();
-                  return serviceDoc.exists
-                    ? { id: serviceDoc.id, ...serviceDoc.data() }
-                    : null;
-                });
-              services = (await Promise.all(servicePromises)).filter(Boolean);
-            }
-          }
-        }
-
-        return {
-          id: doc.id,
-          ...data,
-          shop: shop
-            ? {
-                parlourName: shop.parlourName || '',
-                geolocation: shop.geolocation || null,
-                address: shop.address || '',
-                profileImage: shop.profileImage || DEFAULT_AVATAR,
-              }
-            : null,
-          appointment: appointment
-            ? {
-                appointmentStatus: appointment.appointmentStatus,
-                selectedDate: appointment.selectedDate,
-                selectedTime: appointment.selectedTime,
-                totalAmount: appointment.totalAmount,
-              }
-            : null,
-          services,
-        };
-      }),
-    );
-
-    return notifications;
-  } catch (error) {
-    console.error('Error fetching notifications:', error);
-    return [];
-  }
-};
 
 export const markNotificationAsRead = async id => {
   try {
@@ -1315,5 +1268,67 @@ export const getPendingRequestsCount = async shopId => {
     return querySnapshot?.size ?? 0;
   } catch (error) {
     return error;
+  }
+};
+
+export const getNotificationDetails = async notificationId => {
+  try {
+    const notificationDoc = await firestore()
+      .collection('notifications')
+      .doc(notificationId)
+      .get();
+
+    if (!notificationDoc.exists) return null;
+
+    const notificationData = {
+      id: notificationDoc.id,
+      ...notificationDoc.data(),
+    };
+    const appointmentId = notificationData.appointmentId;
+    const fromId = notificationData.fromId;
+
+    const appointmentDoc = await firestore()
+      .collection('appointments')
+      .doc(appointmentId)
+      .get();
+
+    const customerDoc = await firestore()
+      .collection('customers')
+      .doc(fromId)
+      .get();
+
+    const appointmentDetails = appointmentDoc.exists
+      ? { id: appointmentDoc.id, ...appointmentDoc.data() }
+      : null;
+    const customerDetails = customerDoc.exists
+      ? { id: customerDoc.id, ...customerDoc.data() }
+      : null;
+
+    let serviceDetails = [];
+    if (
+      appointmentDetails &&
+      appointmentDetails.serviceIds &&
+      appointmentDetails.serviceIds.length > 0
+    ) {
+      const servicePromises = appointmentDetails.serviceIds.map(serviceId =>
+        firestore().collection('services').doc(serviceId).get(),
+      );
+      const serviceSnapshots = await Promise.all(servicePromises);
+      serviceDetails = serviceSnapshots
+        .map(doc => (doc.exists ? { id: doc.id, ...doc.data() } : null))
+        .filter(Boolean);
+    }
+
+    return {
+      ...notificationData,
+      appointment: {
+        ...appointmentDetails,
+        services: serviceDetails,
+      },
+      customer: customerDetails,
+    };
+  } catch (error) {
+    console.error('Error fetching notification details:', error);
+    return null;
   }
 };
