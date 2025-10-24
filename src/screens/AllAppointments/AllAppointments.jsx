@@ -16,7 +16,6 @@ import { convertFIrstCharToUpper, formatTimestamp } from '../../utils/utils';
 import EmptyComponent from '../../components/EmptyComponent/EmptyComponent';
 import ServiceCardSkeleton from '../../components/ServiceCardSkeleton/ServiceCardSkeleton';
 import { NO_IMAGE } from '../../constants/variables';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const AllAppointments = ({ navigation }) => {
@@ -110,9 +109,6 @@ const AllAppointments = ({ navigation }) => {
           style={styles.headerImage}
         />
         <View style={styles.overlay} />
-        {/* <TouchableOpacity onPress={onRefresh} style={styles.refreshIcon}>
-          <Icon name="refresh" size={28} color="#fff" />
-        </TouchableOpacity> */}
 
         <TouchableOpacity
           style={styles.refreshIcon}

@@ -43,71 +43,12 @@ const servicesData = [
   },
 ];
 
-const offerData = [
-  {
-    id: '1',
-    name: 'Hair Cut',
-    offer: '50% Offer $255 $120',
-    image: require('../../assets/images/services/1.png'),
-    active: true,
-  },
-  {
-    id: '2',
-    name: 'Fascial',
-    offer: '10 Types',
-    image: require('../../assets/images/services/2.png'),
-  },
-  {
-    id: '3',
-    name: 'Hair Treatment',
-    offer: '50% Offer $255 $120',
-    image: require('../../assets/images/services/3.png'),
-  },
-  {
-    id: '4',
-    name: 'Makeup',
-    offer: '50% Offer $255 $120',
-    image: require('../../assets/images/services/4.png'),
-  },
-  {
-    id: '5',
-    name: 'Spa',
-    offer: '50% Offer $255 $120',
-    image: require('../../assets/images/services/5.png'),
-  },
-];
-
 const ServiceItem = ({ item }) => (
   <View style={styles.card}>
     <Image source={item.image} style={styles.cardImage} />
     <View style={styles.cardTextContainer}>
       <Text style={styles.cardTitle}>{item.name}</Text>
       <Text style={styles.cardSubtitle}>{item.types}</Text>
-    </View>
-    <TouchableOpacity
-      style={[
-        styles.bookButton,
-        item.active ? styles.activeButton : styles.inactiveButton,
-      ]}
-    >
-      <Text
-        style={[
-          styles.bookButtonText,
-          item.active ? styles.activeButtonText : styles.inactiveButtonText,
-        ]}
-      >
-        Book
-      </Text>
-    </TouchableOpacity>
-  </View>
-);
-
-const OfferItem = ({ item }) => (
-  <View style={styles.card}>
-    <Image source={item.image} style={styles.cardImage} />
-    <View style={styles.cardTextContainer}>
-      <Text style={styles.cardTitle}>{item.name}</Text>
-      <Text style={styles.cardSubtitle}>{item.offer}</Text>
     </View>
     <TouchableOpacity
       style={[

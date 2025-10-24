@@ -6,67 +6,22 @@ import {
   ScrollView,
   StatusBar,
   TouchableOpacity,
-  RefreshControl,
   Linking,
 } from 'react-native';
-import React, { useContext, useState, useEffect, useCallback } from 'react';
+import React, { useContext } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import { primaryColor } from '../../constants/colors';
 import { AuthContext } from '../../context/AuthContext';
-import { getUserData } from '../../apis/services';
 import { AVATAR_IMAGE } from '../../constants/images';
 import StarRating from '../../components/StarRating/StarRating';
 
 const ProfileScreen = ({ navigation }) => {
-  const { user, refreshUserData, userData } = useContext(AuthContext);
-  const [name, setName] = useState('');
-  const [imageUri, setImageUri] = useState(null);
-  const [about, setAbout] = useState('');
-  const [address, setAddress] = useState('');
-  const [openingHoursMonWed, setOpeningHoursMonWed] = useState('');
-  const [openingHoursFriSat, setOpeningHoursFriSat] = useState('');
-  const [googleReviewUrl, setGoogleReviewUrl] = useState('');
-  const [profileLoading, setProfileLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const initialImage = AVATAR_IMAGE;
-  const [openingHours, setOpeningHours] = useState([]);
-  const [totalRating, setTotalRating] = useState(0);
-
-  const imageSource = imageUri ? { uri: imageUri } : initialImage;
-
-  const fetchUserData = useCallback(async () => {
-    if (userData) {
-      refreshUserData();
-      setProfileLoading(true);
-
-      setName(userData.parlourName || '');
-      setAbout(userData.about || '');
-      setAddress(userData.address || '');
-      setImageUri(userData.profileImage || null);
-
-      setGoogleReviewUrl(userData.googleReviewUrl || 'Not added');
-      setOpeningHours(userData.openingHours);
-      setTotalRating(userData.totalRating);
-    } else {
-      setProfileLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchUserData();
-  }, [fetchUserData]);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchUserData();
-    setRefreshing(false);
-    await refreshUserData();
-  }, [fetchUserData, refreshUserData]);
+  const { userData } = useContext(AuthContext);
 
   const handleOpenGoogleReview = () => {
     if (userData?.googleReviewUrl) {
-      Linking.openURL(googleReviewUrl).catch(err =>
+      Linking.openURL(userData?.googleReviewUrl).catch(err =>
         console.error('Failed to open URL:', err),
       );
     }
@@ -86,9 +41,6 @@ const ProfileScreen = ({ navigation }) => {
       <ScrollView
         style={styles.contentContainer}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
       >
         <View style={styles.profileInfo}>
           <TouchableOpacity
@@ -102,7 +54,7 @@ const ProfileScreen = ({ navigation }) => {
             source={{ uri: userData?.profileImage ?? AVATAR_IMAGE }}
             style={styles.avatar}
           />
-          {/* <Text style={styles.title}>CEO, Beauty Girls Parlour</Text> */}
+
           <View style={styles.ratingContainer}>
             <StarRating rating={userData?.totalRating ?? 0} />
           </View>

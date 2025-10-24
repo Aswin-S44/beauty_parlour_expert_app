@@ -1,13 +1,13 @@
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import { AVATAR_IMAGE, NO_IMAGE } from '../constants/images';
+import { NO_IMAGE } from '../constants/images';
 import axios from 'axios';
 import { BACKEND_URL, USER_TYPES } from '../constants/variables';
 import { COLLECTIONS } from '../constants/collections';
 
 export const resentOTP = async email => {
   try {
-    const res = await axios.post(`${BACKEND_URL}/send-otp`, {
+    await axios.post(`${BACKEND_URL}/send-otp`, {
       email,
       userType: USER_TYPES.BEAUTY_SHOP,
     });
@@ -40,17 +40,8 @@ export const signup = async (email, password) => {
       profileCompleted: false,
       emailVerified: false,
       openingHours: [],
-      otp: '123456', // for development only
+      otp: '123456',
     });
-
-    // Promise.allSettled([
-    //   axios.post(BACKEND_URL + `/send-otp`, {
-    //     email,
-    //     userType: USER_TYPES.BEAUTY_SHOP,
-    //   }),
-    // ]).then(results => {
-    //   return results;
-    // });
 
     return userCredential.user;
   } catch (error) {
@@ -130,18 +121,8 @@ export const updateShop = async (uid, dataToUpdate) => {
   }
 };
 
-// export const resetPassword = async email => {
-//   try {
-//     await auth().sendPasswordResetEmail(email);
-//     return true;
-//   } catch (error) {
-//     throw error;
-//   }
-// };
-
 export const resetPassword = async (email, newPassword) => {
   try {
-    // sign in again to reauthenticate (Firebase requires authentication to update password)
     const userCredential = await auth().signInWithEmailAndPassword(
       email,
       newPassword,

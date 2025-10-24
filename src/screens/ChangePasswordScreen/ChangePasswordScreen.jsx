@@ -106,8 +106,6 @@ const ChangePasswordScreen = ({ navigation }) => {
     setLoading(true);
 
     try {
-      const currentUser = auth.currentUser;
-
       if (user && user?.email) {
         const credential = EmailAuthProvider.credential(
           user.email,

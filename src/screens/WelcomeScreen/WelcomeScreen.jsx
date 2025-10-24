@@ -9,28 +9,16 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import firestore from '@react-native-firebase/firestore';
-import auth, {
-  GoogleAuthProvider,
-  signInWithCredential,
-} from '@react-native-firebase/auth';
-import {
-  GoogleSignin,
-  statusCodes,
-  GoogleSigninButton,
-} from '@react-native-google-signin/google-signin';
+import auth, { GoogleAuthProvider } from '@react-native-firebase/auth';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { WEB_CLIENT_ID } from '@env';
 import { primaryColor } from '../../constants/colors';
-import { useContext } from 'react';
-import { AuthContext } from '../../context/AuthContext';
 import { COLLECTIONS } from '../../constants/collections';
 import { generateRandomName } from '../../utils/utils';
 import { GOOGLE_ICON, NO_IMAGE } from '../../constants/images';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
-const WelcomeScreen = ({ navigation }) => {
+const WelcomeScreen = () => {
   const lighterPrimaryColor = '#FBCDFF';
-
-  const { user, refreshUser, userData } = useContext(AuthContext);
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -46,11 +34,9 @@ const WelcomeScreen = ({ navigation }) => {
         showPlayServicesUpdateDialog: true,
       });
 
-      // Sign in
       const signInResult = await GoogleSignin.signIn();
 
       let idToken = signInResult.data?.idToken || signInResult.idToken;
-      const user = signInResult.data?.user;
 
       if (!idToken) throw new Error('No ID token found');
 
@@ -65,11 +51,6 @@ const WelcomeScreen = ({ navigation }) => {
       );
       const firebaseUser = userCredential.user;
 
-      const shopRef = await firestore()
-        .collection(COLLECTIONS.SHOP_OWNERS)
-        .doc(firebaseUser.uid);
-      const docSnap = await shopRef.get();
-
       const querySnapshot = await firestore()
         .collection(COLLECTIONS.SHOP_OWNERS)
         .where('email', '==', firebaseUser.email)
@@ -77,41 +58,7 @@ const WelcomeScreen = ({ navigation }) => {
 
       let updateData;
 
-      // if (docSnap.exists) {
-      //   console.log('1111111111111111');
-      //   console.log(
-      //     ' docSnap.data.isOnboarded===============',
-      //     docSnap.data.isOnboarded
-      //       ? docSnap.data.isOnboarded
-      //       : 'no  docSnap.data.isOnboarded',
-      //   );
-      //   await shopRef.set({
-      //     uid: firebaseUser.uid,
-      //     fullName: firebaseUser.displayName || generateRandomName(),
-      //     phone: '',
-      //     email: firebaseUser.email,
-      //     createdAt: new Date(),
-      //     parlourName: '',
-      //     about: '',
-      //     address: '',
-      //     isOnboarded: true, // docSnap.data.isOnboarded,
-      //     profileImage: NO_IMAGE,
-      //     isOTPVerified: true,
-      //     accountInitiated: true,
-      //     profileCompleted: true,
-      //     emailVerified: true,
-      //     openingHours: [],
-      //   });
-      // } else {
-      //   console.log('22222222222222222');
-      //   await firestore()
-      //     .collection(COLLECTIONS.SHOP_OWNERS)
-      //     .doc(firebaseUser.uid)
-      //     .set(updateData);
-      // }
-
       if (querySnapshot.empty) {
-        console.log('111111111111');
         updateData = {
           // uid: firebaseUser.uid,
           fullName: firebaseUser.displayName || generateRandomName(),
@@ -134,61 +81,8 @@ const WelcomeScreen = ({ navigation }) => {
           .doc(firebaseUser.uid)
           .set(updateData);
       } else {
-        console.log('222222222222');
-        // const docId = querySnapshot.docs[0].id;
-        // updateData = {
-        //   uid: firebaseUser.uid,
-        //   fullName: firebaseUser.displayName || generateRandomName(),
-        //   phone: '',
-        //   email: firebaseUser.email,
-        //   createdAt: new Date(),
-        //   parlourName: '',
-        //   about: '',
-        //   address: '',
-        //   isOnboarded: true,
-        //   profileImage: NO_IMAGE,
-        //   isOTPVerified: true,
-        //   accountInitiated: true,
-        //   profileCompleted: true,
-        //   emailVerified: true,
-        //   openingHours: [],
-        // };
-        // await firestore()
-        //   .collection(COLLECTIONS.SHOP_OWNERS)
-        //   .doc(docId)
-        //   .update(updateData);
-
-
-
-
-
-        // await shopRef.set({
-        //   uid: firebaseUser.uid,
-        //   fullName: firebaseUser.displayName || generateRandomName(),
-        //   phone: '',
-        //   email: firebaseUser.email,
-        //   createdAt: new Date(),
-        //   parlourName: '',
-        //   about: '',
-        //   address: '',
-        //   isOnboarded: true,
-        //   profileImage: NO_IMAGE,
-        //   isOTPVerified: true,
-        //   accountInitiated: true,
-        //   profileCompleted: true,
-        //   emailVerified: true,
-        //   openingHours: [],
-        // });
+        // Will handle by firebase
       }
-
-      // if (firebaseUser) {
-      //   const snapshot = await firestore()
-      //   .collection(COLLECTIONS.SHOP_OWNERS)
-      //   .where('email', '==', firebaseUser.email)
-      //   .get();
-      // }
-
-      // let res = await signInWithCredential(getAuth(), googleCredential);
 
       return firebaseUser;
     } catch (error) {

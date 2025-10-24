@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   StatusBar,
   Modal,
-  ActivityIndicator,
   Alert,
   RefreshControl,
 } from 'react-native';
@@ -18,7 +17,6 @@ import { AuthContext } from '../../context/AuthContext';
 import { deleteExpert, getBeautyExperts } from '../../apis/services';
 import { formatServiceName, formatTimeAgo } from '../../utils/utils';
 import ServiceCardSkeleton from '../../components/ServiceCardSkeleton/ServiceCardSkeleton';
-import EmptyComponent from '../../components/EmptyComponent/EmptyComponent';
 
 const ExpertsScreen = ({ navigation }) => {
   const [experts, setExperts] = useState([]);

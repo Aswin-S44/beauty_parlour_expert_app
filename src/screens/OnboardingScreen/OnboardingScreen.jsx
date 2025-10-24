@@ -10,7 +10,6 @@ import {
   StatusBar,
 } from 'react-native';
 import { primaryColor } from '../../constants/colors';
-import { GOOGLE_MAPS_API_KEY } from '@env';
 
 const { width, height } = Dimensions.get('window');
 

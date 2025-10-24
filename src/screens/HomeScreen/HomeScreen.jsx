@@ -15,7 +15,6 @@ import { AuthContext } from '../../context/AuthContext';
 import {
   getAppointmentsByShopId,
   getAppointmentStats,
-  getNotificationsCountByShopId,
 } from '../../apis/services';
 import moment from 'moment';
 import Toast from 'react-native-toast-message';

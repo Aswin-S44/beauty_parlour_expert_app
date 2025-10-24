@@ -12,13 +12,13 @@ import {
   ActivityIndicator,
   Modal,
 } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import { primaryColor } from '../../constants/colors';
 import { AuthContext } from '../../context/AuthContext';
-import { resentOTP, updateShop, verifyOtp } from '../../apis/auth'; // Ensure these APIs exist and work
-import auth from '@react-native-firebase/auth'; // Ensure this imports the firebase auth instance
-import { firestore } from '../../config/firebase'; // Assuming you have firestore instance here
-import { COLLECTIONS } from '../../constants/collections'; // Assuming your collections constant
+import { resentOTP, verifyOtp } from '../../apis/auth';
+import auth from '@react-native-firebase/auth';
+import { firestore } from '../../config/firebase';
+import { COLLECTIONS } from '../../constants/collections';
 
 export const resetPassword = async email => {
   try {
@@ -40,9 +40,8 @@ const OTPVerificationScreen = ({ navigation, route }) => {
   const [otp, setOtp] = useState({ 1: '', 2: '', 3: '', 4: '', 5: '', 6: '' });
   const [isVerifying, setIsVerifying] = useState(false);
 
-  // Get user and setUserData from AuthContext
-  const { user, userData, loading, setUserData } = useContext(AuthContext);
-  const emailFromRoute = route.params?.email || user?.email; // Use email from route or logged-in user
+  const { user, setUserData } = useContext(AuthContext);
+  const emailFromRoute = route.params?.email || user?.email;
 
   const handleVerifyOTP = async () => {
     setIsVerifying(true);
@@ -57,23 +56,15 @@ const OTPVerificationScreen = ({ navigation, route }) => {
       const res = await verifyOtp(emailFromRoute, otpValue);
 
       if (res && res.success) {
-        const uidToUpdate = user?.uid || res.userData?.uid; // Prioritize current user's UID
+        const uidToUpdate = user?.uid || res.userData?.uid;
 
         if (uidToUpdate) {
-          // Update Firestore to mark OTP as verified
           await firestore()
             .collection(COLLECTIONS.SHOP_OWNERS)
             .doc(uidToUpdate)
             .update({ isOTPVerified: true });
 
-          // Manually update AuthContext's userData for immediate navigation
           setUserData(prevData => ({ ...prevData, isOTPVerified: true }));
-
-          // Navigate to the next screen. App.js will handle the actual navigation
-          // based on the updated userData, so we don't necessarily need to `navigate` here.
-          // However, if `GeneralInformationScreen` *must* be pushed, you can.
-          // For a cleaner flow with App.js handling, just let the context update.
-          // navigation.navigate('GeneralInformationScreen');
         } else {
           Alert.alert('Error', 'User ID not found after OTP verification.');
         }
@@ -107,18 +98,10 @@ const OTPVerificationScreen = ({ navigation, route }) => {
     <View style={styles.container}>
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
 
-      {/* <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-        disabled={isVerifying}
-      >
-        <Ionicons name="arrow-back" size={28} color={primaryColor} />
-      </TouchableOpacity> */}
-
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.mainTitle}>OTP Verification</Text>
         <Image
-          source={require('../../assets/images/forgot-password.png')} // Make sure this path is correct
+          source={require('../../assets/images/forgot-password.png')}
           style={styles.illustration}
         />
 

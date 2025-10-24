@@ -154,14 +154,7 @@ const ServiceSummaryScreen = ({ navigation }) => {
                 item.customer ? item.customer?.fullName ?? 'Unavailable' : '_'
               }
             />
-            {/* <Row
-              label="Phone number"
-              value={
-                item.customer?.phone?.trim() == ''
-                  ? 'Unavailable'
-                  : item.customer?.phone
-              }
-            /> */}
+
             <View style={styles.row}>
               <Text style={styles.text}>Phone</Text>
               {item.customer?.phone?.trim() == '' ? (

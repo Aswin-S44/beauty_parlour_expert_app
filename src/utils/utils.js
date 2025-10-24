@@ -48,15 +48,15 @@ export const convertFIrstCharToUpper = s => {
 export const formatDate = dateString => {
   if (!dateString) return '-';
 
-  const parts = dateString.split('-'); // expecting 'DD-MM-YYYY'
+  const parts = dateString.split('-');
   if (parts.length !== 3) return '-';
 
   const [day, month, year] = parts.map(Number);
-  const date = new Date(year, month - 1, day); // month is 0-indexed
+  const date = new Date(year, month - 1, day);
 
   if (!isValid(date)) return '-';
 
-  return format(date, 'dd MMM yyyy'); // e.g. 31 Oct 2025
+  return format(date, 'dd MMM yyyy');
 };
 
 export const formatTimeAgo = createdAt => {
@@ -115,20 +115,7 @@ export const getLatLngFromShortUrl = async shortUrl => {
   return null;
 };
 
-const getPlaceId = async (latitude, longitude) => {
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
-  const res = await fetch(url);
-  const data = await res.json();
-
-  if (data && data?.results[0]?.place_id) {
-    return data?.results[0]?.place_id;
-  } else {
-    return null;
-  }
-};
-
 export const getTotalRating = async placeId => {
-  //const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,reviews&key=${apiKey}`;
   const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,reviews&key=${apiKey}`;
 
   try {
@@ -148,8 +135,6 @@ export const getTotalRating = async placeId => {
 };
 
 export const getPlaceIdFromName = async name => {
-  // name = 'Aura Ladies and Kids Beauty Parlour and Bridal Studio';
-
   let url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${name}&inputtype=textquery&fields=place_id&key=${apiKey}`;
   const res = await fetch(url);
   const data = await res.json();

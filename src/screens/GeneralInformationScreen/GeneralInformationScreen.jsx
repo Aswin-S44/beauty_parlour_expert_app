@@ -16,8 +16,6 @@ import { updateShop } from '../../apis/auth';
 import { AuthContext, useAuth } from '../../context/AuthContext';
 import {
   getLatLngFromAddress,
-  getLatLngFromShortUrl,
-  getPlaceIdFromName,
 } from '../../utils/utils';
 
 const GeneralInformationScreen = ({ navigation }) => {
@@ -27,7 +25,7 @@ const GeneralInformationScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const { setUserData } = useAuth();
 
-  const { user, userData } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
 
   const handleAddGeneralInformation = async () => {
     if (!parlourName.trim() || !address.trim() || !locationUrl.trim()) {

@@ -10,7 +10,6 @@ import {
 } from '../constants/variables';
 import { COLLECTIONS } from '../constants/collections';
 import axios from 'axios';
-import { NO_IMAGE } from '../constants/images';
 
 export const addServices = async (shopId, data, imageUri) => {
   try {
@@ -353,237 +352,6 @@ export const getAppointmentsByShopId = async shopId => {
   }
 };
 
-// export const getAppointmentsByShopId = async shopId => {
-//   try {
-//     const querySnapshot = await firestore()
-//       .collection(COLLECTIONS.APPOINTMENTS)
-//       .where('shopId', '==', shopId)
-//       .where('appointmentStatus', 'in', [
-//         APPOINTMENT_STATUS_MAPPINGS.CONFIRMED,
-//         APPOINTMENT_STATUS_MAPPINGS.PENDING,
-//       ])
-//       .get();
-
-//     const offerSnap = await firestore()
-//       .collection(COLLECTIONS.OFFERS)
-//       .where('shopId', '==', shopId)
-//       .get();
-
-//     const offers = offerSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-//     const results = await Promise.all(
-//       querySnapshot.docs.map(async appointmentDoc => {
-//         const appointmentData = appointmentDoc.data();
-//         const expertId = appointmentData.expertId;
-//         const serviceIds = appointmentData.serviceIds || [];
-//         const customerId = appointmentData.customerId;
-//         console.log('CUSTOMER ID----------', customerId);
-
-//         let expertData = null;
-//         if (expertId) {
-//           const expertSnap = await firestore()
-//             .collection(COLLECTIONS.BEAUTY_EXPERTS)
-//             .doc(expertId)
-//             .get();
-//           if (expertSnap.exists) {
-//             expertData = { id: expertSnap.id, ...expertSnap.data() };
-//           }
-//         }
-
-//         const serviceData = await Promise.all(
-//           serviceIds.map(async serviceId => {
-//             const serviceSnap = await firestore()
-//               .collection(COLLECTIONS.SERVICES)
-//               .doc(serviceId)
-//               .get();
-//             if (serviceSnap.exists) {
-//               return { id: serviceSnap.id, ...serviceSnap.data() };
-//             }
-//             return null;
-//           }),
-//         );
-
-//         let customerData = null;
-//         if (customerId) {
-//           const customerSnap = await firestore()
-//             .collection(COLLECTIONS.CUSTOMERS)
-//             .doc(customerId)
-//             .get();
-//           if (customerSnap.exists) {
-//             customerData = { id: customerSnap.id, ...customerSnap.data() };
-//           }
-//         }
-
-//         const shopOffers = offers.filter(o => o.shopId === shopId);
-
-//         return {
-//           id: appointmentDoc.id,
-//           ...appointmentData,
-//           expert: expertData,
-//           services: serviceData.filter(service => service !== null),
-//           customer: customerData,
-//           offers: shopOffers,
-//         };
-//       }),
-//     );
-
-//     return results;
-//   } catch (error) {
-//     throw error;
-//   }
-// };
-
-// export const getAppointmentsByShopId = async shopId => {
-//   try {
-//     const querySnapshot = await firestore()
-//       .collection(COLLECTIONS.APPOINTMENTS)
-//       .where('shopId', '==', shopId)
-//       .where('appointmentStatus', 'in', [
-//         APPOINTMENT_STATUS_MAPPINGS.CONFIRMED,
-//         APPOINTMENT_STATUS_MAPPINGS.PENDING,
-//       ])
-//       .get();
-
-//     const results = await Promise.all(
-//       querySnapshot.docs.map(async appointmentDoc => {
-//         const appointmentData = appointmentDoc.data();
-//         const expertId = appointmentData.expertId;
-//         const serviceIds = appointmentData.serviceIds || [];
-//         const customerId = appointmentData.customerId;
-
-//         let expertData = null;
-//         if (expertId) {
-//           const expertSnap = await firestore()
-//             .collection(COLLECTIONS.BEAUTY_EXPERTS)
-//             .doc(expertId)
-//             .get();
-//           if (expertSnap.exists) {
-//             expertData = { id: expertSnap.id, ...expertSnap.data() };
-//           }
-//         }
-
-//         const serviceData = await Promise.all(
-//           serviceIds.map(async serviceId => {
-//             const serviceSnap = await firestore()
-//               .collection(COLLECTIONS.SERVICES)
-//               .doc(serviceId)
-//               .get();
-//             if (serviceSnap.exists) {
-//               return { id: serviceSnap.id, ...serviceSnap.data() };
-//             }
-//             return null;
-//           }),
-//         );
-
-//         let customerData = null;
-//         if (customerId) {
-//           const customerSnap = await firestore()
-//             .collection(COLLECTIONS.CUSTOMERS)
-//             .doc(customerId)
-//             .get();
-//           if (customerSnap.exists) {
-//             customerData = { id: customerSnap.id, ...customerSnap.data() };
-//           }
-//         }
-
-//         return {
-//           id: appointmentDoc.id,
-//           ...appointmentData,
-//           expert: expertData,
-//           services: serviceData.filter(service => service !== null),
-//           customer: customerData,
-//         };
-//       }),
-//     );
-
-//     return results;
-//   } catch (error) {
-//     throw error;
-//   }
-// };
-// export const getUserPendingRequests = async shopId => {
-//   try {
-//     const querySnapshot = await firestore()
-//       .collection(COLLECTIONS.APPOINTMENTS)
-//       .where('shopId', '==', shopId)
-//       .where('appointmentStatus', '==', APPOINTMENT_STATUSES.PENDING)
-//       .get();
-
-//     const offersSnapshot = await firestore()
-//       .collection(COLLECTIONS.OFFERS)
-//       .where('shopId', '==', shopId)
-//       .get();
-
-//     const shopOffers = offersSnapshot.docs.map(doc => ({
-//       id: doc.id,
-//       ...doc.data(),
-//     }));
-
-//     const results = await Promise.all(
-//       querySnapshot.docs.map(async appointmentDoc => {
-//         const appointmentData = appointmentDoc.data();
-//         const expertId = appointmentData.expertId;
-//         const serviceIds = appointmentData.serviceIds || [];
-
-//         let expertData = null;
-//         if (expertId) {
-//           const expertSnap = await firestore()
-//             .collection(COLLECTIONS.BEAUTY_EXPERTS)
-//             .doc(expertId)
-//             .get();
-//           if (expertSnap.exists) {
-//             expertData = { id: expertSnap.id, ...expertSnap.data() };
-//           }
-//         }
-
-//         const services = await Promise.all(
-//           serviceIds.map(async serviceId => {
-//             const serviceSnap = await firestore()
-//               .collection(COLLECTIONS.SERVICES)
-//               .doc(serviceId)
-//               .get();
-//             if (serviceSnap.exists) {
-//               return { id: serviceSnap.id, ...serviceSnap.data() };
-//             }
-//             return null;
-//           }),
-//         );
-
-//         const validServices = services.filter(service => service !== null);
-
-//         let offerAvailable = false;
-//         let offerPrice = null;
-
-//         if (serviceIds.length > 0 && shopOffers.length > 0) {
-//           const applicableOffers = shopOffers.filter(offer =>
-//             serviceIds.includes(offer.serviceId),
-//           );
-
-//           if (applicableOffers.length > 0) {
-//             offerAvailable = true;
-//             offerPrice =
-//               applicableOffers[0].price || applicableOffers[0].offerPrice;
-//           }
-//         }
-
-//         return {
-//           id: appointmentDoc.id,
-//           ...appointmentData,
-//           expert: expertData,
-//           services: validServices,
-//           offerAvailable,
-//           ...(offerAvailable && { offerPrice }),
-//         };
-//       }),
-//     );
-
-//     return results;
-//   } catch (error) {
-//     console.error('Error fetching appointments with expert data:', error);
-//     throw error;
-//   }
-// };
-
 export const getUserPendingRequests = async shopId => {
   try {
     const querySnapshot = await firestore()
@@ -681,13 +449,6 @@ export const createNotification = async (
   profileImage,
 ) => {
   try {
-    console.log('================', {
-      fromId,
-      toId,
-      message,
-      shopName,
-      profileImage,
-    });
     const notificationData = {
       fromId,
       toId,
@@ -700,7 +461,7 @@ export const createNotification = async (
     };
 
     const docRef = await firestore()
-      .collection('notifications')
+      .collection(COLLECTIONS.NOTIFICATIONS)
       .add(notificationData);
 
     return {
@@ -724,7 +485,7 @@ export const sendAppointmentNofification = async (
 ) => {
   try {
     const url = `${BACKEND_URL}/appointment`;
-    const res = await axios.post(url, {
+    await axios.post(url, {
       customerId,
       shopId,
       appointmentType,
@@ -756,10 +517,6 @@ export const confirmAppointment = async (
       throw new Error('Appointment does not belong to this shop');
     }
 
-    // if (appointmentData.appointmentStatus !== 'pending') {
-    //   throw new Error('Appointment is not in pending status');
-    // }
-
     await appointmentRef.update({
       appointmentStatus: APPOINTMENT_STATUSES.CONFIRMED,
       confirmedAt: new Date(),
@@ -771,10 +528,6 @@ export const confirmAppointment = async (
       APPOINTMENT_TYPES.BOOKING_ACCEPTED,
     );
     let message = 'Your booking accepted';
-
-    // if (shopName) {
-    //   message = `${shopName} accepted your booking`;
-    // }
 
     await createNotification(
       shopId,
@@ -939,7 +692,7 @@ export const deleteSlot = async (slotId, shopId) => {
 export const getNotificationsByShopId = async userId => {
   try {
     const querySnapshot = await firestore()
-      .collection('notifications')
+      .collection(COLLECTIONS.NOTIFICATIONS)
       .where('toId', '==', userId)
       .get();
 
@@ -956,87 +709,6 @@ export const getNotificationsByShopId = async userId => {
     return [];
   }
 };
-
-// export const getNotificationsByShopId = async userId => {
-//   try {
-//     const querySnapshot = await firestore()
-//       .collection('notifications')
-//       .where('toId', '==', userId)
-//       .get();
-
-//     if (querySnapshot.empty) return [];
-
-//     const notifications = await Promise.all(
-//       querySnapshot.docs.map(async doc => {
-//         const data = doc.data();
-
-//         const shopSnapshot = await firestore()
-//           .collection('shop-owners')
-//           .doc(data.fromId)
-//           .get();
-
-//         const shop = shopSnapshot.exists ? shopSnapshot.data() : null;
-
-//         let appointment = null;
-//         let services = [];
-
-//         if (data.appointmentId) {
-//           const appointmentSnapshot = await firestore()
-//             .collection('appointments')
-//             .doc(data.appointmentId)
-//             .get();
-
-//           if (appointmentSnapshot.exists) {
-//             appointment = appointmentSnapshot.data();
-
-//             if (Array.isArray(appointment?.serviceIds)) {
-//               const servicePromises =
-//                 appointment &&
-//                 appointment?.serviceIds?.length > 0 &&
-//                 appointment?.serviceIds.map(async sid => {
-//                   const serviceDoc = await firestore()
-//                     .collection('services')
-//                     .doc(sid)
-//                     .get();
-//                   return serviceDoc.exists
-//                     ? { id: serviceDoc.id, ...serviceDoc.data() }
-//                     : null;
-//                 });
-//               services = (await Promise.all(servicePromises)).filter(Boolean);
-//             }
-//           }
-//         }
-
-//         return {
-//           id: doc.id,
-//           ...data,
-//           shop: shop
-//             ? {
-//                 parlourName: shop.parlourName || '',
-//                 geolocation: shop.geolocation || null,
-//                 address: shop.address || '',
-//                 profileImage: shop.profileImage || DEFAULT_AVATAR,
-//               }
-//             : null,
-//           appointment: appointment
-//             ? {
-//                 appointmentStatus: appointment.appointmentStatus,
-//                 selectedDate: appointment.selectedDate,
-//                 selectedTime: appointment.selectedTime,
-//                 totalAmount: appointment.totalAmount,
-//               }
-//             : null,
-//           services,
-//         };
-//       }),
-//     );
-
-//     return notifications;
-//   } catch (error) {
-//     console.error('Error fetching notifications:', error);
-//     return [];
-//   }
-// };
 
 export const markNotificationAsRead = async id => {
   try {
@@ -1083,33 +755,6 @@ export const deleteService = async (serviceId, shopId) => {
   } catch (error) {
     console.error('Error deleting service:', error);
     throw error;
-  }
-};
-
-const uploadImage = async image => {
-  try {
-    if (image === 'string' && image.startsWith('file://')) {
-      const formData = new FormData();
-      formData.append('file', {
-        uri: image,
-        type: 'image/jpeg',
-        name: 'upload.jpg',
-      });
-      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-      const response = await fetch(CLOUDINARY_URL, {
-        method: 'POST',
-        body: formData,
-      });
-
-      const responseData = await response.json();
-
-      if (responseData.secure_url) {
-        return responseData.secure_url;
-      }
-    }
-  } catch (error) {
-    return error;
   }
 };
 
@@ -1274,7 +919,7 @@ export const getPendingRequestsCount = async shopId => {
 export const getNotificationDetails = async notificationId => {
   try {
     const notificationDoc = await firestore()
-      .collection('notifications')
+      .collection(COLLECTIONS.NOTIFICATIONS)
       .doc(notificationId)
       .get();
 
@@ -1288,12 +933,12 @@ export const getNotificationDetails = async notificationId => {
     const fromId = notificationData.fromId;
 
     const appointmentDoc = await firestore()
-      .collection('appointments')
+      .collection(COLLECTIONS.APPOINTMENTS)
       .doc(appointmentId)
       .get();
 
     const customerDoc = await firestore()
-      .collection('customers')
+      .collection(COLLECTIONS.CUSTOMERS)
       .doc(fromId)
       .get();
 
@@ -1311,7 +956,7 @@ export const getNotificationDetails = async notificationId => {
       appointmentDetails.serviceIds.length > 0
     ) {
       const servicePromises = appointmentDetails.serviceIds.map(serviceId =>
-        firestore().collection('services').doc(serviceId).get(),
+        firestore().collection(COLLECTIONS.SERVICES).doc(serviceId).get(),
       );
       const serviceSnapshots = await Promise.all(servicePromises);
       serviceDetails = serviceSnapshots

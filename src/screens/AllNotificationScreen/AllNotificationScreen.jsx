@@ -18,7 +18,6 @@ import { getNotificationsByShopId } from '../../apis/services';
 import AllNotificationsScreenSkeleton from '../AllNotificationsScreenSkeleton/AllNotificationsScreenSkeleton';
 import EmptyComponent from '../../components/EmptyComponent/EmptyComponent';
 import { AVATAR_IMAGE } from '../../constants/images';
-import { getNotificationTitle } from '../../constants/variables';
 
 const AllNotificationScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
@@ -91,12 +90,7 @@ const AllNotificationScreen = ({ navigation }) => {
           style={styles.avatar}
         />
         <View style={styles.notificationContent}>
-          <Text style={styles.notificationTitle}>
-            {/* {item.notificationType === 'appointment_request'
-              ? 'Appointment Request'
-              : 'Notification'} */}
-            Appointment request
-          </Text>
+          <Text style={styles.notificationTitle}>Appointment request</Text>
           <Text style={styles.notificationMessage}>{item.message}</Text>
           <Text style={styles.notificationTime}>
             {new Date(item.createdAt._seconds * 1000).toLocaleString()}
