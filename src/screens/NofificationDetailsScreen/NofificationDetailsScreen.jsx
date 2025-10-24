@@ -25,7 +25,7 @@ import { AuthContext } from '../../context/AuthContext'; // Assuming AuthContext
 const NofificationDetailsScreen = ({ route, navigation }) => {
   const { notification } = route.params;
   const { user } = useContext(AuthContext); // Get user from AuthContext
-  console.log('notification-----------------', notification);
+
   const [acceptModalVisible, setAcceptModalVisible] = useState(false);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [confirming, setConfirming] = useState(false);

@@ -130,7 +130,7 @@ const getPlaceId = async (latitude, longitude) => {
 export const getTotalRating = async placeId => {
   //const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,reviews&key=${apiKey}`;
   const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,reviews&key=${apiKey}`;
-  console.log('URL------------', url);
+
   try {
     const res = await axios.get(url);
     const reviewResponse = {
@@ -166,7 +166,7 @@ export const getLatLngFromAddress = async (name, address) => {
     )}&key=${apiKey}`;
     const res = await fetch(apiUrl);
     const data = await res.json();
-    console.log('data------------', data ? data : 'no data');
+
     if (data.results.length > 0) {
       const { lat, lng } = data.results[0].geometry.location;
       let placeId = null;
@@ -193,7 +193,7 @@ export const getLatLngFromAddress = async (name, address) => {
       totalRating: null,
     };
   } catch (error) {
-    console.log('Error-------------', error);
+    return error;
   }
 };
 

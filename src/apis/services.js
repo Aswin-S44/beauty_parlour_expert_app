@@ -586,7 +586,6 @@ export const getAppointmentsByShopId = async shopId => {
 
 export const getUserPendingRequests = async shopId => {
   try {
-    console.log('SHOP ID-----------', shopId);
     const querySnapshot = await firestore()
       .collection(COLLECTIONS.APPOINTMENTS)
       .where('shopId', '==', shopId)
@@ -692,7 +691,6 @@ export const createNotification = async (
       shopName,
       profileImage,
     };
-    console.log('notificationData------------', notificationData);
 
     const docRef = await firestore()
       .collection('notifications')
@@ -724,9 +722,8 @@ export const sendAppointmentNofification = async (
       shopId,
       appointmentType,
     });
-    console.log('notification res---------------', res ? res : 'no res');
   } catch (error) {
-    console.log('Error whilel sending notification : ', error);
+    return error;
   }
 };
 
@@ -755,7 +752,7 @@ export const confirmAppointment = async (
     // if (appointmentData.appointmentStatus !== 'pending') {
     //   throw new Error('Appointment is not in pending status');
     // }
-    console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
+
     await appointmentRef.update({
       appointmentStatus: APPOINTMENT_STATUSES.CONFIRMED,
       confirmedAt: new Date(),
@@ -1038,10 +1035,7 @@ export const getNotificationsByShopId = async userId => {
 
           if (appointmentSnapshot.exists) {
             appointment = appointmentSnapshot.data();
-            console.log(
-              'APPOINTMENT==============',
-              appointment ? appointment : 'no appoinmtne',
-            );
+
             if (Array.isArray(appointment?.serviceIds)) {
               const servicePromises =
                 appointment &&
@@ -1162,7 +1156,6 @@ const uploadImage = async image => {
       }
     }
   } catch (error) {
-    console.log('Error uploading image: ', error);
     return error;
   }
 };
@@ -1321,6 +1314,6 @@ export const getPendingRequestsCount = async shopId => {
 
     return querySnapshot?.size ?? 0;
   } catch (error) {
-    console.log('Eror while fetching penging request count : ', error);
+    return error;
   }
 };

@@ -34,7 +34,7 @@ const ProfileScreen = ({ navigation }) => {
   const [totalRating, setTotalRating] = useState(0);
 
   const imageSource = imageUri ? { uri: imageUri } : initialImage;
-  console.log('USER DATA----------', userData);
+
   const fetchUserData = useCallback(async () => {
     if (userData) {
       refreshUserData();
@@ -116,7 +116,6 @@ const ProfileScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.section}>
-          {console.log('OPENING HOURS===========', openingHours)}
           <Text style={styles.sectionTitle}>Opening Hours</Text>
           <View style={styles.hoursRow}>
             {userData?.openingHours?.length === 0 ? (
@@ -204,7 +203,7 @@ const styles = StyleSheet.create({
   },
   editIcon: {
     position: 'absolute',
-    top: 20,
+    top: 0,
     right: 20,
   },
   name: {

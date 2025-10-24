@@ -11,9 +11,8 @@ export const resentOTP = async email => {
       email,
       userType: USER_TYPES.BEAUTY_SHOP,
     });
-    console.log('RESEND OTP RES---------', res ? res : 'no res');
   } catch (error) {
-    console.log('Error while resending OTP : ', error);
+    return error;
   }
 };
 

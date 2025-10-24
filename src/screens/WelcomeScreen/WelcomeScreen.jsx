@@ -64,14 +64,122 @@ const WelcomeScreen = ({ navigation }) => {
         googleCredential,
       );
       const firebaseUser = userCredential.user;
-      console.log(
-        'firebaseUser------------------',
-        firebaseUser ? firebaseUser : 'no firebaseUser',
-      );
-      const shopRef = firestore()
+
+      const shopRef = await firestore()
         .collection(COLLECTIONS.SHOP_OWNERS)
         .doc(firebaseUser.uid);
       const docSnap = await shopRef.get();
+
+      const querySnapshot = await firestore()
+        .collection(COLLECTIONS.SHOP_OWNERS)
+        .where('email', '==', firebaseUser.email)
+        .get();
+
+      let updateData;
+
+      // if (docSnap.exists) {
+      //   console.log('1111111111111111');
+      //   console.log(
+      //     ' docSnap.data.isOnboarded===============',
+      //     docSnap.data.isOnboarded
+      //       ? docSnap.data.isOnboarded
+      //       : 'no  docSnap.data.isOnboarded',
+      //   );
+      //   await shopRef.set({
+      //     uid: firebaseUser.uid,
+      //     fullName: firebaseUser.displayName || generateRandomName(),
+      //     phone: '',
+      //     email: firebaseUser.email,
+      //     createdAt: new Date(),
+      //     parlourName: '',
+      //     about: '',
+      //     address: '',
+      //     isOnboarded: true, // docSnap.data.isOnboarded,
+      //     profileImage: NO_IMAGE,
+      //     isOTPVerified: true,
+      //     accountInitiated: true,
+      //     profileCompleted: true,
+      //     emailVerified: true,
+      //     openingHours: [],
+      //   });
+      // } else {
+      //   console.log('22222222222222222');
+      //   await firestore()
+      //     .collection(COLLECTIONS.SHOP_OWNERS)
+      //     .doc(firebaseUser.uid)
+      //     .set(updateData);
+      // }
+
+      if (querySnapshot.empty) {
+        console.log('111111111111');
+        updateData = {
+          // uid: firebaseUser.uid,
+          fullName: firebaseUser.displayName || generateRandomName(),
+          phone: '',
+          email: firebaseUser.email,
+          createdAt: new Date(),
+          parlourName: '',
+          about: '',
+          address: '',
+          isOnboarded: false,
+          profileImage: NO_IMAGE,
+          isOTPVerified: false,
+          accountInitiated: true,
+          profileCompleted: false,
+          emailVerified: true,
+          openingHours: [],
+        };
+        await firestore()
+          .collection(COLLECTIONS.SHOP_OWNERS)
+          .doc(firebaseUser.uid)
+          .set(updateData);
+      } else {
+        console.log('222222222222');
+        // const docId = querySnapshot.docs[0].id;
+        // updateData = {
+        //   uid: firebaseUser.uid,
+        //   fullName: firebaseUser.displayName || generateRandomName(),
+        //   phone: '',
+        //   email: firebaseUser.email,
+        //   createdAt: new Date(),
+        //   parlourName: '',
+        //   about: '',
+        //   address: '',
+        //   isOnboarded: true,
+        //   profileImage: NO_IMAGE,
+        //   isOTPVerified: true,
+        //   accountInitiated: true,
+        //   profileCompleted: true,
+        //   emailVerified: true,
+        //   openingHours: [],
+        // };
+        // await firestore()
+        //   .collection(COLLECTIONS.SHOP_OWNERS)
+        //   .doc(docId)
+        //   .update(updateData);
+
+
+
+
+
+        // await shopRef.set({
+        //   uid: firebaseUser.uid,
+        //   fullName: firebaseUser.displayName || generateRandomName(),
+        //   phone: '',
+        //   email: firebaseUser.email,
+        //   createdAt: new Date(),
+        //   parlourName: '',
+        //   about: '',
+        //   address: '',
+        //   isOnboarded: true,
+        //   profileImage: NO_IMAGE,
+        //   isOTPVerified: true,
+        //   accountInitiated: true,
+        //   profileCompleted: true,
+        //   emailVerified: true,
+        //   openingHours: [],
+        // });
+      }
 
       // if (firebaseUser) {
       //   const snapshot = await firestore()
@@ -80,62 +188,12 @@ const WelcomeScreen = ({ navigation }) => {
       //   .get();
       // }
 
-      let updateData = {
-        uid: firebaseUser.uid,
-        fullName: firebaseUser.displayName || generateRandomName(),
-        phone: '',
-        email: firebaseUser.email,
-        createdAt: new Date(),
-        parlourName: '',
-        about: '',
-        address: '',
-        isOnboarded: false,
-        profileImage: NO_IMAGE,
-        isOTPVerified: false,
-        accountInitiated: true,
-        profileCompleted: false,
-        emailVerified: true,
-        openingHours: [],
-      };
-
-      if (docSnap.exists) {
-        console.log('1111111111111111');
-        console.log(
-          ' docSnap.data.isOnboarded===============',
-          docSnap.data.isOnboarded
-            ? docSnap.data.isOnboarded
-            : 'no  docSnap.data.isOnboarded',
-        );
-        await shopRef.set({
-          uid: firebaseUser.uid,
-          fullName: firebaseUser.displayName || generateRandomName(),
-          phone: '',
-          email: firebaseUser.email,
-          createdAt: new Date(),
-          parlourName: '',
-          about: '',
-          address: '',
-          isOnboarded: true, // docSnap.data.isOnboarded,
-          profileImage: NO_IMAGE,
-          isOTPVerified: true,
-          accountInitiated: true,
-          profileCompleted: true,
-          emailVerified: true,
-          openingHours: [],
-        });
-      } else {
-        console.log('22222222222222222');
-        await firestore()
-          .collection(COLLECTIONS.SHOP_OWNERS)
-          .doc(firebaseUser.uid)
-          .set(updateData);
-      }
-
-      let res = await signInWithCredential(getAuth(), googleCredential);
+      // let res = await signInWithCredential(getAuth(), googleCredential);
 
       return firebaseUser;
     } catch (error) {
       console.log('GOOGLE SIGN-IN ERROR =====>', error);
+      return error;
     }
   }
 
@@ -157,9 +215,9 @@ const WelcomeScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.signInButton}
           onPress={() =>
-            onGoogleButtonPress().then(() =>
-              console.log('Signed in with Google!'),
-            )
+            onGoogleButtonPress().then(() => {
+              // Successfully signed
+            })
           }
         >
           <Image source={{ uri: GOOGLE_ICON }} style={styles.googleIcon} />

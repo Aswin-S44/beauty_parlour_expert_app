@@ -289,7 +289,6 @@ export default function App() {
     // This effect runs whenever user or userData changes, or when app is loaded.
     // We only want to set up FCM when a user is logged in AND onboarded.
     if (user && userData?.isOnboarded && !userData.fcmToken) {
-      console.log('USER DATA ONBOARDER----------', userData);
       const initializeAppNotifications = async () => {
         try {
           // Initialize Firebase Notification Service
@@ -366,25 +365,13 @@ export default function App() {
     // General info completed, but waiting for admin confirmation
     currentStack = <ConfirmationWaitingScreen />;
     curentScreen = 'confirmation';
-  }
-  else if (userData.isOnboarded) {
+  } else {
     // User is fully authenticated, OTP verified, onboarded, and profile completed
     currentStack = <MainAppStack />;
     curentScreen = 'main';
   }
-  else {
-    // User is fully authenticated, OTP verified, onboarded, and profile completed
-    currentStack = <MainAppStack />;
-    curentScreen = 'main';
-  }
-
-  console.log('CURRENT SCREN-----------------', curentScreen);
-
-  // console.log(
-  //   'CURRENT STACK----------',
-  //   currentStack ? currentStack : 'no currentStack',
-  // );
-
+  console.log('curentScreen----------------', curentScreen);
+ 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NavigationContainer>{currentStack}</NavigationContainer>

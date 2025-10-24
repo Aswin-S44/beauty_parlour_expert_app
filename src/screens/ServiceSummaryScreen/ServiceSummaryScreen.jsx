@@ -45,7 +45,6 @@ const AmountRow = ({ service, qty, price, isBold = false }) => (
 const ServiceSummaryScreen = ({ navigation }) => {
   const route = useRoute();
   const { item } = route.params;
-  console.log('ITEM-------------', item ? item : 'no item');
 
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -124,7 +123,7 @@ const ServiceSummaryScreen = ({ navigation }) => {
                 : '-'}
             </Text>
           </View>
-                
+
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Appointment Details</Text>
             <Row
@@ -146,7 +145,7 @@ const ServiceSummaryScreen = ({ navigation }) => {
               </Text>
             </View>
           </View>
-          {console.log('ITEM-------------', item ? item : 'no item')}
+
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Customer Details</Text>
             <Row

@@ -79,14 +79,16 @@ class FirebaseNotificationService {
         [
           {
             text: 'OK',
-            onPress: () => console.log('Notification pressed'),
+            onPress: () => {
+              // Notification pressed
+              // TODO: If any logic need
+            },
           },
         ],
       );
     });
 
     messaging().onNotificationOpenedApp(remoteMessage => {
-      console.log('Notification opened from background:', remoteMessage);
       // Handle navigation based on notification data
     });
 
@@ -94,7 +96,7 @@ class FirebaseNotificationService {
       .getInitialNotification()
       .then(remoteMessage => {
         if (remoteMessage) {
-          console.log('App opened by notification:', remoteMessage);
+          // App opened by notification
         }
       });
 
@@ -104,9 +106,8 @@ class FirebaseNotificationService {
   static async subscribeToShopTopic(shopId) {
     try {
       await messaging().subscribeToTopic(`shop_${shopId}`);
-      console.log(`Subscribed to shop topic: shop_${shopId}`);
     } catch (error) {
-      console.error('Error subscribing to topic:', error);
+      return error;
     }
   }
 
