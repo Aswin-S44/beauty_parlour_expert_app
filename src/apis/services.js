@@ -977,3 +977,100 @@ export const getNotificationDetails = async notificationId => {
     return null;
   }
 };
+
+export const subscribeToUserPendingRequests = (shopId, onUpdate, onError) => {
+  const unsubscribe = firestore()
+    .collection(COLLECTIONS.APPOINTMENTS)
+    .where('shopId', '==', shopId)
+    .where('appointmentStatus', '==', APPOINTMENT_STATUSES.PENDING)
+    .onSnapshot(
+      async querySnapshot => {
+        try {
+          const offersSnapshot = await firestore()
+            .collection(COLLECTIONS.OFFERS)
+            .where('shopId', '==', shopId)
+            .get();
+
+          const shopOffers = offersSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+
+          const results = await Promise.all(
+            querySnapshot.docs.map(async appointmentDoc => {
+              const appointmentData = appointmentDoc.data();
+              const { expertId, serviceIds = [], customerId } = appointmentData;
+
+              let expertData = null;
+              if (expertId) {
+                const expertSnap = await firestore()
+                  .collection(COLLECTIONS.BEAUTY_EXPERTS)
+                  .doc(expertId)
+                  .get();
+                if (expertSnap.exists)
+                  expertData = { id: expertSnap.id, ...expertSnap.data() };
+              }
+
+              const services = await Promise.all(
+                serviceIds.map(async serviceId => {
+                  const serviceSnap = await firestore()
+                    .collection(COLLECTIONS.SERVICES)
+                    .doc(serviceId)
+                    .get();
+                  return serviceSnap.exists
+                    ? { id: serviceSnap.id, ...serviceSnap.data() }
+                    : null;
+                }),
+              );
+
+              const validServices = services.filter(s => s !== null);
+
+              let customerData = null;
+              if (customerId) {
+                const customerSnap = await firestore()
+                  .collection(COLLECTIONS.CUSTOMERS)
+                  .doc(customerId.trim())
+                  .get();
+                if (customerSnap.exists)
+                  customerData = {
+                    id: customerSnap.id,
+                    ...customerSnap.data(),
+                  };
+              }
+
+              let offerAvailable = false;
+              let offerPrice = null;
+
+              if (serviceIds.length > 0 && shopOffers.length > 0) {
+                const applicableOffers = shopOffers.filter(offer =>
+                  serviceIds.includes(offer.serviceId),
+                );
+                if (applicableOffers.length > 0) {
+                  offerAvailable = true;
+                  offerPrice =
+                    applicableOffers[0].price || applicableOffers[0].offerPrice;
+                }
+              }
+
+              return {
+                id: appointmentDoc.id,
+                ...appointmentData,
+                expert: expertData,
+                customer: customerData,
+                services: validServices,
+                offerAvailable,
+                ...(offerAvailable && { offerPrice }),
+              };
+            }),
+          );
+          onUpdate(results);
+        } catch (error) {
+          onError(error);
+        }
+      },
+      error => {
+        onError(error);
+      },
+    );
+  return unsubscribe;
+};

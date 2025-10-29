@@ -18,7 +18,7 @@ import { AuthContext } from '../../context/AuthContext';
 import {
   rejectAppointment,
   confirmAppointment,
-  getUserPendingRequests,
+  subscribeToUserPendingRequests,
 } from '../../apis/services';
 import { formatTimestamp } from '../../utils/utils';
 import ServiceCardSkeleton from '../../components/ServiceCardSkeleton/ServiceCardSkeleton';
@@ -32,33 +32,36 @@ const AppointmentRequestsScreen = ({ navigation }) => {
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [userRequests, setUserRequests] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
   const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
+    let unsubscribe;
     if (user && user.uid) {
-      fetchRequests();
-    }
-  }, [user]);
-
-  const fetchRequests = async () => {
-    try {
       setLoading(true);
-
-      const res = await getUserPendingRequests(user.uid);
-      if (res && Array.isArray(res)) {
-        setUserRequests(res);
-      } else {
-        setUserRequests([]);
-      }
-    } catch (err) {
-      console.error('Error fetching user requests:', err);
-      setUserRequests([]);
-    } finally {
+      unsubscribe = subscribeToUserPendingRequests(
+        user.uid,
+        newRequests => {
+          setUserRequests(newRequests);
+          setLoading(false);
+        },
+        error => {
+          console.error('Error subscribing to user requests:', error);
+          setUserRequests([]);
+          setLoading(false);
+        },
+      );
+    } else {
       setLoading(false);
     }
-  };
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [user]);
 
   const handleAcceptPress = item => {
     setSelectedRequest(item);
@@ -80,7 +83,6 @@ const AppointmentRequestsScreen = ({ navigation }) => {
         userData?.profileImage,
       );
       setAcceptModalVisible(false);
-      await fetchRequests();
     } catch (error) {
       console.error('Error confirming appointment:', error);
     } finally {
@@ -93,7 +95,6 @@ const AppointmentRequestsScreen = ({ navigation }) => {
       setCancelling(true);
       await rejectAppointment(appointmentId, shopId);
       setCancelModalVisible(false);
-      await fetchRequests();
     } catch (error) {
       console.error('Error canceling appointment:', error);
     } finally {
@@ -109,14 +110,16 @@ const AppointmentRequestsScreen = ({ navigation }) => {
       <Image
         source={{
           uri:
-            typeof item.expert.imageUrl === 'string'
+            typeof item.expert?.imageUrl === 'string'
               ? item.expert.imageUrl
               : NO_IMAGE,
         }}
         style={styles.avatar}
       />
       <View style={styles.requestInfo}>
-        <Text style={styles.requesterName}>{item.expert.expertName ?? ''}</Text>
+        <Text style={styles.requesterName}>
+          {item.expert?.expertName ?? ''}
+        </Text>
         <Text style={styles.requestDetails}>
           {formatTimestamp(item.createdAt)} {'  '} {item.selectedTime}
         </Text>
@@ -168,7 +171,7 @@ const AppointmentRequestsScreen = ({ navigation }) => {
             <Text style={styles.amountHeader}>Quantity</Text>
             <Text style={styles.amountHeader}>Price</Text>
           </View>
-          {selectedRequest?.services.map((service, index) => (
+          {selectedRequest?.services?.map((service, index) => (
             <View key={index} style={styles.amountRow}>
               <Text style={styles.serviceText}>
                 {service.serviceName ?? '_'}
@@ -199,7 +202,7 @@ const AppointmentRequestsScreen = ({ navigation }) => {
           <View style={styles.summaryRow}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalValue}>
-              {selectedRequest?.offerPrice ?? 0}
+              {selectedRequest?.offerPrice ?? selectedRequest?.totalAmount ?? 0}
             </Text>
           </View>
           <View style={styles.modalActions}>
@@ -263,7 +266,7 @@ const AppointmentRequestsScreen = ({ navigation }) => {
             <TouchableOpacity
               style={styles.modalCancelButton}
               onPress={() => setCancelModalVisible(false)}
-              disabled={confirming}
+              disabled={cancelling}
             >
               <Text style={styles.modalButtonTextSecondary}>No</Text>
             </TouchableOpacity>
@@ -284,13 +287,13 @@ const AppointmentRequestsScreen = ({ navigation }) => {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.refreshButton}
-            onPress={fetchRequests}
-            disabled={loading}
+            onPress={() => setLoading(true)}
+            disabled={true}
           >
             {loading ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <Ionicons name="refresh" size={24} color="#fff" />
+              <Ionicons name="sync-circle-outline" size={24} color="#fff" />
             )}
             <Text style={styles.refreshButtonText}>Refresh</Text>
           </TouchableOpacity>

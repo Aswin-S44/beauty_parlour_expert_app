@@ -92,9 +92,9 @@ const AllNotificationScreen = ({ navigation }) => {
         <View style={styles.notificationContent}>
           <Text style={styles.notificationTitle}>Appointment request</Text>
           <Text style={styles.notificationMessage}>{item.message}</Text>
-          <Text style={styles.notificationTime}>
+          {/* <Text style={styles.notificationTime}>
             {new Date(item.createdAt._seconds * 1000).toLocaleString()}
-          </Text>
+          </Text> */}
         </View>
         {!item.isRead && <View style={styles.unreadDot} />}
       </TouchableOpacity>

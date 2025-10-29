@@ -60,7 +60,7 @@ const WelcomeScreen = () => {
 
       if (querySnapshot.empty) {
         updateData = {
-          // uid: firebaseUser.uid,
+          uid: firebaseUser.uid,
           fullName: firebaseUser.displayName || generateRandomName(),
           phone: '',
           email: firebaseUser.email,

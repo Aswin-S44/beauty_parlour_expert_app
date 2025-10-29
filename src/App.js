@@ -255,7 +255,7 @@ export default function App() {
   const [timeoutReached, setTimeoutReached] = useState(false);
 
   useEffect(() => {
-    if (user && userData?.isOnboarded && !userData.fcmToken) {
+    if (user && userData?.isOnboarded) {
       const initializeAppNotifications = async () => {
         try {
           FirebaseNotificationService.setupNotificationHandlers();

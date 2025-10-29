@@ -288,7 +288,7 @@ const NofificationDetailsScreen = ({ route, navigation }) => {
               </Text>
             </View>
 
-            <View style={styles.detailRow}>
+            {/* <View style={styles.detailRow}>
               <Text style={styles.label}>Received On:</Text>
               <Text style={styles.value}>
                 {formatDate(
@@ -296,7 +296,7 @@ const NofificationDetailsScreen = ({ route, navigation }) => {
                   notificationDetails?.createdAt?._nanoseconds,
                 )}
               </Text>
-            </View>
+            </View> */}
 
             {notificationDetails?.appointment && (
               <View style={styles.customerInfo}>
