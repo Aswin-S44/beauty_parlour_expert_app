@@ -6,12 +6,12 @@ import {
   StyleSheet,
   FlatList,
   Alert,
-  TextInput,
   Modal,
   SafeAreaView,
   Platform,
   StatusBar,
   Switch,
+  Dimensions,
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import moment from 'moment';
@@ -23,6 +23,8 @@ import { AuthContext } from '../../context/AuthContext';
 import { primaryColor } from '../../constants/colors';
 import SlotsSkeleton from '../../components/SlotsSkeleton/SlotsSkeleton';
 import { COLLECTIONS } from '../../constants/collections';
+
+const { width } = Dimensions.get('window');
 
 const SlotsManagementScreen = ({ navigation }) => {
   const { user } = useContext(AuthContext);
@@ -435,43 +437,50 @@ const SlotsManagementScreen = ({ navigation }) => {
       ? 'Available'
       : 'Booked';
     const statusColor = isHoliday
-      ? '#FFC107'
+      ? '#FF9800'
       : item.isAvailable
-      ? '#B8E080'
-      : '#ED5E3E';
-    const slotStyle = isHoliday ? styles.slotItemHoliday : styles.slotItem;
+      ? '#4CAF50'
+      : '#F44336';
+    const cardBg = isHoliday ? '#FFF3E0' : '#FFFFFF';
 
     return (
-      <View style={slotStyle}>
-        <Text
-          style={styles.slotTime}
-        >{`${item.startTime} - ${item.endTime}`}</Text>
-        <Text
-          style={[
-            styles.statusText,
-            styles.chip,
-            { backgroundColor: statusColor, color: '#fff', fontSize: 14 },
-          ]}
-        >
-          {statusText}
-        </Text>
-        {!isHoliday && (
-          <View style={styles.slotActions}>
-            <TouchableOpacity
-              onPress={() => openEditSlotModal(item)}
-              style={styles.actionIcon}
-            >
-              <Icon name="pencil-outline" size={20} color={primaryColor} />
-            </TouchableOpacity>
+      <View style={[styles.slotCard, { backgroundColor: cardBg }]}>
+        <View style={[styles.statusStrip, { backgroundColor: statusColor }]} />
 
-            <TouchableOpacity
-              onPress={() => handleDeleteSlot(item.id)}
-              style={styles.actionIcon}
-            >
-              <Icon name="trash-can-outline" size={20} color="#E84F67" />
-            </TouchableOpacity>
+        <View style={styles.slotContent}>
+          <View>
+            <Text style={styles.slotTimeText}>
+              {moment(item.startTime, 'HH:mm').format('h:mm A')} -{' '}
+              {moment(item.endTime, 'HH:mm').format('h:mm A')}
+            </Text>
+            <View style={styles.statusChipContainer}>
+              <View
+                style={[styles.statusDot, { backgroundColor: statusColor }]}
+              />
+              <Text style={[styles.statusLabel, { color: statusColor }]}>
+                {statusText}
+              </Text>
+            </View>
           </View>
-        )}
+
+          {!isHoliday && (
+            <View style={styles.actionButtonsContainer}>
+              <TouchableOpacity
+                onPress={() => openEditSlotModal(item)}
+                style={[styles.iconButton, styles.editBtn]}
+              >
+                <Icon name="pencil" size={18} color={primaryColor} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => handleDeleteSlot(item.id)}
+                style={[styles.iconButton, styles.deleteBtn]}
+              >
+                <Icon name="trash-can-outline" size={18} color="#FF5252" />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       </View>
     );
   };
@@ -483,15 +492,16 @@ const SlotsManagementScreen = ({ navigation }) => {
   Object.keys(holidays).forEach(date => {
     markedDates[date] = {
       ...(markedDates[date] || {}),
-      dotColor: '#FFC107',
       marked: true,
+      dotColor: '#FF9800',
       customStyles: {
         container: {
-          backgroundColor: '#FFFACD',
-          borderRadius: 5,
+          backgroundColor: '#FFF3E0',
+          borderWidth: 1,
+          borderColor: '#FFE0B2',
         },
         text: {
-          color: '#DAA520',
+          color: '#EF6C00',
         },
       },
     };
@@ -502,15 +512,13 @@ const SlotsManagementScreen = ({ navigation }) => {
     selectedColor: primaryColor,
     selectedTextColor: '#FFFFFF',
     customStyles: {
-      ...(markedDates[selectedDate]?.customStyles || {}),
       container: {
-        ...(markedDates[selectedDate]?.customStyles?.container || {}),
         backgroundColor: primaryColor,
-        borderRadius: 5,
+        elevation: 4,
       },
       text: {
-        ...(markedDates[selectedDate]?.customStyles?.text || {}),
         color: '#FFFFFF',
+        fontWeight: 'bold',
       },
     },
   };
@@ -518,96 +526,132 @@ const SlotsManagementScreen = ({ navigation }) => {
   const isSelectedDateHoliday = holidays[selectedDate];
 
   const ListHeaderComponent = () => (
-    <>
-      <Text style={styles.sectionHeader}>Manage Booking Slots</Text>
-
-      <View style={styles.calendarContainer}>
+    <View style={styles.headerContainer}>
+      <View style={styles.topSpacing} />
+      <View style={styles.calendarCard}>
         <Calendar
           onDayPress={onDayPress}
           markedDates={markedDates}
           markingType={'custom'}
+          enableSwipeMonths={true}
           theme={{
-            backgroundColor: '#FFFFFF',
-            calendarBackground: '#FFFFFF',
-            textSectionTitleColor: primaryColor,
+            backgroundColor: '#ffffff',
+            calendarBackground: '#ffffff',
+            textSectionTitleColor: '#B0BEC5',
             selectedDayBackgroundColor: primaryColor,
             selectedDayTextColor: '#ffffff',
-            todayTextColor: '#6200EE',
-            dayTextColor: '#2d4150',
-            textDisabledColor: '#d9e1e8',
+            todayTextColor: primaryColor,
+            dayTextColor: '#263238',
+            textDisabledColor: '#ECEFF1',
             dotColor: primaryColor,
             selectedDotColor: '#ffffff',
             arrowColor: primaryColor,
-            monthTextColor: '#2d4150',
+            monthTextColor: '#263238',
             indicatorColor: primaryColor,
-            textDayFontWeight: '300',
-            textMonthFontWeight: 'bold',
-            textDayHeaderFontWeight: '500',
-            textDayFontSize: 16,
+            textDayFontWeight: '500',
+            textMonthFontWeight: '700',
+            textDayHeaderFontWeight: '600',
+            textDayFontSize: 15,
             textMonthFontSize: 18,
-            textDayHeaderFontSize: 14,
+            textDayHeaderFontSize: 13,
           }}
         />
       </View>
 
-      <View style={styles.holidayToggleContainer}>
-        <Text style={styles.holidayToggleText}>
-          {isSelectedDateHoliday ? 'Marked as Holiday' : 'Mark as Holiday'}
-        </Text>
-        <Switch
-          trackColor={{ false: '#767577', true: '#FFC107' }}
-          thumbColor={isSelectedDateHoliday ? '#F57F17' : '#f4f3f4'}
-          ios_backgroundColor="#3e3e3e"
-          onValueChange={handleToggleHoliday}
-          value={isSelectedDateHoliday}
-        />
+      <View style={styles.controlGrid}>
+        <View
+          style={[
+            styles.controlBox,
+            isSelectedDateHoliday && styles.controlBoxActiveHoliday,
+          ]}
+        >
+          <View style={styles.controlHeader}>
+            <Icon
+              name={isSelectedDateHoliday ? 'beach' : 'calendar-check'}
+              size={24}
+              color={isSelectedDateHoliday ? '#F57C00' : '#78909C'}
+            />
+            <Switch
+              trackColor={{ false: '#ECEFF1', true: '#FFE0B2' }}
+              thumbColor={isSelectedDateHoliday ? '#F57C00' : '#B0BEC5'}
+              onValueChange={handleToggleHoliday}
+              value={isSelectedDateHoliday}
+              style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
+            />
+          </View>
+          <Text style={styles.controlLabel}>Holiday Mode</Text>
+          <Text style={styles.controlSubLabel}>
+            {isSelectedDateHoliday ? 'Bookings Paused' : 'Accepting Clients'}
+          </Text>
+        </View>
+
+        <View
+          style={[
+            styles.controlBox,
+            repeatSlotsDaily && styles.controlBoxActiveRepeat,
+          ]}
+        >
+          <View style={styles.controlHeader}>
+            <Icon
+              name="autorenew"
+              size={24}
+              color={repeatSlotsDaily ? primaryColor : '#78909C'}
+            />
+            <Switch
+              trackColor={{ false: '#ECEFF1', true: '#C5CAE9' }}
+              thumbColor={repeatSlotsDaily ? primaryColor : '#B0BEC5'}
+              onValueChange={handleRepeatSlotsDailyToggle}
+              value={repeatSlotsDaily}
+              style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
+            />
+          </View>
+          <Text style={styles.controlLabel}>Daily Repeat</Text>
+          <Text style={styles.controlSubLabel}>Copy to future</Text>
+        </View>
       </View>
 
-      <View style={styles.repeatSlotsDailyContainer}>
-        <Text style={styles.repeatSlotsDailyText}>
-          Repeat all slots for this day daily (from{' '}
-          {moment(selectedDate).format('MMM Do')})
-        </Text>
-        <Switch
-          trackColor={{ false: '#767577', true: primaryColor }}
-          thumbColor={repeatSlotsDaily ? primaryColor : '#f4f3f4'}
-          ios_backgroundColor="#3e3e3e"
-          onValueChange={handleRepeatSlotsDailyToggle}
-          value={repeatSlotsDaily}
-        />
-      </View>
-
-      <View style={styles.slotListHeader}>
-        <Text style={styles.slotListHeaderText}>
-          Slots for {moment(selectedDate).format('MMMM Do, YYYY')}
-        </Text>
+      <View style={styles.sectionTitleRow}>
+        <View>
+          <Text style={styles.dateTitle}>
+            {moment(selectedDate).format('MMMM Do')}
+          </Text>
+          <Text style={styles.yearTitle}>
+            {moment(selectedDate).format('YYYY')}
+          </Text>
+        </View>
         <TouchableOpacity
           onPress={openAddSlotModal}
-          style={styles.addSlotButton}
+          style={[
+            styles.fabButton,
+            isSelectedDateHoliday && styles.fabButtonDisabled,
+          ]}
           disabled={isSelectedDateHoliday}
         >
-          <Icon name="plus" size={18} color="#FFFFFF" style={styles.addIcon} />
-          <Text style={styles.addSlotButtonText}>Add Slot</Text>
+          <Icon name="plus" size={22} color="#FFFFFF" />
+          <Text style={styles.fabText}>Add Slot</Text>
         </TouchableOpacity>
       </View>
-    </>
+    </View>
   );
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={primaryColor} />
 
-      <View style={styles.customHeader}>
+      <View style={styles.curvedHeaderBg} />
+
+      <View style={styles.navbar}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
-          style={styles.backButton}
+          style={styles.navBackButton}
         >
-          <Icon name="chevron-left" size={24} color="#FFFFFF" />
-          <Text style={styles.backButtonText}>Back</Text>
+          <Icon name="arrow-left" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <View style={{ width: 60 }} />
+        <Text style={styles.navTitle}>Manage Slots</Text>
+        <View style={{ width: 40 }} />
       </View>
-      <View style={styles.contentContainer}>
+
+      <View style={styles.contentWrapper}>
         {loading ? (
           <SlotsSkeleton />
         ) : (
@@ -616,101 +660,119 @@ const SlotsManagementScreen = ({ navigation }) => {
             renderItem={renderSlotItem}
             keyExtractor={item => item.id}
             ListHeaderComponent={ListHeaderComponent}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
             ListEmptyComponent={
               isSelectedDateHoliday ? (
-                <View style={styles.emptySlotsContainer}>
-                  <Icon name="weather-sunny-alert" size={40} color="#FFC107" />
-                  <Text style={[styles.emptySlotsText, { color: '#DAA520' }]}>
-                    This day is marked as a Holiday.
-                  </Text>
-                  <Text style={styles.emptySlotsSubText}>
-                    No bookings can be made for this date.
+                <View style={styles.emptyContainer}>
+                  <View
+                    style={[styles.emptyIconBg, { backgroundColor: '#FFF3E0' }]}
+                  >
+                    <Icon name="umbrella-beach" size={48} color="#FFA000" />
+                  </View>
+                  <Text style={styles.emptyTitle}>Holiday Mode Active</Text>
+                  <Text style={styles.emptyDesc}>
+                    You have marked this day as a holiday. No bookings can be
+                    made.
                   </Text>
                 </View>
               ) : (
-                <View style={styles.emptySlotsContainer}>
-                  <Icon
-                    name="calendar-remove-outline"
-                    size={40}
-                    color="#B0B0B0"
-                  />
-                  <Text style={styles.emptySlotsText}>
-                    No slots configured for this date.
-                  </Text>
-                  <Text style={styles.emptySlotsSubText}>
-                    Tap "Add Slot" to create new availability.
+                <View style={styles.emptyContainer}>
+                  <View style={styles.emptyIconBg}>
+                    <Icon name="calendar-clock" size={48} color="#CFD8DC" />
+                  </View>
+                  <Text style={styles.emptyTitle}>No Slots Added</Text>
+                  <Text style={styles.emptyDesc}>
+                    Tap the "Add Slot" button to create availability for this
+                    date.
                   </Text>
                 </View>
               )
             }
-            contentContainerStyle={styles.slotsListContent}
           />
         )}
       </View>
 
       <Modal
-        animationType="fade"
+        animationType="slide"
         transparent={true}
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>
-              {editingSlot ? 'Edit Slot' : 'Create New Slot'}
+        <View style={styles.modalBackdrop}>
+          <View style={styles.bottomSheet}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>
+              {editingSlot ? 'Edit Time Slot' : 'New Time Slot'}
             </Text>
 
-            <TouchableOpacity
-              onPress={() => setShowStartTimePicker(true)}
-              style={styles.timeInputButton}
-            >
-              <Text style={styles.timeInputButtonText}>
-                Start Time: {moment(startTime).format('HH:mm')}
-              </Text>
-              <Icon name="clock-outline" size={24} color={primaryColor} />
-            </TouchableOpacity>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Starts At</Text>
+              <TouchableOpacity
+                onPress={() => setShowStartTimePicker(true)}
+                style={styles.timeSelector}
+              >
+                <Text style={styles.timeBigText}>
+                  {moment(startTime).format('hh:mm')}
+                </Text>
+                <Text style={styles.timeAmPm}>
+                  {moment(startTime).format('A')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             {showStartTimePicker && (
               <DateTimePicker
                 value={startTime}
                 mode="time"
-                is24Hour={true}
-                display="spinner"
+                is24Hour={false}
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                 onChange={onStartTimeChange}
               />
             )}
 
-            <TouchableOpacity
-              onPress={() => setShowEndTimePicker(true)}
-              style={styles.timeInputButton}
-            >
-              <Text style={styles.timeInputButtonText}>
-                End Time: {moment(endTime).format('HH:mm')}
-              </Text>
-              <Icon name="clock-outline" size={24} color={primaryColor} />
-            </TouchableOpacity>
+            <View style={styles.arrowDownContainer}>
+              <Icon name="arrow-down" size={20} color="#B0BEC5" />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Ends At</Text>
+              <TouchableOpacity
+                onPress={() => setShowEndTimePicker(true)}
+                style={styles.timeSelector}
+              >
+                <Text style={styles.timeBigText}>
+                  {moment(endTime).format('hh:mm')}
+                </Text>
+                <Text style={styles.timeAmPm}>
+                  {moment(endTime).format('A')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             {showEndTimePicker && (
               <DateTimePicker
                 value={endTime}
                 mode="time"
-                is24Hour={true}
-                display="spinner"
+                is24Hour={false}
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                 onChange={onEndTimeChange}
               />
             )}
 
-            <View style={styles.modalButtons}>
+            <View style={styles.sheetActions}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
+                style={styles.btnSecondary}
                 onPress={() => setModalVisible(false)}
               >
-                <Text style={styles.buttonText}>Cancel</Text>
+                <Text style={styles.btnSecondaryText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton]}
+                style={styles.btnPrimary}
                 onPress={handleAddOrUpdateSlot}
               >
-                <Text style={[styles.buttonText, styles.confirmButtonText]}>
-                  {editingSlot ? 'Update Slot' : 'Add Slot'}
+                <Text style={styles.btnPrimaryText}>
+                  {editingSlot ? 'Update Slot' : 'Create Slot'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -719,7 +781,7 @@ const SlotsManagementScreen = ({ navigation }) => {
       </Modal>
 
       <Modal
-        animationType="fade"
+        animationType="slide"
         transparent={true}
         visible={repeatUntilModalVisible}
         onRequestClose={() => {
@@ -727,63 +789,51 @@ const SlotsManagementScreen = ({ navigation }) => {
           setRepeatSlotsDaily(false);
         }}
       >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Repeat Slots Until</Text>
-            <Calendar
-              onDayPress={day => setRepeatUntilDate(day.dateString)}
-              markedDates={
-                repeatUntilDate
-                  ? {
-                      [repeatUntilDate]: {
-                        selected: true,
-                        selectedColor: primaryColor,
-                      },
-                    }
-                  : {}
-              }
-              minDate={moment(selectedDate).add(1, 'day').format('YYYY-MM-DD')}
-              theme={{
-                backgroundColor: '#FFFFFF',
-                calendarBackground: '#FFFFFF',
-                textSectionTitleColor: primaryColor,
-                selectedDayBackgroundColor: primaryColor,
-                selectedDayTextColor: '#ffffff',
-                todayTextColor: '#6200EE',
-                dayTextColor: '#2d4150',
-                textDisabledColor: '#d9e1e8',
-                dotColor: primaryColor,
-                selectedDotColor: '#ffffff',
-                arrowColor: primaryColor,
-                monthTextColor: '#2d4150',
-                indicatorColor: primaryColor,
-                textDayFontWeight: '300',
-                textMonthFontWeight: 'bold',
-                textDayHeaderFontWeight: '500',
-                textDayFontSize: 16,
-                textMonthFontSize: 18,
-                textDayHeaderFontSize: 14,
-              }}
-            />
-            <View style={styles.modalButtons}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.bottomSheet}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.sheetHeaderRow}>
+              <Text style={styles.sheetTitle}>Repeat Until</Text>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => {
                   setRepeatUntilModalVisible(false);
                   setRepeatSlotsDaily(false);
                 }}
               >
-                <Text style={styles.buttonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton]}
-                onPress={handleRepeatSlotsConfirm}
-              >
-                <Text style={[styles.buttonText, styles.confirmButtonText]}>
-                  Confirm
-                </Text>
+                <Icon name="close-circle-outline" size={28} color="#90A4AE" />
               </TouchableOpacity>
             </View>
+
+            <View style={styles.repeatCalendarWrapper}>
+              <Calendar
+                onDayPress={day => setRepeatUntilDate(day.dateString)}
+                markedDates={
+                  repeatUntilDate
+                    ? {
+                        [repeatUntilDate]: {
+                          selected: true,
+                          selectedColor: primaryColor,
+                        },
+                      }
+                    : {}
+                }
+                minDate={moment(selectedDate)
+                  .add(1, 'day')
+                  .format('YYYY-MM-DD')}
+                theme={{
+                  selectedDayBackgroundColor: primaryColor,
+                  todayTextColor: primaryColor,
+                  arrowColor: primaryColor,
+                }}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.btnPrimaryFull}
+              onPress={handleRepeatSlotsConfirm}
+            >
+              <Text style={styles.btnPrimaryText}>Confirm Schedule</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -794,279 +844,347 @@ const SlotsManagementScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: primaryColor,
+    backgroundColor: '#F4F6F8',
   },
-  customHeader: {
+  curvedHeaderBg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 280,
+    backgroundColor: primaryColor,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    zIndex: 0,
+  },
+  navbar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 10,
-    paddingBottom: 40,
-    backgroundColor: primaryColor,
+    paddingHorizontal: 16,
+    height: 60,
+    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    zIndex: 1,
   },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  backButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    marginLeft: 5,
-  },
-  contentContainer: {
-    flex: 1,
-    backgroundColor: '#F7F8FC',
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    paddingHorizontal: 15,
-    paddingTop: 20,
-    marginTop: -20,
-    overflow: 'hidden',
-  },
-  sectionHeader: {
-    fontSize: 26,
-    fontWeight: '500',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  calendarContainer: {
+  navBackButton: {
+    padding: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
   },
-  holidayToggleContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#FFFBE0',
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#FFECB3',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-  },
-  holidayToggleText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#DAA520',
-  },
-  repeatSlotsDailyContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#E8F5E9',
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#C8E6C9',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-  },
-  repeatSlotsDailyText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#388E3C',
-    flexShrink: 1,
-    marginRight: 10,
-  },
-  slotListHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-    paddingHorizontal: 5,
-  },
-  slotListHeaderText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#333',
-  },
-  addSlotButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: primaryColor,
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 25,
-    elevation: 2,
-    shadowColor: primaryColor,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-  },
-  addIcon: {
-    marginRight: 5,
-  },
-  addSlotButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  slotsListContent: {
-    paddingBottom: 20,
-  },
-  slotItem: {
-    backgroundColor: '#FFFFFF',
-    padding: 18,
-    borderRadius: 10,
-    marginBottom: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    borderLeftWidth: 5,
-    borderLeftColor: '#6200EE',
-  },
-  slotItemHoliday: {
-    backgroundColor: '#FFF8E1',
-    padding: 18,
-    borderRadius: 10,
-    marginBottom: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    borderLeftWidth: 5,
-    borderLeftColor: '#FFC107',
-    opacity: 0.8,
-  },
-  slotTime: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: '#333',
-  },
-  slotActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  actionIcon: {
-    marginLeft: 15,
-    padding: 5,
-  },
-  emptySlotsContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 50,
-    padding: 20,
-  },
-  emptySlotsText: {
+  navTitle: {
     fontSize: 18,
-    color: '#B0B0B0',
-    marginTop: 15,
     fontWeight: '600',
-    textAlign: 'center',
+    color: '#FFFFFF',
   },
-  emptySlotsSubText: {
-    fontSize: 14,
-    color: '#C0C0C0',
-    marginTop: 5,
-    textAlign: 'center',
-  },
-  centeredView: {
+  contentWrapper: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    zIndex: 1,
   },
-  modalView: {
-    width: '85%',
-    backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 25,
-    alignItems: 'center',
-    elevation: 10,
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 40,
+  },
+  headerContainer: {
+    marginBottom: 20,
+  },
+  topSpacing: {
+    height: 10,
+  },
+  calendarCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 10,
+    elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    marginBottom: 20,
   },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 25,
-  },
-  timeInputButton: {
+  controlGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    height: 50,
-    borderColor: '#E0E0E0',
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    marginBottom: 15,
-    backgroundColor: '#F9F9F9',
+    marginBottom: 24,
+    gap: 12,
   },
-  timeInputButtonText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginTop: 20,
-  },
-  modalButton: {
+  controlBox: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginHorizontal: 5,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
-  cancelButton: {
-    backgroundColor: '#F0F0F0',
+  controlBoxActiveHoliday: {
+    backgroundColor: '#FFF8E1',
+    borderColor: '#FFE0B2',
   },
-  confirmButton: {
+  controlBoxActiveRepeat: {
+    backgroundColor: '#E8EAF6',
+    borderColor: '#C5CAE9',
+  },
+  controlHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  controlLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#37474F',
+  },
+  controlSubLabel: {
+    fontSize: 12,
+    color: '#78909C',
+    marginTop: 2,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  dateTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#263238',
+  },
+  yearTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#90A4AE',
+  },
+  fabButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: primaryColor,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+    elevation: 4,
+    shadowColor: primaryColor,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
-  buttonText: {
-    color: '#333',
-    fontSize: 16,
+  fabButtonDisabled: {
+    backgroundColor: '#B0BEC5',
+    elevation: 0,
+  },
+  fabText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    marginLeft: 6,
+  },
+  slotCard: {
+    flexDirection: 'row',
+    borderRadius: 16,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    overflow: 'hidden',
+  },
+  statusStrip: {
+    width: 6,
+    height: '100%',
+  },
+  slotContent: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+  },
+  slotTimeText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#37474F',
+    marginBottom: 6,
+  },
+  statusChipContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  statusLabel: {
+    fontSize: 13,
     fontWeight: '600',
   },
-  confirmButtonText: {
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  iconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editBtn: {
+    backgroundColor: '#F5F7FA',
+  },
+  deleteBtn: {
+    backgroundColor: '#FFEBEE',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    marginTop: 40,
+    paddingHorizontal: 30,
+  },
+  emptyIconBg: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#ECEFF1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#455A64',
+    marginBottom: 8,
+  },
+  emptyDesc: {
+    fontSize: 14,
+    color: '#90A4AE',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  bottomSheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+  },
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 24,
+  },
+  sheetHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  sheetTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#263238',
+    marginBottom: 20,
+  },
+  inputGroup: {
+    marginBottom: 10,
+  },
+  label: {
+    fontSize: 13,
+    color: '#90A4AE',
+    fontWeight: '600',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  timeSelector: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    backgroundColor: '#F5F7FA',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#ECEFF1',
+  },
+  timeBigText: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#37474F',
+    marginRight: 8,
+  },
+  timeAmPm: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#90A4AE',
+  },
+  arrowDownContainer: {
+    alignItems: 'center',
+    marginVertical: 4,
+  },
+  sheetActions: {
+    flexDirection: 'row',
+    gap: 16,
+    marginTop: 30,
+  },
+  btnSecondary: {
+    flex: 1,
+    paddingVertical: 16,
+    backgroundColor: '#ECEFF1',
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+  btnSecondaryText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#546E7A',
+  },
+  btnPrimary: {
+    flex: 2,
+    paddingVertical: 16,
+    backgroundColor: primaryColor,
+    borderRadius: 14,
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: primaryColor,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  btnPrimaryFull: {
+    width: '100%',
+    paddingVertical: 16,
+    backgroundColor: primaryColor,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginTop: 20,
+    elevation: 4,
+  },
+  btnPrimaryText: {
+    fontSize: 16,
+    fontWeight: '700',
     color: '#FFFFFF',
   },
-  chip: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 15,
+  repeatCalendarWrapper: {
+    borderWidth: 1,
+    borderColor: '#ECEFF1',
+    borderRadius: 16,
+    overflow: 'hidden',
+    padding: 4,
   },
 });
 

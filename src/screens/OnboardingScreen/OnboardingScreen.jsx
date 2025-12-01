@@ -17,19 +17,19 @@ const slides = [
   {
     key: '1',
     title: 'Easy to find Customer',
-    text: 'Aenean leoigula porttitor eu,consequat vitae eleifend acenimliquam lorem ante dapibus in viverra quis feugiat',
+    text: 'Make it easy for customers to find your parlor. With smart search and location-based results, users can quickly book the services they need',
     image: require('../../assets/images/old/onboard/1.png'),
   },
   {
     key: '2',
     title: 'Branding for your Parlour',
-    text: 'Aenean leoigula porttitor eu,consequat vitae eleifend acenimliquam lorem ante dapibus in viverra quis feugiat',
+    text: 'Let your parlour shine! Customize your shop profile, add photos, and highlight what makes your services special.',
     image: require('../../assets/images/old/onboard/2.png'),
   },
   {
     key: '3',
     title: 'Get customer Feedback',
-    text: 'Aenean leoigula porttitor eu,consequat vitae eleifend acenimliquam lorem ante dapibus in viverra quis feugiat',
+    text: 'Hear what your customers love! Collect feedback to make your services even more beautiful and satisfying.',
     image: require('../../assets/images/old/onboard/3.png'),
   },
 ];

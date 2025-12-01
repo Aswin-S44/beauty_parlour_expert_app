@@ -10,6 +10,8 @@ import {
   Modal,
   Alert,
   ActivityIndicator,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import React, { useContext, useState } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -17,6 +19,8 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import { Picker } from '@react-native-picker/picker';
 import { addServices } from '../../apis/services';
 import { AuthContext } from '../../context/AuthContext';
+import { primaryColor } from '../../constants/colors';
+import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 
 const AddServicesScreen = ({ navigation }) => {
   const [category, setCategory] = useState('');
@@ -40,24 +44,21 @@ const AddServicesScreen = ({ navigation }) => {
 
   const validate = () => {
     const newErrors = {};
-    if (!category.trim()) newErrors.category = 'Category is required.';
-    if (!serviceName.trim())
-      newErrors.serviceName = 'Service name is required.';
+    if (!category.trim()) newErrors.category = 'Category is required';
+    if (!serviceName.trim()) newErrors.serviceName = 'Service name is required';
     if (!servicePrice.trim()) {
-      newErrors.servicePrice = 'Service price is required.';
+      newErrors.servicePrice = 'Price is required';
     } else if (isNaN(servicePrice)) {
-      newErrors.servicePrice = 'Price must be a valid number.';
+      newErrors.servicePrice = 'Must be a number';
     }
-    if (!imageUri) newErrors.image = 'An image is required.';
+    if (!imageUri) newErrors.image = 'Image is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSaveService = async () => {
-    if (!validate()) {
-      return;
-    }
+    if (!validate()) return;
     setIsLoading(true);
     try {
       const serviceData = {
@@ -90,15 +91,13 @@ const AddServicesScreen = ({ navigation }) => {
     launchImageLibrary({ mediaType: 'photo' }, response => {
       if (response.didCancel) return;
       if (response.errorCode) {
-        Alert.alert('ImagePicker Error', response.errorMessage);
+        Alert.alert('Error', response.errorMessage);
         return;
       }
       const uri = response.assets?.[0]?.uri;
       if (uri) {
         setImageUri(uri);
-        if (errors.image) {
-          setErrors(prev => ({ ...prev, image: null }));
-        }
+        if (errors.image) setErrors(prev => ({ ...prev, image: null }));
       }
     });
   };
@@ -112,31 +111,228 @@ const AddServicesScreen = ({ navigation }) => {
       setCategory(newCategory);
       setCategoryModalVisible(false);
       setCustomCategory('');
-      if (errors.category) {
-        setErrors(prev => ({ ...prev, category: null }));
-      }
+      if (errors.category) setErrors(prev => ({ ...prev, category: null }));
     } else {
-      Alert.alert('Invalid Category', 'Category name cannot be empty.');
+      Alert.alert('Invalid', 'Category name cannot be empty.');
     }
   };
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <View style={styles.header}>
+      <StatusBar barStyle="light-content" backgroundColor={primaryColor} />
+
+      <View style={styles.headerContainer}>
         <Image
           source={require('../../assets/images/home_bg-1.png')}
-          style={styles.headerImage}
+          style={styles.headerBg}
+          resizeMode="cover"
         />
-        <View style={styles.overlay} />
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Icon name="chevron-back" size={24} color="#fff" />
-          <Text style={styles.backButtonText}>Back</Text>
-        </TouchableOpacity>
+        <View style={styles.headerOverlay} />
+        <View style={styles.headerContent}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <View style={styles.backBtnCircle}>
+              <Icon name="chevron-back" size={22} color="#8e44ad" />
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Create Service</Text>
+          <View style={{ width: 40 }} />
+        </View>
       </View>
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          style={styles.mainContent}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.formSection}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Category</Text>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  errors.category && styles.inputError,
+                ]}
+              >
+                <View style={styles.iconContainer}>
+                  <Icon name="grid-outline" size={20} color={primaryColor} />
+                </View>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={category}
+                    onValueChange={itemValue => {
+                      if (itemValue === 'add_new') {
+                        setCategoryModalVisible(true);
+                      } else {
+                        setCategory(itemValue);
+                        if (errors.category)
+                          setErrors(prev => ({ ...prev, category: null }));
+                      }
+                    }}
+                    style={styles.picker}
+                    dropdownIconColor="#8e44ad"
+                  >
+                    <Picker.Item
+                      label="Select Category"
+                      value=""
+                      color="#999"
+                    />
+                    {predefinedCategories.map(cat => (
+                      <Picker.Item
+                        key={cat}
+                        label={cat}
+                        value={cat}
+                        color="#333"
+                      />
+                    ))}
+                    <Picker.Item
+                      label="+ Add New Category"
+                      value="add_new"
+                      color="#8e44ad"
+                    />
+                  </Picker>
+                </View>
+              </View>
+              {errors.category && (
+                <Text style={styles.errorMsg}>{errors.category}</Text>
+              )}
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Service Name</Text>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  errors.serviceName && styles.inputError,
+                ]}
+              >
+                <View style={styles.iconContainer}>
+                  <Icon
+                    name="pricetag-outline"
+                    size={20}
+                    color={primaryColor}
+                  />
+                </View>
+                <TextInput
+                  style={styles.textInput}
+                  value={serviceName}
+                  onChangeText={text => {
+                    setServiceName(text);
+                    if (errors.serviceName)
+                      setErrors(prev => ({ ...prev, serviceName: null }));
+                  }}
+                  placeholder="Ex: Haircut"
+                  placeholderTextColor="#999"
+                />
+              </View>
+              {errors.serviceName && (
+                <Text style={styles.errorMsg}>{errors.serviceName}</Text>
+              )}
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Price</Text>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  errors.servicePrice && styles.inputError,
+                ]}
+              >
+                <View style={styles.iconContainer}>
+                  <FontAwesomeIcon
+                    name="rupee"
+                    size={20}
+                    color={primaryColor}
+                  />
+                </View>
+                <TextInput
+                  style={styles.textInput}
+                  value={servicePrice}
+                  onChangeText={text => {
+                    setServicePrice(text);
+                    if (errors.servicePrice)
+                      setErrors(prev => ({ ...prev, servicePrice: null }));
+                  }}
+                  keyboardType="numeric"
+                  placeholder="0.00"
+                  placeholderTextColor="#999"
+                />
+              </View>
+              {errors.servicePrice && (
+                <Text style={styles.errorMsg}>{errors.servicePrice}</Text>
+              )}
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Service Image</Text>
+              <TouchableOpacity
+                style={[
+                  styles.uploadContainer,
+                  errors.image && styles.uploadError,
+                ]}
+                onPress={selectImage}
+                activeOpacity={0.8}
+              >
+                {imageUri ? (
+                  <View style={styles.imagePreviewContainer}>
+                    <Image
+                      source={{ uri: imageUri }}
+                      style={styles.imagePreview}
+                    />
+                    <View style={styles.editImageOverlay}>
+                      <Icon name="camera" size={20} color="#fff" />
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.uploadPlaceholder}>
+                    <View style={styles.uploadIconCircle}>
+                      <Icon
+                        name="cloud-upload-outline"
+                        size={28}
+                        color={primaryColor}
+                      />
+                    </View>
+                    <Text style={styles.uploadText}>Click to upload image</Text>
+                    <Text style={styles.uploadSubText}>JPG, PNG up to 5MB</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              {errors.image && (
+                <Text style={styles.errorMsg}>{errors.image}</Text>
+              )}
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.submitBtn, isLoading && styles.submitBtnDisabled]}
+            onPress={handleSaveService}
+            disabled={isLoading}
+            activeOpacity={0.9}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <Text style={styles.submitBtnText}>Save</Text>
+                <Icon
+                  name="arrow-forward"
+                  size={20}
+                  color="#fff"
+                  style={{ marginLeft: 10 }}
+                />
+              </>
+            )}
+          </TouchableOpacity>
+
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <Modal
         transparent={true}
@@ -144,19 +340,20 @@ const AddServicesScreen = ({ navigation }) => {
         animationType="fade"
         onRequestClose={handleCloseSuccessModal}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalView}>
-            <View style={styles.successIconContainer}>
-              <Icon name="checkmark" size={40} color="#fff" />
+        <View style={styles.modalOverlay}>
+          <View style={styles.successCard}>
+            <View style={styles.successHeader}>
+              <Icon name="checkmark-circle" size={60} color="#2ecc71" />
             </View>
-            <Text style={styles.modalText}>
-              Successfully Added{'\n'}Your New Service
+            <Text style={styles.successTitle}>Success!</Text>
+            <Text style={styles.successMessage}>
+              Your service has been added successfully.
             </Text>
             <TouchableOpacity
-              style={styles.okButton}
+              style={styles.successBtn}
               onPress={handleCloseSuccessModal}
             >
-              <Text style={styles.okButtonText}>OK</Text>
+              <Text style={styles.successBtnText}>Continue</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -165,145 +362,43 @@ const AddServicesScreen = ({ navigation }) => {
       <Modal
         transparent={true}
         visible={isCategoryModalVisible}
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setCategoryModalVisible(false)}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Add New Category</Text>
+        <View style={styles.modalOverlay}>
+          <View style={styles.categoryCard}>
+            <View style={styles.categoryHeader}>
+              <Text style={styles.categoryTitle}>New Category</Text>
+              <TouchableOpacity onPress={() => setCategoryModalVisible(false)}>
+                <Icon name="close" size={24} color="#999" />
+              </TouchableOpacity>
+            </View>
+
             <TextInput
-              style={styles.modalInput}
+              style={styles.categoryInput}
               placeholder="Enter category name"
               value={customCategory}
               onChangeText={setCustomCategory}
+              autoFocus
             />
-            <View style={styles.modalButtonGroup}>
+
+            <View style={styles.modalActions}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
+                style={styles.modalBtnCancel}
                 onPress={() => setCategoryModalVisible(false)}
               >
-                <Text style={[styles.modalButtonText, styles.cancelButtonText]}>
-                  Cancel
-                </Text>
+                <Text style={styles.modalBtnCancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.addButton]}
+                style={styles.modalBtnAdd}
                 onPress={handleAddCustomCategory}
               >
-                <Text style={styles.modalButtonText}>Add</Text>
+                <Text style={styles.modalBtnAddText}>Add Category</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-
-      <ScrollView
-        style={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={styles.title}>Add Service</Text>
-
-        <View style={styles.form}>
-          <Text style={styles.label}>Category</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={category}
-              onValueChange={itemValue => {
-                if (itemValue === 'add_new') {
-                  setCategoryModalVisible(true);
-                } else if (itemValue) {
-                  setCategory(itemValue);
-                  if (errors.category) {
-                    setErrors(prev => ({ ...prev, category: null }));
-                  }
-                }
-              }}
-              style={styles.picker}
-            >
-              <Picker.Item label="Select a category..." value="" />
-              {predefinedCategories.map(cat => (
-                <Picker.Item key={cat} label={cat} value={cat} />
-              ))}
-              <Picker.Item
-                label="Add a new category..."
-                value="add_new"
-                style={styles.addNewPickerItem}
-              />
-            </Picker>
-          </View>
-          {errors.category && (
-            <Text style={styles.errorText}>{errors.category}</Text>
-          )}
-
-          <Text style={styles.label}>Service Name</Text>
-          <TextInput
-            style={styles.input}
-            value={serviceName}
-            onChangeText={text => {
-              setServiceName(text);
-              if (errors.serviceName) {
-                setErrors(prev => ({ ...prev, serviceName: null }));
-              }
-            }}
-          />
-          {errors.serviceName && (
-            <Text style={styles.errorText}>{errors.serviceName}</Text>
-          )}
-
-          <Text style={styles.label}>Service Price</Text>
-          <TextInput
-            style={styles.input}
-            value={servicePrice}
-            onChangeText={text => {
-              setServicePrice(text);
-              if (errors.servicePrice) {
-                setErrors(prev => ({ ...prev, servicePrice: null }));
-              }
-            }}
-            keyboardType="numeric"
-          />
-          {errors.servicePrice && (
-            <Text style={styles.errorText}>{errors.servicePrice}</Text>
-          )}
-
-          <View style={styles.uploadLabelContainer}>
-            <Text style={styles.label}>Upload Image</Text>
-            <Text style={styles.subLabel}>(Max image size 80x80)</Text>
-          </View>
-          <TouchableOpacity style={styles.uploadBox} onPress={selectImage}>
-            {imageUri ? (
-              <>
-                <Image
-                  source={{ uri: imageUri }}
-                  style={styles.uploadedImage}
-                />
-                <TouchableOpacity
-                  style={styles.deleteIcon}
-                  onPress={() => setImageUri(null)}
-                >
-                  <Icon name="close-circle" size={24} color="#333" />
-                </TouchableOpacity>
-              </>
-            ) : (
-              <Icon name="image-outline" size={40} color="#ccc" />
-            )}
-          </TouchableOpacity>
-          {errors.image && <Text style={styles.errorText}>{errors.image}</Text>}
-        </View>
-
-        <TouchableOpacity
-          style={[styles.saveButton, isLoading && styles.disabledButton]}
-          onPress={handleSaveService}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.saveButtonText}>SAVE SERVICE +</Text>
-          )}
-        </TouchableOpacity>
-      </ScrollView>
     </View>
   );
 };
@@ -311,220 +406,296 @@ const AddServicesScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: primaryColor,
   },
-  header: {
-    height: 120,
-    justifyContent: 'center',
-    paddingTop: 20,
+  headerContainer: {
+    height: 180,
+    width: '100%',
+    position: 'relative',
+    justifyContent: 'flex-start',
   },
-  headerImage: {
-    ...StyleSheet.absoluteFillObject,
+  headerBg: {
     width: '100%',
     height: '100%',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(128, 0, 128, 0.6)',
-  },
-  backButton: {
     position: 'absolute',
-    top: 50,
-    left: 15,
+  },
+  headerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: primaryColor,
+  },
+  headerContent: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: 50,
+    paddingHorizontal: 20,
   },
-  backButtonText: {
+  backBtnCircle: {
+    width: 40,
+    height: 40,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
     color: '#fff',
-    fontSize: 16,
-    marginLeft: 5,
+    letterSpacing: 0.5,
   },
-  contentContainer: {
+  mainContent: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#fff',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    marginTop: -30,
-    paddingTop: 10,
+    marginTop: -40,
+    paddingTop: 25,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginVertical: 20,
-    color: '#333',
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 30,
   },
-  form: {
-    paddingHorizontal: 25,
+  formSection: {
+    marginBottom: 20,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#34495e',
     marginBottom: 8,
-    marginTop: 10,
+    marginLeft: 4,
   },
-  input: {
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#fff',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    borderColor: primaryColor,
+    height: 54,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  inputError: {
+    borderColor: primaryColor,
+    borderWidth: 1.5,
+  },
+  iconContainer: {
+    width: 50,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FBFBFB',
+    borderRightWidth: 1,
+    borderRightColor: '#F0F0F0',
+  },
+  textInput: {
+    flex: 1,
+    height: '100%',
     paddingHorizontal: 15,
-    paddingVertical: 12,
+    color: '#333',
     fontSize: 16,
-    marginBottom: 5,
   },
   pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    marginBottom: 5,
+    flex: 1,
     justifyContent: 'center',
   },
   picker: {
-    height: 50,
     width: '100%',
-  },
-  addNewPickerItem: {
-    color: '#8e44ad',
-    backgroundColor: '#f0f0f0',
-  },
-  uploadLabelContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginTop: 10,
-  },
-  subLabel: {
-    fontSize: 12,
-    color: '#888',
-    marginLeft: 10,
-  },
-  uploadBox: {
-    height: 100,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fafafa',
-    marginTop: 8,
-    marginBottom: 5,
-  },
-  uploadedImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
-  },
-  deleteIcon: {
-    position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderRadius: 12,
-  },
-  saveButton: {
-    backgroundColor: '#8e44ad',
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginHorizontal: 25,
-    marginVertical: 30,
-  },
-  disabledButton: {
-    backgroundColor: '#c7a4d6',
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  modalBackdrop: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-  },
-  modalView: {
-    width: '85%',
-    backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 20,
-    alignItems: 'center',
-  },
-  successIconContainer: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: '#8e44ad',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 25,
-  },
-  modalText: {
-    fontSize: 20,
-    fontWeight: 'bold',
     color: '#333',
-    textAlign: 'center',
-    marginBottom: 20,
   },
-  okButton: {
-    backgroundColor: '#8e44ad',
-    paddingVertical: 15,
-    width: '100%',
-    alignItems: 'center',
-    borderRadius: 10,
-    marginTop: 10,
-  },
-  okButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  errorText: {
-    color: 'red',
+  errorMsg: {
+    color: '#ff6b6b',
     fontSize: 12,
+    marginTop: 5,
+    marginLeft: 5,
+    fontWeight: '500',
+  },
+  uploadContainer: {
+    height: 140,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: primaryColor,
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  uploadError: {
+    borderColor: primaryColor,
+  },
+  uploadPlaceholder: {
+    alignItems: 'center',
+  },
+  uploadIconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#F3E5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 10,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20,
+  uploadText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#666',
   },
-  modalInput: {
+  uploadSubText: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
+  },
+  imagePreviewContainer: {
     width: '100%',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 20,
-    fontSize: 16,
+    height: '100%',
+    position: 'relative',
   },
-  modalButtonGroup: {
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  editImageOverlay: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 8,
+    borderRadius: 20,
+  },
+  submitBtn: {
+    backgroundColor: primaryColor,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderRadius: 14,
+    shadowColor: '#8e44ad',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    marginTop: 10,
+  },
+  submitBtnDisabled: {
+    backgroundColor: '#b39ddb',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  submitBtnText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  successCard: {
+    backgroundColor: '#fff',
+    width: '85%',
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    elevation: 10,
+  },
+  successHeader: {
+    marginBottom: 15,
+  },
+  successTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  successMessage: {
+    fontSize: 15,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 22,
+  },
+  successBtn: {
+    backgroundColor: primaryColor,
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 25,
+  },
+  successBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  categoryCard: {
+    backgroundColor: '#fff',
+    width: '90%',
+    borderRadius: 16,
+    padding: 24,
+    elevation: 10,
+  },
+  categoryHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%',
-  },
-  modalButton: {
-    flex: 1,
-    padding: 15,
-    borderRadius: 8,
     alignItems: 'center',
+    marginBottom: 20,
   },
-  cancelButton: {
-    backgroundColor: '#f0f0f0',
-    marginRight: 10,
-  },
-  cancelButtonText: {
+  categoryTitle: {
+    fontSize: 20,
+    fontWeight: '700',
     color: '#333',
   },
-  addButton: {
-    backgroundColor: '#8e44ad',
-    marginLeft: 10,
-  },
-  modalButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+  categoryInput: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 10,
+    padding: 15,
     fontSize: 16,
+    marginBottom: 25,
+    backgroundColor: '#FAFAFA',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  modalBtnCancel: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginRight: 10,
+  },
+  modalBtnCancelText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalBtnAdd: {
+    backgroundColor: '#8e44ad',
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+  },
+  modalBtnAddText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

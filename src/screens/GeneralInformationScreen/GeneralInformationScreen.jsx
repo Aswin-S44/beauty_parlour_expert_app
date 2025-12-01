@@ -14,9 +14,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { primaryColor } from '../../constants/colors';
 import { updateShop } from '../../apis/auth';
 import { AuthContext, useAuth } from '../../context/AuthContext';
-import {
-  getLatLngFromAddress,
-} from '../../utils/utils';
+import { getLatLngFromAddress } from '../../utils/utils';
 
 const GeneralInformationScreen = ({ navigation }) => {
   const [parlourName, setParlourName] = useState('');
@@ -80,7 +78,7 @@ const GeneralInformationScreen = ({ navigation }) => {
         };
 
         const res = await updateShop(user.uid, dataToUpdate);
-
+        console.log('RES------------', res ? res : 'no res');
         if (res && res.success) {
           setUserData({
             profileCompleted: true,

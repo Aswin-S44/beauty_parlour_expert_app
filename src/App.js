@@ -302,22 +302,35 @@ export default function App() {
   let currentStack;
 
   let curentScreen = 'no screen';
-
-  if (!user) {
+  console.log('user.isOnboarded-----------', userData?.isOnboarded);
+  console.log(
+    'userData.profileCompleted--------------',
+    userData?.profileCompleted,
+  );
+  if (!user || !userData) {
     currentStack = <AuthStack />;
     curentScreen = 'auth';
-  } else if (!userData && !timeoutReached) {
+  } else if (!user && !timeoutReached) {
     currentStack = <SplashScreen1 />;
     curentScreen = 'splash';
-  } else if (!userData && timeoutReached) {
+  } else if (!user && timeoutReached) {
     currentStack = <AuthStack />;
     curentScreen = 'auth2';
-  } else if (userData.emailVerified && !userData.profileCompleted) {
+  } else if (
+    userData &&
+    userData?.emailVerified &&
+    !userData?.profileCompleted
+  ) {
     currentStack = <GeneralInformationScreen />;
-  } else if (!userData.isOnboarded && !userData.profileCompleted) {
+  } else if (
+    userData &&
+    !userData?.isOnboarded &&
+    !userData?.profileCompleted
+  ) {
+    console.log('-----------------');
     currentStack = <GeneralInformationScreen />;
     curentScreen = 'general information';
-  } else if (!userData.isOnboarded && userData.profileCompleted) {
+  } else if (userData && !userData?.isOnboarded && userData?.profileCompleted) {
     currentStack = <ConfirmationWaitingScreen />;
     curentScreen = 'confirmation';
   } else {
@@ -325,6 +338,7 @@ export default function App() {
     curentScreen = 'main';
   }
 
+  console.log('curentScreen===================', curentScreen);
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NavigationContainer>{currentStack}</NavigationContainer>

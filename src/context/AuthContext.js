@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import auth from '@react-native-firebase/auth';
-import { firestore } from '../config/firebase';
+import firestore from '@react-native-firebase/firestore';
 import { COLLECTIONS } from '../constants/collections';
 
 export const AuthContext = createContext();
@@ -11,52 +11,47 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
 
-  const setupUserDataListener = firebaseUser => {
-    if (firebaseUser) {
-      setIsEmailVerified(firebaseUser.emailVerified);
-      const docRef = firestore()
-        .collection(COLLECTIONS.SHOP_OWNERS)
-        .doc(firebaseUser.uid);
-
-      const unsubscribe = docRef.onSnapshot(
-        docSnap => {
-          if (docSnap.exists) {
-            setUserData(docSnap.data());
-          } else {
-            setUserData(null);
-          }
-        },
-        error => {
-          console.error('Error fetching user data in real-time:', error);
-          setUserData(null);
-          setIsEmailVerified(false);
-        },
-      );
-      return unsubscribe;
-    } else {
-      setUserData(null);
-      setIsEmailVerified(false);
-      return () => {};
-    }
-  };
-
   useEffect(() => {
-    let unsubscribeAuth;
     let unsubscribeFirestore = () => {};
 
-    unsubscribeAuth = auth().onAuthStateChanged(async firebaseUser => {
-      setUser(firebaseUser);
-      setLoading(true);
-
-      unsubscribeFirestore();
-
+    const unsubscribeAuth = auth().onAuthStateChanged(async firebaseUser => {
       if (firebaseUser) {
-        unsubscribeFirestore = setupUserDataListener(firebaseUser);
+        try {
+          await firebaseUser.reload();
+          setUser(firebaseUser);
+          setIsEmailVerified(firebaseUser.emailVerified);
+
+          const docRef = firestore()
+            .collection(COLLECTIONS.SHOP_OWNERS)
+            .doc(firebaseUser.uid);
+
+          unsubscribeFirestore = docRef.onSnapshot(
+            docSnap => {
+              if (docSnap.exists) {
+                setUserData(docSnap.data());
+              } else {
+                setUserData(null);
+              }
+              setLoading(false);
+            },
+            error => {
+              setUserData(null);
+              setLoading(false);
+            },
+          );
+        } catch (error) {
+          await auth().signOut();
+          setUser(null);
+          setUserData(null);
+          setIsEmailVerified(false);
+          setLoading(false);
+        }
       } else {
+        setUser(null);
         setUserData(null);
         setIsEmailVerified(false);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => {
@@ -65,11 +60,15 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  const logout = () => {
-    auth().signOut();
-    setUser(null);
-    setUserData(null);
-    setIsEmailVerified(false);
+  const logout = async () => {
+    try {
+      await auth().signOut();
+      setUser(null);
+      setUserData(null);
+      setIsEmailVerified(false);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const refreshUserData = async () => {
@@ -81,11 +80,9 @@ export const AuthProvider = ({ children }) => {
           .get();
         if (docSnap.exists) {
           setUserData(docSnap.data());
-        } else {
-          setUserData(null);
         }
       } catch (error) {
-        console.error('Error refreshing user data:', error);
+        console.error(error);
       }
     }
   };

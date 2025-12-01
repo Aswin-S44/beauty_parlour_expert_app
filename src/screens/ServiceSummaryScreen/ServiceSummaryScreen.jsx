@@ -8,437 +8,561 @@ import {
   StatusBar,
   Modal,
   Linking,
+  Image,
+  Platform,
+  Dimensions,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { primaryColor } from '../../constants/colors';
 import { useRoute } from '@react-navigation/native';
 import { formatDate, formatServiceName } from '../../utils/utils';
-import { Image } from 'react-native';
 import { AVATAR_IMAGE } from '../../constants/images';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const Row = ({ label, value }) => (
-  <View style={styles.row}>
-    <Text style={styles.text}>{label}</Text>
-    <Text style={styles.text}>{value}</Text>
-  </View>
-);
-
-const AmountRow = ({ service, qty, price, isBold = false }) => (
-  <View style={styles.amountRow}>
-    <Text style={[styles.amountCell, { flex: 2 }, isBold && styles.boldText]}>
-      {service}
-    </Text>
-    <Text style={[styles.amountCell, isBold && styles.boldText]}>{qty}</Text>
-    <Text
-      style={[
-        styles.amountCell,
-        { textAlign: 'right' },
-        isBold && styles.boldText,
-      ]}
-    >
-      {price}
-    </Text>
-  </View>
-);
+const { width } = Dimensions.get('window');
 
 const ServiceSummaryScreen = ({ navigation }) => {
   const route = useRoute();
   const { item } = route.params;
-
   const [modalVisible, setModalVisible] = useState(false);
 
-  const getStatusStyle = status => {
-    switch (status) {
+  // --- Configuration Helpers ---
+  const getStatusConfig = status => {
+    switch (status?.toLowerCase()) {
       case 'confirmed':
-        return styles.statusConfirmed;
+        return {
+          bg: '#E8F5E9',
+          text: '#2E7D32',
+          label: 'Booking Confirmed',
+          icon: 'checkmark-circle',
+        };
       case 'pending':
-        return styles.statusPending;
+        return {
+          bg: '#FFF3E0',
+          text: '#EF6C00',
+          label: 'Waiting Confirmation',
+          icon: 'hourglass',
+        };
       case 'cancelled':
-        return styles.statusCancelled;
+      case 'rejected':
+        return {
+          bg: '#FFEBEE',
+          text: '#C62828',
+          label: 'Booking Cancelled',
+          icon: 'close-circle',
+        };
       default:
-        return styles.statusDefault;
+        return {
+          bg: '#F5F5F5',
+          text: '#616161',
+          label: status,
+          icon: 'help-circle',
+        };
     }
   };
 
-  const handleCall = phoneNumber => {
-    if (phoneNumber && phoneNumber.trim() !== '') {
-      Linking.openURL(`tel:${phoneNumber}`);
-    } else {
-      alert('Phone number not available');
-    }
+  const statusConfig = getStatusConfig(item.appointmentStatus);
+
+  // --- Actions ---
+  const handleCall = () => {
+    if (item.customer?.phone) Linking.openURL(`tel:${item.customer?.phone}`);
   };
+
+  const handleEmail = () => {
+    if (item.customer?.email) Linking.openURL(`mailto:${item.customer?.email}`);
+  };
+
+  // --- Calculations ---
+  const subtotal = item.services.reduce(
+    (sum, s) => sum + s.servicePrice * (s.qty || 1),
+    0,
+  );
+  const discount =
+    item.offers?.length > 0
+      ? item.offers[0].offerPrice
+      : item.offerAvailable
+      ? item.offerPrice
+      : 0;
+  const total = item.totalAmount || subtotal - discount;
+
+  // --- Components ---
+  const InfoBlock = ({ label, value, icon, color }) => (
+    <View style={styles.infoBlock}>
+      <View style={[styles.infoIconBg, { backgroundColor: color + '20' }]}>
+        <Ionicons name={icon} size={22} color={color} />
+      </View>
+      <View>
+        <Text style={styles.infoLabel}>{label}</Text>
+        <Text style={styles.infoValue}>{value}</Text>
+      </View>
+    </View>
+  );
 
   return (
-    <View style={styles.outerContainer}>
-      <StatusBar backgroundColor={primaryColor} barStyle="light-content" />
+    <View style={styles.container}>
+      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
 
-      <Modal
-        transparent={true}
-        visible={modalVisible}
-        animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
+      {/* 1. Header Bar */}
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.roundBtn}
+        >
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Booking Details</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalContainer}>
-            <View style={styles.successIconContainer}>
-              <Ionicons name="checkmark" size={36} color="#fff" />
-            </View>
-            <Text style={styles.modalText}>
-              Successfully send your request. Waiting for confirmation.
-            </Text>
-            <TouchableOpacity
-              style={styles.okButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.okButtonText}>OK</Text>
-            </TouchableOpacity>
-          </View>
+        {/* 2. Status Banner */}
+        <View
+          style={[styles.statusBanner, { backgroundColor: statusConfig.bg }]}
+        >
+          <Ionicons
+            name={statusConfig.icon}
+            size={20}
+            color={statusConfig.text}
+          />
+          <Text style={[styles.statusBannerText, { color: statusConfig.text }]}>
+            {statusConfig.label}
+          </Text>
         </View>
-      </Modal>
 
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-      >
-        <Ionicons name="chevron-back" size={24} color="#fff" />
-        <Text style={styles.backButtonText}>Back</Text>
-      </TouchableOpacity>
-
-      <View style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <Text style={styles.mainTitle}>Service Summary</Text>
-
-          <View style={styles.profileSection}>
+        {/* 3. Expert Profile Card */}
+        <View style={styles.card}>
+          <View style={styles.profileContainer}>
             <Image
               source={{ uri: item.expert.imageUrl ?? AVATAR_IMAGE }}
               style={styles.avatar}
             />
-            <Text style={styles.expertName}>
-              {item?.expert?.expertName ?? '-'}
-            </Text>
-            <Text style={styles.expertSpecialty}>
-              {item?.expert?.specialist
-                ? formatServiceName(item?.expert?.specialist)
-                : '-'}
-            </Text>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Appointment Details</Text>
-            <Row
-              label="Date"
-              value={item.selectedDate ? formatDate(item.selectedDate) : ''}
-            />
-            <Row label="Time" value={item.selectedTime ?? '_'} />
-            <View style={styles.row}>
-              <Text style={styles.text}>Status</Text>
-              <Text
-                style={[
-                  styles.statusText,
-                  getStatusStyle(item.appointmentStatus),
-                ]}
-              >
-                {item.appointmentStatus
-                  ? item.appointmentStatus.toUpperCase()
-                  : '-'}
+            <View style={styles.profileDetails}>
+              <Text style={styles.expertName}>
+                {item.expert?.expertName ?? 'Expert'}
+              </Text>
+              <Text style={styles.expertRole}>
+                {item.expert?.specialist
+                  ? formatServiceName(item.expert?.specialist)
+                  : 'Specialist'}
               </Text>
             </View>
           </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Customer Details</Text>
-            <Row
-              label="Name"
-              value={
-                item.customer ? item.customer?.fullName ?? 'Unavailable' : '_'
-              }
+          <View style={styles.divider} />
+
+          {/* Date & Time Grid */}
+          <View style={styles.gridContainer}>
+            <InfoBlock
+              label="Date"
+              value={item.selectedDate ? formatDate(item.selectedDate) : 'N/A'}
+              icon="calendar"
+              color="#5C6BC0"
             />
-
-            <View style={styles.row}>
-              <Text style={styles.text}>Phone</Text>
-              {item.customer?.phone?.trim() == '' ? (
-                <Text>Unavailable</Text>
-              ) : (
-                <>
-                  <TouchableOpacity
-                    onPress={() => {
-                      handleCall(item.customer?.phone.trim());
-                    }}
-                    style={styles.iconButton}
-                  >
-                    <View style={styles.row}>
-                      <Text style={{ left: -20 }}>{item.customer?.phone}</Text>
-                      <Icon name="call" size={22} color="green" />
-                    </View>
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>
-
-            <Row
-              label="Email"
-              value={
-                item.customer?.email?.trim() == ''
-                  ? 'Unavailable'
-                  : item.customer?.email
-              }
+            <View style={styles.verticalDivider} />
+            <InfoBlock
+              label="Time"
+              value={item.selectedTime ?? 'N/A'}
+              icon="time"
+              color="#EC407A"
             />
           </View>
+        </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Amount</Text>
-            <View>
-              <View style={styles.amountHeader}>
-                <Text style={[styles.amountCell, styles.boldText, { flex: 2 }]}>
-                  Service
-                </Text>
-                <Text style={[styles.amountCell, styles.boldText]}>
-                  Quantity
-                </Text>
-                <Text
-                  style={[
-                    styles.amountCell,
-                    styles.boldText,
-                    { textAlign: 'right' },
-                  ]}
-                >
-                  Price
-                </Text>
-              </View>
-              {item.services.map((service, index) => (
-                <>
-                  <AmountRow
-                    key={index}
-                    service={service.serviceName ?? '-'}
-                    qty={service?.qty ?? 1}
-                    price={service?.servicePrice ?? '-'}
-                  />
-                </>
-              ))}
+        {/* 4. Customer Action Card */}
+        <View style={styles.sectionTitleRow}>
+          <Text style={styles.sectionTitle}>Customer</Text>
+        </View>
+
+        <View style={styles.card}>
+          <View style={styles.customerRow}>
+            <View style={styles.customerAvatar}>
+              <Text style={styles.customerInitials}>
+                {item.customer?.fullName
+                  ? item.customer.fullName.substring(0, 2).toUpperCase()
+                  : 'CS'}
+              </Text>
             </View>
-
-            <View style={styles.separator} />
-
-            <AmountRow
-              service="Subtotal"
-              qty={item.services[0]?.qty ?? 1}
-              price={item.services.reduce(
-                (sum, service) =>
-                  sum + service.servicePrice * (service.qty || 1),
-                0,
-              )}
-            />
-            {item?.offers?.length > 0 && (
-              <AmountRow
-                service="Discount by offer"
-                qty={item?.offers?.length ?? 1}
-                price={item?.offers[0]?.offerPrice ?? 0}
-              />
-            )}
-
-            {item?.offerAvailable && (
-              <AmountRow
-                service="Discount by offer"
-                qty={1}
-                price={item?.offerPrice ?? 0}
-              />
-            )}
-
-            <View style={styles.separator} />
-
-            <AmountRow
-              service="Total"
-              qty={item.services[0]?.qty ?? 1}
-              price={
-                item?.offers?.length > 0
-                  ? (item.services[0]?.servicePrice ?? 0) -
-                    (item.offers[0]?.offerPrice ?? 0)
-                  : (item.services[0]?.servicePrice ?? 0) -
-                    (item?.offerPrice ?? 0)
-              }
-              isBold={true}
-            />
+            <View style={styles.customerInfo}>
+              <Text style={styles.customerName}>
+                {item.customer?.fullName ?? 'Walk-in Customer'}
+              </Text>
+            </View>
           </View>
-        </ScrollView>
-      </View>
+
+          <View style={styles.actionGrid}>
+            <TouchableOpacity
+              style={[
+                styles.actionBtn,
+                !item.customer?.phone && styles.disabledAction,
+              ]}
+              onPress={handleCall}
+              disabled={!item.customer?.phone}
+            >
+              <Ionicons name="call" size={20} color="#fff" />
+              <Text style={styles.actionText}>Call</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.actionBtn,
+                styles.secondaryAction,
+                !item.customer?.email && styles.disabledAction,
+              ]}
+              onPress={handleEmail}
+              disabled={!item.customer?.email}
+            >
+              <Ionicons name="mail" size={20} color={primaryColor} />
+              <Text style={styles.secondaryActionText}>Email</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* 5. Bill Summary */}
+        <View style={styles.sectionTitleRow}>
+          <Text style={styles.sectionTitle}>Order Summary</Text>
+        </View>
+
+        <View style={styles.card}>
+          <View style={styles.billHeader}>
+            <Text style={[styles.billHead, { flex: 2 }]}>SERVICE</Text>
+            <Text style={[styles.billHead, { flex: 1, textAlign: 'center' }]}>
+              QTY
+            </Text>
+            <Text style={[styles.billHead, { flex: 1, textAlign: 'right' }]}>
+              PRICE
+            </Text>
+          </View>
+
+          {item.services.map((service, index) => (
+            <View key={index} style={styles.billRow}>
+              <Text style={[styles.billItem, { flex: 2 }]}>
+                {service.serviceName}
+              </Text>
+              <Text style={[styles.billItem, { flex: 1, textAlign: 'center' }]}>
+                x{service.qty || 1}
+              </Text>
+              <Text
+                style={[styles.billItemPrice, { flex: 1, textAlign: 'right' }]}
+              >
+                ₹{service.servicePrice * (service.qty || 1)}
+              </Text>
+            </View>
+          ))}
+
+          <View style={styles.dashedDivider} />
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Subtotal</Text>
+            <Text style={styles.summaryValue}>₹{subtotal}</Text>
+          </View>
+
+          {discount > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: '#4CAF50' }]}>
+                Discount Applied
+              </Text>
+              <Text style={[styles.summaryValue, { color: '#4CAF50' }]}>
+                - ₹{discount}
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.totalContainer}>
+            <Text style={styles.totalLabel}>Total Pay</Text>
+            <Text style={styles.totalValue}>₹{total}</Text>
+          </View>
+        </View>
+
+        <View style={{ height: 30 }} />
+      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  outerContainer: {
-    flex: 1,
-    backgroundColor: primaryColor,
-  },
-  backButton: {
-    position: 'absolute',
-    top: 55,
-    left: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  backButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    marginLeft: 5,
-  },
   container: {
     flex: 1,
-    marginTop: 100,
+    backgroundColor: '#F4F6F8', // Cool grey background
+  },
+  // HEADER
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
     backgroundColor: '#fff',
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
-    paddingHorizontal: 25,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
-  mainTitle: {
-    fontSize: 26,
-    fontWeight: '500',
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
     color: '#333',
-    textAlign: 'center',
-    marginVertical: 25,
   },
-  section: {
+  roundBtn: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
+  },
+
+  scrollContent: {
+    padding: 20,
+  },
+
+  // STATUS BANNER
+  statusBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
     marginBottom: 20,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: 15,
+  statusBannerText: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: '700',
   },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
+
+  // CARD STYLES
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    marginBottom: 20,
   },
-  text: {
-    fontSize: 16,
-    color: '#555',
-  },
-  amountHeader: {
-    flexDirection: 'row',
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    marginBottom: 10,
-  },
-  amountRow: {
-    flexDirection: 'row',
-    paddingVertical: 8,
-  },
-  amountCell: {
-    flex: 1,
-    fontSize: 16,
-    color: '#555',
-  },
-  boldText: {
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  separator: {
+  divider: {
     height: 1,
     backgroundColor: '#F0F0F0',
-    marginVertical: 10,
+    marginVertical: 20,
   },
-  confirmButton: {
-    backgroundColor: primaryColor,
-    padding: 18,
-    borderRadius: 15,
+  verticalDivider: {
+    width: 1,
+    height: '100%',
+    backgroundColor: '#F0F0F0',
+  },
+  dashedDivider: {
+    height: 1,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderStyle: 'dashed',
+    borderRadius: 1,
+    marginVertical: 15,
+  },
+
+  // EXPERT PROFILE
+  profileContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 10,
-  },
-  confirmButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '500',
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    width: '85%',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  successIconContainer: {
-    backgroundColor: primaryColor,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 30,
-  },
-  modalText: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#333',
-    textAlign: 'center',
-    marginVertical: 25,
-    paddingHorizontal: 20,
-    lineHeight: 26,
-  },
-  okButton: {
-    backgroundColor: '#111',
-    width: '100%',
-    padding: 20,
-    alignItems: 'center',
-  },
-  okButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  profileSection: {
-    alignItems: 'center',
-    marginBottom: 25,
-  },
-  expertName: {
-    fontSize: 22,
-    fontWeight: '500',
-    color: '#333',
-  },
-  expertSpecialty: {
-    fontSize: 16,
-    color: '#777',
-    marginVertical: 4,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 50,
-    marginRight: 15,
-  },
-  statusText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 5,
-    overflow: 'hidden',
-  },
-  statusConfirmed: {
-    backgroundColor: '#e6ffe6',
-    color: '#008000',
-  },
-  statusPending: {
-    backgroundColor: '#fffbe6',
-    color: '#ffbf00',
-  },
-  statusCancelled: {
-    backgroundColor: '#ffe6e6',
-    color: '#cc0000',
-  },
-  statusDefault: {
+    width: 64,
+    height: 64,
+    borderRadius: 16, // Squircle shape
     backgroundColor: '#f0f0f0',
+  },
+  profileDetails: {
+    flex: 1,
+    marginLeft: 15,
+  },
+  expertName: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#333',
+  },
+  expertRole: {
+    fontSize: 14,
+    color: '#888',
+    marginVertical: 2,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF9C4',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginTop: 4,
+  },
+  ratingText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333',
+    marginLeft: 4,
+  },
+
+  // GRID (DATE/TIME)
+  gridContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  infoBlock: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  infoIconBg: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  infoLabel: {
+    fontSize: 12,
+    color: '#999',
+    fontWeight: '600',
+  },
+  infoValue: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#333',
+  },
+
+  // CUSTOMER SECTION
+  sectionTitleRow: {
+    marginBottom: 10,
+    marginLeft: 4,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
     color: '#555',
+  },
+  customerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  customerAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  customerInitials: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  customerInfo: {
+    marginLeft: 15,
+  },
+  customerName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333',
+  },
+  customerId: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+  },
+  actionGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: primaryColor,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  secondaryAction: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: primaryColor,
+  },
+  disabledAction: {
+    backgroundColor: '#E0E0E0',
+    borderColor: '#E0E0E0',
+  },
+  actionText: {
+    color: '#fff',
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  secondaryActionText: {
+    color: primaryColor,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+
+  // BILL
+  billHeader: {
+    flexDirection: 'row',
+    marginBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    paddingBottom: 10,
+  },
+  billHead: {
+    fontSize: 12,
+    color: '#999',
+    fontWeight: '700',
+  },
+  billRow: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  billItem: {
+    fontSize: 14,
+    color: '#555',
+  },
+  billItemPrice: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '600',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: '#777',
+  },
+  summaryValue: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  totalContainer: {
+    backgroundColor: '#F9FAFB',
+    padding: 15,
+    borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  totalLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333',
+  },
+  totalValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: primaryColor,
   },
 });
 

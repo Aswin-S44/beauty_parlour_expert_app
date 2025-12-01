@@ -12,11 +12,14 @@ import {
   FlatList,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { launchImageLibrary } from 'react-native-image-picker';
 import { AuthContext } from '../../context/AuthContext';
 import { addOffer, getShopServices } from '../../apis/services';
-import { launchImageLibrary } from 'react-native-image-picker';
+import { primaryColor } from '../../constants/colors';
 
 const AddOffersScreen = ({ navigation }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -92,24 +95,18 @@ const AddOffersScreen = ({ navigation }) => {
     launchImageLibrary(
       { mediaType: 'photo', includeBase64: true },
       response => {
-        if (response.didCancel) {
+        if (response.didCancel) return;
+        if (response.errorCode) {
+          Alert.alert('Error', response.errorMessage);
           return;
-        } else if (response.errorCode) {
-          console.error('ImagePicker Error: ', response.errorMessage);
-        } else {
-          const asset = response.assets?.[0];
-          if (asset && asset.base64) {
-            const uri = `data:${asset.type};base64,${asset.base64}`;
-            setImageUri(uri);
-          }
+        }
+        const asset = response.assets?.[0];
+        if (asset && asset.base64) {
+          const uri = `data:${asset.type};base64,${asset.base64}`;
+          setImageUri(uri);
         }
       },
     );
-  };
-
-  const handleCloseSuccessModal = () => {
-    setSuccessModalVisible(false);
-    resetForm();
   };
 
   const handleAddOffer = async () => {
@@ -141,7 +138,6 @@ const AddOffersScreen = ({ navigation }) => {
         }
       }
     } catch (error) {
-      console.error('Error adding offer:', error);
       Alert.alert(
         'Error',
         'An unexpected error occurred while adding the offer.',
@@ -151,6 +147,12 @@ const AddOffersScreen = ({ navigation }) => {
     }
   };
 
+  const handleCloseSuccessModal = () => {
+    setSuccessModalVisible(false);
+    resetForm();
+    navigation.goBack();
+  };
+
   const renderPickerModal = (
     visible,
     setVisible,
@@ -158,6 +160,7 @@ const AddOffersScreen = ({ navigation }) => {
     onSelectItem,
     keyExtractor,
     renderItem,
+    title,
   ) => (
     <Modal
       transparent={true}
@@ -168,8 +171,15 @@ const AddOffersScreen = ({ navigation }) => {
       <TouchableOpacity
         style={styles.modalOverlay}
         onPress={() => setVisible(false)}
+        activeOpacity={1}
       >
         <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{title}</Text>
+            <TouchableOpacity onPress={() => setVisible(false)}>
+              <Icon name="close" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
           <FlatList
             data={data}
             keyExtractor={keyExtractor}
@@ -179,8 +189,10 @@ const AddOffersScreen = ({ navigation }) => {
                 onPress={() => onSelectItem(item)}
               >
                 <Text style={styles.modalItemText}>{renderItem(item)}</Text>
+                <Icon name="chevron-forward" size={18} color="#ccc" />
               </TouchableOpacity>
             )}
+            style={{ maxHeight: 300 }}
           />
         </View>
       </TouchableOpacity>
@@ -189,119 +201,206 @@ const AddOffersScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <View style={styles.header}>
+      <StatusBar barStyle="light-content" backgroundColor={primaryColor} />
+
+      <View style={styles.headerContainer}>
         <Image
           source={require('../../assets/images/home_bg-1.png')}
-          style={styles.headerImage}
+          style={styles.headerBg}
+          resizeMode="cover"
         />
-        <View style={styles.overlay} />
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Icon name="chevron-back" size={24} color="#fff" />
-          <Text style={styles.backButtonText}>Back</Text>
-        </TouchableOpacity>
+        <View style={styles.headerOverlay} />
+        <View style={styles.headerContent}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <View style={styles.backBtnCircle}>
+              <Icon name="chevron-back" size={22} color={primaryColor} />
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Add Offers</Text>
+          <View style={{ width: 40 }} />
+        </View>
       </View>
 
-      <ScrollView
-        style={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
       >
-        <Text style={styles.title}>Add Offers</Text>
-        {loading ? (
-          <ActivityIndicator
-            size="large"
-            color="#8e44ad"
-            style={{ marginTop: 50 }}
-          />
-        ) : (
-          <>
-            <View style={styles.form}>
-              <Text style={styles.label}>Categories</Text>
-              <TouchableOpacity
-                style={styles.pickerContainer}
-                onPress={() => setCategoryModalVisible(true)}
-              >
-                <Text style={styles.pickerText}>
-                  {selectedCategory || 'Select a category'}
-                </Text>
-                <Icon name="chevron-down" size={20} color="#888" />
-              </TouchableOpacity>
-
-              <Text style={styles.label}>Service Name</Text>
-              <TouchableOpacity
-                style={[
-                  styles.pickerContainer,
-                  !selectedCategory && styles.disabledPicker,
-                ]}
-                onPress={() => setServiceModalVisible(true)}
-                disabled={!selectedCategory}
-              >
-                <Text style={styles.pickerText}>
-                  {selectedService
-                    ? selectedService.serviceName
-                    : 'Select a service'}
-                </Text>
-                <Icon name="chevron-down" size={20} color="#888" />
-              </TouchableOpacity>
-
-              <Text style={styles.label}>Regular Price</Text>
-              <TextInput
-                style={styles.input}
-                value={regularPrice}
-                onChangeText={setRegularPrice}
-                keyboardType="numeric"
-                placeholder="Regular price"
-              />
-
-              <Text style={styles.label}>Offer Price</Text>
-              <TextInput
-                style={styles.input}
-                value={offerPrice}
-                onChangeText={setOfferPrice}
-                keyboardType="numeric"
-                placeholder="Enter offer price"
-              />
-
-              <View style={styles.uploadLabelContainer}>
-                <Text style={styles.label}>Upload Image</Text>
-                <Text style={styles.subLabel}>(Min image size 90x90)</Text>
+        <ScrollView
+          style={styles.mainContent}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {loading ? (
+            <ActivityIndicator
+              size="large"
+              color={primaryColor}
+              style={{ marginTop: 50 }}
+            />
+          ) : (
+            <View style={styles.formSection}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Category</Text>
+                <TouchableOpacity
+                  style={styles.inputWrapper}
+                  onPress={() => setCategoryModalVisible(true)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.iconContainer}>
+                    <Icon name="grid-outline" size={20} color={primaryColor} />
+                  </View>
+                  <Text
+                    style={[
+                      styles.textInput,
+                      !selectedCategory && { color: '#999' },
+                    ]}
+                  >
+                    {selectedCategory || 'Select Category'}
+                  </Text>
+                  <Icon
+                    name="chevron-down"
+                    size={20}
+                    color="#999"
+                    style={{ marginRight: 15 }}
+                  />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity style={styles.uploadBox} onPress={selectImage}>
-                {imageUri ? (
-                  <>
-                    <Image
-                      source={{ uri: imageUri }}
-                      style={styles.uploadedImage}
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Service Name</Text>
+                <TouchableOpacity
+                  style={[
+                    styles.inputWrapper,
+                    !selectedCategory && styles.disabledInput,
+                  ]}
+                  onPress={() => setServiceModalVisible(true)}
+                  disabled={!selectedCategory}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.iconContainer}>
+                    <Icon name="cut-outline" size={20} color={primaryColor} />
+                  </View>
+                  <Text
+                    style={[
+                      styles.textInput,
+                      !selectedService && { color: '#999' },
+                    ]}
+                  >
+                    {selectedService
+                      ? selectedService.serviceName
+                      : 'Select Service'}
+                  </Text>
+                  <Icon
+                    name="chevron-down"
+                    size={20}
+                    color="#999"
+                    style={{ marginRight: 15 }}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Regular Price</Text>
+                <View style={[styles.inputWrapper, styles.disabledInput]}>
+                  <View style={styles.iconContainer}>
+                    <Icon
+                      name="pricetag-outline"
+                      size={20}
+                      color={primaryColor}
                     />
-                    <TouchableOpacity
-                      style={styles.deleteIcon}
-                      onPress={() => setImageUri(null)}
-                    >
-                      <Icon name="close-circle" size={24} color="#333" />
-                    </TouchableOpacity>
-                  </>
+                  </View>
+                  <TextInput
+                    style={styles.textInput}
+                    value={regularPrice}
+                    editable={false}
+                    placeholder="Auto-filled"
+                    placeholderTextColor="#999"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Offer Price</Text>
+                <View style={styles.inputWrapper}>
+                  <View style={styles.iconContainer}>
+                    <Icon name="cash-outline" size={20} color={primaryColor} />
+                  </View>
+                  <TextInput
+                    style={styles.textInput}
+                    value={offerPrice}
+                    onChangeText={setOfferPrice}
+                    keyboardType="numeric"
+                    placeholder="Enter offer price"
+                    placeholderTextColor="#999"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Offer Image</Text>
+                <TouchableOpacity
+                  style={styles.uploadContainer}
+                  onPress={selectImage}
+                  activeOpacity={0.8}
+                >
+                  {imageUri ? (
+                    <View style={styles.imagePreviewContainer}>
+                      <Image
+                        source={{ uri: imageUri }}
+                        style={styles.imagePreview}
+                      />
+                      <View style={styles.editImageOverlay}>
+                        <Icon name="camera" size={20} color="#fff" />
+                      </View>
+                    </View>
+                  ) : (
+                    <View style={styles.uploadPlaceholder}>
+                      <View style={styles.uploadIconCircle}>
+                        <Icon
+                          name="cloud-upload-outline"
+                          size={28}
+                          color={primaryColor}
+                        />
+                      </View>
+                      <Text style={styles.uploadText}>
+                        Click to upload image
+                      </Text>
+                      <Text style={styles.uploadSubText}>
+                        Size 90x90 recommended
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.submitBtn, isSaving && styles.submitBtnDisabled]}
+                onPress={handleAddOffer}
+                disabled={isSaving}
+                activeOpacity={0.9}
+              >
+                {isSaving ? (
+                  <ActivityIndicator color="#fff" />
                 ) : (
-                  <Icon name="image-outline" size={40} color="#ccc" />
+                  <>
+                    <Text style={styles.submitBtnText}>ADD OFFER</Text>
+                    <Icon
+                      name="add-circle-outline"
+                      size={22}
+                      color="#fff"
+                      style={{ marginLeft: 10 }}
+                    />
+                  </>
                 )}
               </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
-              onPress={handleAddOffer}
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text style={styles.saveButtonText}>ADD OFFER</Text>
-              )}
-            </TouchableOpacity>
-          </>
-        )}
-      </ScrollView>
+          )}
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {renderPickerModal(
         isCategoryModalVisible,
@@ -310,6 +409,7 @@ const AddOffersScreen = ({ navigation }) => {
         handleSelectCategory,
         (item, index) => index.toString(),
         item => item,
+        'Select Category',
       )}
 
       {renderPickerModal(
@@ -319,6 +419,7 @@ const AddOffersScreen = ({ navigation }) => {
         handleSelectService,
         item => item.id,
         item => item.serviceName,
+        'Select Service',
       )}
 
       <Modal
@@ -327,19 +428,20 @@ const AddOffersScreen = ({ navigation }) => {
         animationType="fade"
         onRequestClose={handleCloseSuccessModal}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalView}>
-            <View style={styles.successIconContainer}>
-              <Icon name="checkmark" size={40} color="#fff" />
+        <View style={styles.successModalOverlay}>
+          <View style={styles.successCard}>
+            <View style={styles.successHeader}>
+              <Icon name="checkmark-circle" size={60} color="#2ecc71" />
             </View>
-            <Text style={styles.modalText}>
-              Successfully Added{'\n'}Your New Offer
+            <Text style={styles.successTitle}>Success!</Text>
+            <Text style={styles.successMessage}>
+              New Offer has been added successfully.
             </Text>
             <TouchableOpacity
-              style={styles.okButton}
+              style={styles.successBtn}
               onPress={handleCloseSuccessModal}
             >
-              <Text style={styles.okButtonText}>OK</Text>
+              <Text style={styles.successBtnText}>Continue</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -351,129 +453,189 @@ const AddOffersScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: primaryColor,
   },
-  header: {
-    height: 120,
-    justifyContent: 'center',
-    paddingTop: 20,
+  headerContainer: {
+    height: 180,
+    width: '100%',
+    position: 'relative',
+    justifyContent: 'flex-start',
   },
-  headerImage: {
-    ...StyleSheet.absoluteFillObject,
+  headerBg: {
     width: '100%',
     height: '100%',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(128, 0, 128, 0.6)',
-  },
-  backButton: {
     position: 'absolute',
-    top: 50,
-    left: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-    zIndex: 1,
   },
-  backButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    marginLeft: 5,
+  headerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: primaryColor,
   },
-  contentContainer: {
-    flex: 1,
-    backgroundColor: 'white',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    marginTop: -30,
-    paddingTop: 10,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginVertical: 20,
-    color: '#333',
-  },
-  form: {
-    paddingHorizontal: 25,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    fontSize: 16,
-    marginBottom: 20,
-  },
-  pickerContainer: {
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: 50,
+    paddingHorizontal: 20,
+  },
+  backButton: {
+    zIndex: 10,
+  },
+  backBtnCircle: {
+    width: 40,
+    height: 40,
     backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    marginBottom: 20,
-  },
-  disabledPicker: {
-    backgroundColor: '#f0f0f0',
-  },
-  pickerText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  uploadLabelContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 8,
-  },
-  subLabel: {
-    fontSize: 12,
-    color: '#888',
-    marginLeft: 10,
-  },
-  uploadBox: {
-    height: 120,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fafafa',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+    letterSpacing: 0.5,
+  },
+  mainContent: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    marginTop: -40,
+    paddingTop: 25,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 30,
+  },
+  formSection: {
     marginBottom: 20,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#34495e',
+    marginLeft: 4,
+    marginBottom: 8,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: primaryColor,
+    height: 54,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  disabledInput: {
+    backgroundColor: '#F5F5F5',
+    borderColor: '#E0E0E0',
+  },
+  iconContainer: {
+    width: 50,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FBFBFB',
+    borderRightWidth: 1,
+    borderRightColor: '#F0F0F0',
+  },
+  textInput: {
+    flex: 1,
+    height: '100%',
+    paddingHorizontal: 15,
+    color: '#333',
+    fontSize: 16,
+    textAlignVertical: 'center',
+    paddingVertical: 0,
+  },
+  uploadContainer: {
+    height: 140,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: primaryColor,
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
     overflow: 'hidden',
   },
-  uploadedImage: {
+  uploadPlaceholder: {
+    alignItems: 'center',
+  },
+  uploadIconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#F3E5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  uploadText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#666',
+  },
+  uploadSubText: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
+  },
+  imagePreviewContainer: {
     width: '100%',
     height: '100%',
-    borderRadius: 8,
+    position: 'relative',
   },
-  saveButton: {
-    backgroundColor: '#8e44ad',
-    paddingVertical: 15,
-    borderRadius: 10,
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  editImageOverlay: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 8,
+    borderRadius: 20,
+  },
+  submitBtn: {
+    backgroundColor: primaryColor,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 25,
-    marginBottom: 30,
+    paddingVertical: 16,
+    borderRadius: 14,
+    shadowColor: '#8e44ad',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    marginTop: 10,
   },
-  saveButtonDisabled: {
-    backgroundColor: '#b392c4',
+  submitBtnDisabled: {
+    backgroundColor: '#b39ddb',
+    shadowOpacity: 0,
+    elevation: 0,
   },
-  saveButtonText: {
+  submitBtnText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
   modalOverlay: {
     flex: 1,
@@ -482,68 +644,80 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: 'white',
-    width: '80%',
-    maxHeight: '60%',
-    borderRadius: 10,
-    padding: 10,
+    backgroundColor: '#fff',
+    width: '85%',
+    borderRadius: 15,
+    padding: 20,
+    maxHeight: '70%',
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: primaryColor,
   },
   modalItem: {
-    padding: 15,
+    paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#f5f5f5',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   modalItemText: {
     fontSize: 16,
+    color: '#333',
   },
-  deleteIcon: {
-    position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderRadius: 12,
-  },
-  modalBackdrop: {
+  successModalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-  },
-  modalView: {
-    width: '85%',
-    backgroundColor: 'white',
-    borderRadius: 15,
     padding: 20,
-    alignItems: 'center',
   },
-  successIconContainer: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: '#8e44ad',
-    justifyContent: 'center',
+  successCard: {
+    backgroundColor: '#fff',
+    width: '85%',
+    borderRadius: 20,
+    padding: 30,
     alignItems: 'center',
-    marginBottom: 25,
+    elevation: 10,
   },
-  modalText: {
-    fontSize: 20,
+  successHeader: {
+    marginBottom: 15,
+  },
+  successTitle: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
+    marginBottom: 10,
+  },
+  successMessage: {
+    fontSize: 15,
+    color: '#666',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 25,
+    lineHeight: 22,
   },
-  okButton: {
-    backgroundColor: '#8e44ad',
-    paddingVertical: 15,
-    width: '100%',
-    alignItems: 'center',
-    borderRadius: 10,
-    marginTop: 10,
+  successBtn: {
+    backgroundColor: primaryColor,
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 25,
   },
-  okButtonText: {
+  successBtnText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 });
 

@@ -1,11 +1,14 @@
-import React, { useEffect } from 'react';
-import { Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   StatusBar,
+  Image,
+  Alert,
+  ActivityIndicator,
+  Modal,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import firestore from '@react-native-firebase/firestore';
@@ -18,6 +21,7 @@ import { generateRandomName } from '../../utils/utils';
 import { GOOGLE_ICON, NO_IMAGE } from '../../constants/images';
 
 const WelcomeScreen = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const lighterPrimaryColor = '#FBCDFF';
 
   useEffect(() => {
@@ -28,6 +32,7 @@ const WelcomeScreen = () => {
   }, []);
 
   async function onGoogleButtonPress() {
+    setIsLoading(true);
     try {
       await GoogleSignin.signOut();
       await GoogleSignin.hasPlayServices({
@@ -35,14 +40,10 @@ const WelcomeScreen = () => {
       });
 
       const signInResult = await GoogleSignin.signIn();
-
       let idToken = signInResult.data?.idToken || signInResult.idToken;
 
-      if (!idToken) throw new Error('No ID token found');
-
       if (!idToken) {
-        Alert.alert('Error', 'Error while signin');
-        return;
+        throw new Error('No ID token found');
       }
 
       const googleCredential = GoogleAuthProvider.credential(idToken);
@@ -56,10 +57,8 @@ const WelcomeScreen = () => {
         .where('email', '==', firebaseUser.email)
         .get();
 
-      let updateData;
-
       if (querySnapshot.empty) {
-        updateData = {
+        const updateData = {
           uid: firebaseUser.uid,
           fullName: firebaseUser.displayName || generateRandomName(),
           phone: '',
@@ -80,14 +79,12 @@ const WelcomeScreen = () => {
           .collection(COLLECTIONS.SHOP_OWNERS)
           .doc(firebaseUser.uid)
           .set(updateData);
-      } else {
-        // Will handle by firebase
       }
-
-      return firebaseUser;
     } catch (error) {
       console.log('GOOGLE SIGN-IN ERROR =====>', error);
-      return error;
+      Alert.alert('Error', 'Failed to sign in with Google');
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -99,6 +96,7 @@ const WelcomeScreen = () => {
       end={{ x: 1, y: 1 }}
     >
       <StatusBar backgroundColor={primaryColor} barStyle="light-content" />
+
       <Image
         source={require('../../assets/images/splash_logo.png')}
         style={styles.welcomeImage}
@@ -108,16 +106,27 @@ const WelcomeScreen = () => {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.signInButton}
-          onPress={() =>
-            onGoogleButtonPress().then(() => {
-              // Successfully signed
-            })
-          }
+          onPress={onGoogleButtonPress}
+          disabled={isLoading}
         >
           <Image source={{ uri: GOOGLE_ICON }} style={styles.googleIcon} />
           <Text style={styles.signInButtonText}>Sign in with Google</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={isLoading}
+        onRequestClose={() => {}}
+      >
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={primaryColor} />
+            <Text style={styles.loadingText}>Signing in...</Text>
+          </View>
+        </View>
+      </Modal>
     </LinearGradient>
   );
 };
@@ -156,26 +165,8 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-  googleIcon: {
-    marginRight: 10,
-    // color: 'darkcyan',
-  },
   signInButtonText: {
     color: primaryColor,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  signUpButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: '#fff',
-    paddingVertical: 15,
-    width: '90%',
-    alignItems: 'center',
-    borderRadius: 12,
-  },
-  signUpButtonText: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -189,6 +180,24 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginRight: 10,
+  },
+  loadingOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    elevation: 5,
+  },
+  loadingText: {
+    marginTop: 10,
+    color: primaryColor,
+    fontWeight: '500',
   },
 });
 

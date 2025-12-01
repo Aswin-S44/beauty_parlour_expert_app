@@ -80,7 +80,7 @@ android {
 
     namespace "com.app"
     defaultConfig {
-        applicationId "saloon.beauty.app"
+        applicationId "com.beauty.app1"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

@@ -9,6 +9,7 @@ import {
   Platform,
   Modal,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import React, { useEffect, useState, useContext } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -23,7 +24,9 @@ import { NO_IMAGE } from '../../constants/variables';
 import { primaryColor } from '../../constants/colors';
 import { AuthContext } from '../../context/AuthContext';
 
-const NofificationDetailsScreen = ({ route, navigation }) => {
+const { width } = Dimensions.get('window');
+
+const NotificationDetailsScreen = ({ route, navigation }) => {
   const { notificationId } = route.params;
   const { user, userData } = useContext(AuthContext);
 
@@ -39,9 +42,7 @@ const NofificationDetailsScreen = ({ route, navigation }) => {
       const fetchNotification = async () => {
         setLoading(true);
         let res = await getNotificationDetails(notificationId);
-        if (res) {
-          setNotificationDetails(res);
-        }
+        if (res) setNotificationDetails(res);
         setLoading(false);
       };
       fetchNotification();
@@ -50,41 +51,18 @@ const NofificationDetailsScreen = ({ route, navigation }) => {
 
   useEffect(() => {
     if (notificationId) {
-      const updateNotification = async () => {
-        await markNotificationAsRead(notificationId);
-      };
-      updateNotification();
+      markNotificationAsRead(notificationId).catch(err => console.error(err));
     }
   }, [notificationId]);
 
-  const formatDate = (seconds, nanoseconds) => {
-    if (seconds === undefined || nanoseconds === undefined) {
-      return 'N/A';
-    }
-    return moment
-      .unix(seconds + nanoseconds / 1_000_000_000)
-      .format('MMMM Do YYYY, h:mm a');
-  };
-
-  const handleAcceptPress = () => {
-    setAcceptModalVisible(true);
-  };
-
-  const handleCancelPress = () => {
-    setCancelModalVisible(true);
-  };
-
+  // --- Actions ---
   const handleAcceptAppointment = async () => {
     try {
       setConfirming(true);
-      if (
-        notificationDetails &&
-        notificationDetails?.appointmentId &&
-        notificationDetails?.toId
-      ) {
+      if (notificationDetails?.appointmentId && notificationDetails?.toId) {
         await confirmAppointment(
-          notificationDetails?.appointmentId,
-          notificationDetails?.toId,
+          notificationDetails.appointmentId,
+          notificationDetails.toId,
           userData?.parlourName,
           userData?.profileImage,
         );
@@ -101,14 +79,10 @@ const NofificationDetailsScreen = ({ route, navigation }) => {
   const handleRejectAppointment = async () => {
     try {
       setCancelling(true);
-      if (
-        notificationDetails &&
-        notificationDetails?.appointmentId &&
-        notificationDetails?.toId
-      ) {
+      if (notificationDetails?.appointmentId && notificationDetails?.toId) {
         await rejectAppointment(
-          notificationDetails?.appointmentId,
-          notificationDetails?.toId,
+          notificationDetails.appointmentId,
+          notificationDetails.toId,
         );
         setCancelModalVisible(false);
         navigation.goBack();
@@ -120,119 +94,40 @@ const NofificationDetailsScreen = ({ route, navigation }) => {
     }
   };
 
-  const renderAcceptModal = () => (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={acceptModalVisible}
-      onRequestClose={() => setAcceptModalVisible(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Date & Time</Text>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Date</Text>
-            <Text style={styles.detailValue}>
-              {notificationDetails?.appointment?.selectedDate || 'N/A'}
-            </Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Time</Text>
-            <Text style={styles.detailValue}>
-              {notificationDetails?.appointment?.selectedTime || 'N/A'}
-            </Text>
-          </View>
+  // --- Status Config ---
+  const getStatusConfig = status => {
+    switch (status?.toLowerCase()) {
+      case 'confirmed':
+        return { bg: '#E8F5E9', color: '#2E7D32', icon: 'checkmark-circle' };
+      case 'pending':
+        return { bg: '#FFF3E0', color: '#EF6C00', icon: 'time' };
+      case 'cancelled':
+        return { bg: '#FFEBEE', color: '#C62828', icon: 'close-circle' };
+      default:
+        return { bg: '#F5F5F5', color: '#757575', icon: 'help-circle' };
+    }
+  };
 
-          <Text style={[styles.modalTitle, { marginTop: 20 }]}>Amount</Text>
-          <View style={styles.amountHeaderRow}>
-            <Text style={styles.amountHeader}>Service</Text>
-            <Text style={styles.amountHeader}>Quantity</Text>
-            <Text style={styles.amountHeader}>Price</Text>
-          </View>
-          {notificationDetails?.appointment?.services &&
-            notificationDetails?.appointment?.services?.map(
-              (service, index) => (
-                <View key={service.id || index} style={styles.amountRow}>
-                  <Text style={styles.serviceText}>
-                    {service.serviceName || 'N/A'}
-                  </Text>
-                  <Text style={styles.serviceText}>{service?.qty || 1}</Text>
-                  <Text style={styles.serviceText}>
-                    ₹{service.servicePrice * (service.qty || 1) || '0'}
-                  </Text>
-                </View>
-              ),
-            )}
-          <View style={styles.lineSeparator} />
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Total</Text>
-            <Text style={styles.summaryValue}>
-              ₹{notificationDetails?.appointment?.totalAmount || '0'}
-            </Text>
-          </View>
-          <View style={styles.modalActions}>
-            <TouchableOpacity
-              style={styles.modalAcceptButton}
-              onPress={handleAcceptAppointment}
-              disabled={confirming}
-            >
-              {confirming ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.modalButtonTextPrimary}>Accept</Text>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.modalCancelButton}
-              onPress={() => setAcceptModalVisible(false)}
-              disabled={confirming}
-            >
-              <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+  // --- Components ---
+  const DetailRow = ({ icon, label, value }) => (
+    <View style={styles.detailRow}>
+      <View style={styles.detailIconBox}>
+        <Icon name={icon} size={18} color="#666" />
       </View>
-    </Modal>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.detailLabel}>{label}</Text>
+        <Text style={styles.detailValue}>{value}</Text>
+      </View>
+    </View>
   );
 
-  const renderCancelModal = () => (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={cancelModalVisible}
-      onRequestClose={() => setCancelModalVisible(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Reason for Reject</Text>
-          <Text>Do you want to reject the appointment request ?</Text>
-          <View style={styles.modalActions}>
-            <TouchableOpacity
-              style={styles.modalAcceptButton}
-              onPress={handleRejectAppointment}
-              disabled={cancelling}
-            >
-              {cancelling ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.modalButtonTextPrimary}>Yes</Text>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.modalCancelButton}
-              onPress={() => setCancelModalVisible(false)}
-              disabled={cancelling}
-            >
-              <Text style={styles.modalButtonTextSecondary}>No</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
+  const statusConfig = getStatusConfig(
+    notificationDetails?.appointment?.appointmentStatus,
   );
-
   const isAppointmentRequest =
     notificationDetails?.notificationType === 'appointment_request';
+  const isPending =
+    notificationDetails?.appointment?.appointmentStatus === 'pending';
 
   if (loading || !notificationDetails) {
     return (
@@ -244,142 +139,262 @@ const NofificationDetailsScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="light-content" backgroundColor={primaryColor} />
+
+      {/* HEADER */}
       <View style={styles.header}>
-        <Image
-          source={require('../../assets/images/home_bg-1.png')}
-          style={styles.headerImage}
-        />
-        <View style={styles.overlay} />
         <TouchableOpacity
-          style={styles.backButton}
           onPress={() => navigation.goBack()}
+          style={styles.backBtn}
         >
           <Icon name="chevron-back" size={24} color="#fff" />
-          <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Notification Details</Text>
+        <View style={{ width: 24 }} />
       </View>
-      <View style={styles.contentContainer}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.title}>Notification Details</Text>
 
-          <View style={styles.card}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* 1. SENDER PROFILE CARD */}
+        <View style={styles.card}>
+          <View style={styles.profileHeader}>
             <Image
               source={{
                 uri: notificationDetails?.customer?.profileImage || NO_IMAGE,
               }}
-              style={styles.profileImage}
+              style={styles.avatar}
             />
-            <Text style={styles.customerName}>
-              {notificationDetails?.customer?.fullName || 'Unavailable'}
-            </Text>
-            <Text style={styles.notificationMessage}>
-              "{notificationDetails?.message || 'No message provided.'}"
-            </Text>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.label}>Notification Type:</Text>
-              <Text style={styles.value}>
+            <View style={styles.profileText}>
+              <Text style={styles.customerName}>
+                {notificationDetails?.customer?.fullName || 'Unknown User'}
+              </Text>
+              <Text style={styles.notificationType}>
                 {notificationDetails?.notificationType
-                  ? notificationDetails?.notificationType
+                  ? notificationDetails.notificationType
                       .replace(/_/g, ' ')
-                      .replace(/\b\w/g, char => char.toUpperCase())
-                  : 'Unavailable'}
+                      .toUpperCase()
+                  : 'NOTIFICATION'}
               </Text>
             </View>
-
-            {/* <View style={styles.detailRow}>
-              <Text style={styles.label}>Received On:</Text>
-              <Text style={styles.value}>
-                {formatDate(
-                  notificationDetails?.createdAt?._seconds,
-                  notificationDetails?.createdAt?._nanoseconds,
-                )}
-              </Text>
-            </View> */}
-
-            {notificationDetails?.appointment && (
-              <View style={styles.customerInfo}>
-                <Text style={styles.customerInfoTitle}>
-                  Appointment Details
-                </Text>
-                <View style={styles.detailRow}>
-                  <Text style={styles.label}>Status:</Text>
-                  <Text style={styles.value}>
-                    {notificationDetails?.appointment?.appointmentStatus
-                      ? notificationDetails?.appointment?.appointmentStatus.replace(
-                          /\b\w/g,
-                          char => char.toUpperCase(),
-                        )
-                      : 'N/A'}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.label}>Date:</Text>
-                  <Text style={styles.value}>
-                    {notificationDetails?.appointment?.selectedDate || 'N/A'}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.label}>Time:</Text>
-                  <Text style={styles.value}>
-                    {notificationDetails?.appointment?.selectedTime || 'N/A'}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.label}>Total Amount:</Text>
-                  <Text style={styles.value}>
-                    ₹{notificationDetails?.appointment?.totalAmount || '0'}
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            {notificationDetails?.appointment?.services &&
-              notificationDetails?.appointment?.services?.length > 0 && (
-                <View style={styles.customerInfo}>
-                  <Text style={styles.customerInfoTitle}>Services Booked</Text>
-                  {notificationDetails?.appointment?.services?.map(
-                    (service, index) => (
-                      <View
-                        key={service.id || index}
-                        style={styles.serviceItem}
-                      >
-                        <Text style={styles.serviceName}>
-                          {service?.serviceName || 'N/A'}
-                        </Text>
-                        <Text style={styles.servicePrice}>
-                          ₹{service?.servicePrice || '0'}
-                        </Text>
-                      </View>
-                    ),
-                  )}
-                </View>
-              )}
-
-            {isAppointmentRequest &&
-              notificationDetails?.appointment?.appointmentStatus ===
-                'pending' && (
-                <View style={styles.actionButtonsContainer}>
-                  <TouchableOpacity
-                    onPress={handleAcceptPress}
-                    style={[styles.actionButton, styles.acceptButton]}
-                  >
-                    <Text style={styles.acceptButtonText}>Accept</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={handleCancelPress}
-                    style={[styles.actionButton, styles.rejectButton]}
-                  >
-                    <Text style={styles.rejectButtonText}>Reject</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
           </View>
-        </ScrollView>
-      </View>
-      {renderAcceptModal()}
-      {renderCancelModal()}
+
+          <View style={styles.messageBox}>
+            <Icon
+              name="chatbubble-ellipses-outline"
+              size={20}
+              color="#888"
+              style={styles.quoteIcon}
+            />
+            <Text style={styles.messageText}>
+              {notificationDetails?.message || 'No message content.'}
+            </Text>
+          </View>
+        </View>
+
+        {/* 2. APPOINTMENT DETAILS (If Available) */}
+        {notificationDetails?.appointment && (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Appointment Info</Text>
+            <View style={styles.card}>
+              {/* Status Badge */}
+              <View
+                style={[
+                  styles.statusBadge,
+                  { backgroundColor: statusConfig.bg },
+                ]}
+              >
+                <Icon
+                  name={statusConfig.icon}
+                  size={16}
+                  color={statusConfig.color}
+                  style={{ marginRight: 6 }}
+                />
+                <Text
+                  style={[styles.statusText, { color: statusConfig.color }]}
+                >
+                  {notificationDetails.appointment.appointmentStatus?.toUpperCase() ||
+                    'UNKNOWN'}
+                </Text>
+              </View>
+
+              <View style={styles.divider} />
+
+              <DetailRow
+                icon="calendar-outline"
+                label="Date"
+                value={notificationDetails.appointment.selectedDate || 'N/A'}
+              />
+              <View style={{ height: 12 }} />
+              <DetailRow
+                icon="time-outline"
+                label="Time"
+                value={notificationDetails.appointment.selectedTime || 'N/A'}
+              />
+            </View>
+          </View>
+        )}
+
+        {/* 3. SERVICES & PAYMENT */}
+        {notificationDetails?.appointment?.services && (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Services & Payment</Text>
+            <View style={styles.card}>
+              <View style={styles.tableHeader}>
+                <Text style={[styles.thText, { flex: 2 }]}>Service</Text>
+                <Text style={[styles.thText, { flex: 1, textAlign: 'center' }]}>
+                  Qty
+                </Text>
+                <Text style={[styles.thText, { flex: 1, textAlign: 'right' }]}>
+                  Price
+                </Text>
+              </View>
+
+              {notificationDetails.appointment.services.map(
+                (service, index) => (
+                  <View key={index} style={styles.tableRow}>
+                    <Text style={[styles.tdText, { flex: 2 }]}>
+                      {service.serviceName}
+                    </Text>
+                    <Text
+                      style={[styles.tdText, { flex: 1, textAlign: 'center' }]}
+                    >
+                      {service.qty || 1}
+                    </Text>
+                    <Text
+                      style={[styles.tdPrice, { flex: 1, textAlign: 'right' }]}
+                    >
+                      ₹{service.servicePrice * (service.qty || 1)}
+                    </Text>
+                  </View>
+                ),
+              )}
+
+              <View style={styles.divider} />
+
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Total Amount</Text>
+                <Text style={styles.totalValue}>
+                  ₹{notificationDetails.appointment.totalAmount || 0}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* 4. ACTION BUTTONS */}
+        {isAppointmentRequest && isPending && (
+          <View style={styles.footerActions}>
+            <TouchableOpacity
+              style={styles.rejectBtn}
+              onPress={() => setCancelModalVisible(true)}
+            >
+              <Text style={styles.rejectBtnText}>Reject Request</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.acceptBtn}
+              onPress={() => setAcceptModalVisible(true)}
+            >
+              <Text style={styles.acceptBtnText}>Accept Request</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <View style={{ height: 30 }} />
+      </ScrollView>
+
+      {/* --- MODALS --- */}
+
+      {/* ACCEPT MODAL */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={acceptModalVisible}
+        onRequestClose={() => setAcceptModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalIconContainer}>
+              <Icon name="calendar" size={32} color="#fff" />
+            </View>
+            <Text style={styles.modalTitle}>Confirm Appointment</Text>
+            <Text style={styles.modalSubtitle}>
+              Are you sure you want to accept this appointment for{' '}
+              {notificationDetails?.appointment?.selectedDate} at{' '}
+              {notificationDetails?.appointment?.selectedTime}?
+            </Text>
+
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setAcceptModalVisible(false)}
+                disabled={confirming}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalConfirmBtn}
+                onPress={handleAcceptAppointment}
+                disabled={confirming}
+              >
+                {confirming ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.modalConfirmText}>Confirm</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* REJECT MODAL */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={cancelModalVisible}
+        onRequestClose={() => setCancelModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View
+              style={[
+                styles.modalIconContainer,
+                { backgroundColor: '#FFEBEE' },
+              ]}
+            >
+              <Icon name="alert-circle" size={32} color="#D32F2F" />
+            </View>
+            <Text style={styles.modalTitle}>Reject Request</Text>
+            <Text style={styles.modalSubtitle}>
+              This action cannot be undone. The user will be notified that you
+              are unable to take this appointment.
+            </Text>
+
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setCancelModalVisible(false)}
+                disabled={cancelling}
+              >
+                <Text style={styles.modalCancelText}>Go Back</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalConfirmBtn, { backgroundColor: '#D32F2F' }]}
+                onPress={handleRejectAppointment}
+                disabled={cancelling}
+              >
+                {cancelling ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.modalConfirmText}>Reject</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -387,272 +402,286 @@ const NofificationDetailsScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F5F7FA',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
   },
   header: {
-    height: Platform.OS === 'ios' ? 120 : 100,
-    justifyContent: 'center',
-    paddingTop: Platform.OS === 'ios' ? 20 : 0,
-  },
-  headerImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(128, 0, 128, 0.6)',
-  },
-  backButton: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 50 : 30,
-    left: 15,
+    backgroundColor: primaryColor,
+    height: Platform.OS === 'ios' ? 110 : 60,
+    paddingTop: Platform.OS === 'ios' ? 50 : 10,
     flexDirection: 'row',
     alignItems: 'center',
-    zIndex: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
   },
-  backButtonText: {
+  headerTitle: {
     color: '#fff',
-    fontSize: 16,
-    marginLeft: 5,
+    fontSize: 18,
+    fontWeight: 'bold',
   },
-  contentContainer: {
-    flex: 1,
-    backgroundColor: 'white',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    marginTop: -30,
-    paddingTop: 10,
-    overflow: 'hidden',
+  backBtn: {
+    padding: 8,
   },
   scrollContent: {
-    paddingBottom: 20,
+    padding: 20,
+    paddingBottom: 40,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginVertical: 20,
-    color: '#333',
-  },
+
+  // CARD STYLES
   card: {
     backgroundColor: '#fff',
-    marginHorizontal: 20,
-    borderRadius: 15,
+    borderRadius: 16,
     padding: 20,
+    marginBottom: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 8,
-    alignItems: 'center',
+    elevation: 2,
   },
-  profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 15,
+  },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 15,
     borderWidth: 2,
-    borderColor: '#800080',
+    borderColor: '#f0f0f0',
+  },
+  profileText: {
+    flex: 1,
   },
   customerName: {
-    fontSize: 20,
-    fontWeight: '500',
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#333',
-    marginBottom: 10,
   },
-  notificationMessage: {
-    fontSize: 16,
+  notificationType: {
+    fontSize: 12,
+    color: primaryColor,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  messageBox: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 15,
+    flexDirection: 'row',
+  },
+  quoteIcon: {
+    marginRight: 10,
+    marginTop: 2,
+  },
+  messageText: {
+    fontSize: 14,
     color: '#555',
-    textAlign: 'center',
-    marginBottom: 20,
-    paddingHorizontal: 10,
+    lineHeight: 20,
+    flex: 1,
     fontStyle: 'italic',
+  },
+
+  // SECTION STYLES
+  sectionContainer: {
+    marginTop: 20,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#888',
+    marginBottom: 10,
+    marginLeft: 4,
+    textTransform: 'uppercase',
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 15,
+  },
+  statusText: {
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#EEE',
+    marginVertical: 12,
   },
   detailRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 8,
-    paddingHorizontal: 10,
-  },
-  label: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#666',
-    flex: 1,
-  },
-  value: {
-    fontSize: 15,
-    color: '#333',
-    flex: 2,
-    textAlign: 'right',
-  },
-  customerInfo: {
-    marginTop: 25,
-    width: '100%',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    paddingTop: 20,
-    alignItems: 'flex-start',
-  },
-  customerInfoTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#800080',
-    marginBottom: 15,
-    alignSelf: 'center',
-  },
-  serviceItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 5,
-    paddingHorizontal: 10,
-  },
-  serviceName: {
-    fontSize: 15,
-    color: '#333',
-    flex: 1,
-  },
-  servicePrice: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#800080',
-    textAlign: 'right',
-  },
-  actionButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 30,
-    width: '100%',
-  },
-  actionButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 25,
-    borderRadius: 8,
-    minWidth: 100,
     alignItems: 'center',
   },
-  acceptButton: {
-    backgroundColor: primaryColor,
-  },
-  acceptButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  rejectButton: {
-    backgroundColor: '#ff4d4d',
-  },
-  rejectButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  detailIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    marginRight: 12,
+  },
+  detailLabel: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 2,
+  },
+  detailValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+
+  // TABLE STYLES
+  tableHeader: {
+    flexDirection: 'row',
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+    paddingBottom: 8,
+  },
+  thText: {
+    fontSize: 12,
+    color: '#999',
+    fontWeight: '700',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  tdText: {
+    fontSize: 14,
+    color: '#555',
+  },
+  tdPrice: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '600',
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  totalLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  totalValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: primaryColor,
+  },
+
+  // FOOTER ACTIONS
+  footerActions: {
+    flexDirection: 'row',
+    marginTop: 25,
+    gap: 15,
+  },
+  rejectBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#FFEBEE',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFCDD2',
+  },
+  rejectBtnText: {
+    color: '#D32F2F',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  acceptBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: primaryColor,
+    alignItems: 'center',
+  },
+  acceptBtnText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+
+  // MODAL STYLES
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
   modalContent: {
     backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 25,
     width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+  },
+  modalIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: primaryColor,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 15,
-  },
-  detailLabel: {
-    fontSize: 15,
-    color: '#4A4A4A',
-  },
-  detailValue: {
-    fontSize: 15,
-    color: '#4A4A4A',
-  },
-  amountHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  amountHeader: {
-    fontSize: 15,
     color: '#333',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  modalBtnRow: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    color: '#666',
     fontWeight: '600',
-    width: '33%',
-  },
-  amountRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  serviceText: {
     fontSize: 15,
-    color: '#555',
-    width: '33%',
   },
-  lineSeparator: {
-    height: 1,
-    backgroundColor: '#ECECEC',
-    marginVertical: 15,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  summaryLabel: {
-    fontSize: 15,
-    color: '#555',
-  },
-  summaryValue: {
-    fontSize: 15,
-    color: '#555',
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 30,
-    gap: 15,
-  },
-  modalAcceptButton: {
+  modalConfirmBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
     backgroundColor: primaryColor,
-    paddingVertical: 10,
-    paddingHorizontal: 35,
-    borderRadius: 8,
+    alignItems: 'center',
   },
-  modalCancelButton: {
-    backgroundColor: '#F3E5F5',
-    paddingVertical: 10,
-    paddingHorizontal: 35,
-    borderRadius: 8,
-  },
-  modalButtonTextPrimary: {
+  modalConfirmText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  modalButtonTextSecondary: {
-    color: primaryColor,
-    fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
+    fontSize: 15,
   },
 });
 
-export default NofificationDetailsScreen;
+export default NotificationDetailsScreen;

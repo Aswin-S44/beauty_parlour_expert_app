@@ -7,9 +7,12 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
-  Alert,
   Modal,
+  Alert,
   ActivityIndicator,
+  Platform,
+  KeyboardAvoidingView,
+  Switch,
 } from 'react-native';
 import React, { useContext, useState } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -17,6 +20,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { AuthContext } from '../../context/AuthContext';
 import { addBeautyExpert } from '../../apis/services';
+import { primaryColor } from '../../constants/colors';
 
 const AddExpertScreen = ({ navigation }) => {
   const [expertName, setExpertName] = useState('');
@@ -24,11 +28,12 @@ const AddExpertScreen = ({ navigation }) => {
   const [about, setAbout] = useState('');
   const [address, setAddress] = useState('');
   const [imageUri, setImageUri] = useState(null);
-  const [isModalVisible, setModalVisible] = useState(false);
+  const [isSuccessModalVisible, setSuccessModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [useShopAddress, setUseShopAddress] = useState(false);
 
-  const { user } = useContext(AuthContext);
+  const { user, userData } = useContext(AuthContext);
 
   const [open, setOpen] = useState(false);
   const [specialistOptions, setSpecialistOptions] = useState([
@@ -50,36 +55,17 @@ const AddExpertScreen = ({ navigation }) => {
 
   const validate = () => {
     const newErrors = {};
-    if (!expertName.trim()) newErrors.expertName = 'Expert name is required.';
-    if (!specialist) newErrors.specialist = 'A specialty is required.';
-    if (!address.trim()) newErrors.address = 'Address is required.';
-    if (!imageUri) newErrors.image = 'An image is required.';
+    if (!expertName.trim()) newErrors.expertName = 'Expert name is required';
+    if (!specialist) newErrors.specialist = 'Specialty is required';
+    if (!address.trim()) newErrors.address = 'Address is required';
+    if (!imageUri) newErrors.image = 'Image is required';
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const selectImage = () => {
-    launchImageLibrary({ mediaType: 'photo' }, response => {
-      if (response.didCancel) {
-        return;
-      } else if (response.errorCode) {
-        Alert.alert('ImagePicker Error', response.errorMessage);
-      } else {
-        const uri = response.assets?.[0]?.uri;
-        if (uri) {
-          setImageUri(uri);
-          if (errors.image) {
-            setErrors(prev => ({ ...prev, image: null }));
-          }
-        }
-      }
-    });
-  };
-
   const handleAddBeautyExpert = async () => {
-    if (!validate()) {
-      return;
-    }
+    if (!validate()) return;
     setIsLoading(true);
     try {
       const expertData = {
@@ -88,9 +74,10 @@ const AddExpertScreen = ({ navigation }) => {
         about,
         address,
       };
+
       const result = await addBeautyExpert(user.uid, expertData, imageUri);
       if (result) {
-        setModalVisible(true);
+        setSuccessModalVisible(true);
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to add expert. Please try again.');
@@ -99,170 +86,303 @@ const AddExpertScreen = ({ navigation }) => {
     }
   };
 
-  const handleCloseModal = () => {
-    setModalVisible(false);
+  const handleCloseSuccessModal = () => {
+    setSuccessModalVisible(false);
     setExpertName('');
     setSpecialist(null);
     setAbout('');
     setAddress('');
     setImageUri(null);
     setErrors({});
+    setUseShopAddress(false);
     navigation.goBack();
+  };
+
+  const selectImage = () => {
+    launchImageLibrary({ mediaType: 'photo' }, response => {
+      if (response.didCancel) return;
+      if (response.errorCode) {
+        Alert.alert('Error', response.errorMessage);
+        return;
+      }
+      const uri = response.assets?.[0]?.uri;
+      if (uri) {
+        setImageUri(uri);
+        if (errors.image) setErrors(prev => ({ ...prev, image: null }));
+      }
+    });
+  };
+
+  const handleToggleShopAddress = value => {
+    setUseShopAddress(value);
+    if (value) {
+      const shopAddress = userData?.address || '';
+      setAddress(shopAddress);
+      if (errors.address) setErrors(prev => ({ ...prev, address: null }));
+    } else {
+      setAddress('');
+    }
   };
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <View style={styles.header}>
+      <StatusBar barStyle="light-content" backgroundColor={primaryColor} />
+
+      <View style={styles.headerContainer}>
         <Image
           source={require('../../assets/images/home_bg-1.png')}
-          style={styles.headerImage}
+          style={styles.headerBg}
+          resizeMode="cover"
         />
-        <View style={styles.overlay} />
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Icon name="chevron-back" size={24} color="#fff" />
-          <Text style={styles.backButtonText}>Back</Text>
-        </TouchableOpacity>
+        <View style={styles.headerOverlay} />
+        <View style={styles.headerContent}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <View style={styles.backBtnCircle}>
+              <Icon name="chevron-back" size={22} color={primaryColor} />
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Add Beauty Expert</Text>
+          <View style={{ width: 40 }} />
+        </View>
       </View>
 
-      <ScrollView
-        style={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
       >
-        <Text style={styles.title}>Add Beauty Expert</Text>
-
-        <View style={styles.form}>
-          <Text style={styles.label}>Expert Name</Text>
-          <TextInput
-            style={styles.input}
-            value={expertName}
-            onChangeText={text => {
-              setExpertName(text);
-              if (errors.expertName)
-                setErrors(prev => ({ ...prev, expertName: null }));
-            }}
-          />
-          {errors.expertName && (
-            <Text style={styles.errorText}>{errors.expertName}</Text>
-          )}
-
-          <Text style={styles.label}>Specialist</Text>
-          <DropDownPicker
-            open={open}
-            value={specialist}
-            items={specialistOptions}
-            setOpen={setOpen}
-            setValue={setSpecialist}
-            onSelectItem={() => {
-              if (errors.specialist)
-                setErrors(prev => ({ ...prev, specialist: null }));
-            }}
-            setItems={setSpecialistOptions}
-            searchable={true}
-            addCustomItem={true}
-            placeholder="Select or search for a specialist"
-            searchPlaceholder="Search..."
-            style={[styles.pickerStyle, open && { borderColor: '#8e44ad' }]}
-            dropDownContainerStyle={styles.dropDownContainer}
-            textStyle={styles.pickerText}
-            selectedItemLabelStyle={styles.selectedItemLabel}
-            listItemLabelStyle={styles.listItemLabel}
-            tickIconStyle={styles.tickIcon}
-            arrowIconStyle={styles.arrowIcon}
-            searchContainerStyle={styles.searchContainer}
-            searchTextInputStyle={styles.searchTextInput}
-            searchPlaceholderTextColor="#999"
-            zIndex={3000}
-            zIndexInverse={1000}
-            listMode="SCROLLVIEW"
-          />
-          {errors.specialist && (
-            <Text style={styles.errorText}>{errors.specialist}</Text>
-          )}
-
-          <Text style={styles.label}>About</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={about}
-            onChangeText={setAbout}
-            multiline
-          />
-
-          <Text style={styles.label}>Address</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={address}
-            onChangeText={text => {
-              setAddress(text);
-              if (errors.address)
-                setErrors(prev => ({ ...prev, address: null }));
-            }}
-            multiline
-          />
-          {errors.address && (
-            <Text style={styles.errorText}>{errors.address}</Text>
-          )}
-
-          <View style={styles.uploadLabelContainer}>
-            <Text style={styles.label}>Upload Image</Text>
-            <Text style={styles.subLabel}>(Mix image size 90x90)</Text>
-          </View>
-          <TouchableOpacity style={styles.uploadBox} onPress={selectImage}>
-            {imageUri ? (
-              <>
-                <Image
-                  source={{ uri: imageUri }}
-                  style={styles.uploadedImage}
+        <ScrollView
+          style={styles.mainContent}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.formSection}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Expert Name</Text>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  errors.expertName && styles.inputError,
+                ]}
+              >
+                <View style={styles.iconContainer}>
+                  <Icon name="person-outline" size={20} color={primaryColor} />
+                </View>
+                <TextInput
+                  style={styles.textInput}
+                  value={expertName}
+                  onChangeText={text => {
+                    setExpertName(text);
+                    if (errors.expertName)
+                      setErrors(prev => ({ ...prev, expertName: null }));
+                  }}
+                  placeholder="Ex: John"
+                  placeholderTextColor="#999"
                 />
-                <TouchableOpacity
-                  style={styles.deleteIcon}
-                  onPress={() => setImageUri(null)}
-                >
-                  <Icon name="close-circle" size={24} color="#333" />
-                </TouchableOpacity>
-              </>
+              </View>
+              {errors.expertName && (
+                <Text style={styles.errorMsg}>{errors.expertName}</Text>
+              )}
+            </View>
+
+            <View style={[styles.inputGroup, { zIndex: 2000 }]}>
+              <Text style={styles.inputLabel}>Specialist</Text>
+              <DropDownPicker
+                open={open}
+                value={specialist}
+                items={specialistOptions}
+                setOpen={setOpen}
+                setValue={setSpecialist}
+                setItems={setSpecialistOptions}
+                onSelectItem={() => {
+                  if (errors.specialist)
+                    setErrors(prev => ({ ...prev, specialist: null }));
+                }}
+                searchable={true}
+                placeholder="Select Specialty"
+                style={[
+                  styles.dropdownStyle,
+                  errors.specialist && styles.inputError,
+                ]}
+                dropDownContainerStyle={styles.dropdownContainerStyle}
+                textStyle={styles.dropdownText}
+                labelStyle={styles.dropdownLabel}
+                placeholderStyle={{ color: '#999' }}
+                listMode="SCROLLVIEW"
+                scrollViewProps={{
+                  nestedScrollEnabled: true,
+                }}
+              />
+              {errors.specialist && (
+                <Text style={styles.errorMsg}>{errors.specialist}</Text>
+              )}
+            </View>
+
+            <View style={[styles.inputGroup, { zIndex: 1000 }]}>
+              <Text style={styles.inputLabel}>About</Text>
+              <View style={[styles.inputWrapper, styles.textAreaWrapper]}>
+                <View style={[styles.iconContainer, { height: '100%' }]}>
+                  <Icon
+                    name="information-circle-outline"
+                    size={20}
+                    color={primaryColor}
+                  />
+                </View>
+                <TextInput
+                  style={[styles.textInput, styles.textAreaInput]}
+                  value={about}
+                  onChangeText={setAbout}
+                  placeholder="Tell us about the expert..."
+                  placeholderTextColor="#999"
+                  multiline={true}
+                  textAlignVertical="top"
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.labelRow}>
+                <Text style={[styles.inputLabel, { marginBottom: 0 }]}>
+                  Address
+                </Text>
+                <View style={styles.toggleContainer}>
+                  <Text style={styles.toggleText}>Use shop address</Text>
+                  <Switch
+                    trackColor={{ false: '#767577', true: '#b39ddb' }}
+                    thumbColor={useShopAddress ? primaryColor : '#f4f3f4'}
+                    ios_backgroundColor="#3e3e3e"
+                    onValueChange={handleToggleShopAddress}
+                    value={useShopAddress}
+                    style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
+                  />
+                </View>
+              </View>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  styles.textAreaWrapper,
+                  errors.address && styles.inputError,
+                  useShopAddress && styles.disabledInput,
+                ]}
+              >
+                <View style={[styles.iconContainer, { height: '100%' }]}>
+                  <Icon
+                    name="location-outline"
+                    size={20}
+                    color={primaryColor}
+                  />
+                </View>
+                <TextInput
+                  style={[styles.textInput, styles.textAreaInput]}
+                  value={address}
+                  onChangeText={text => {
+                    setAddress(text);
+                    if (errors.address)
+                      setErrors(prev => ({ ...prev, address: null }));
+                  }}
+                  placeholder="Enter full address"
+                  placeholderTextColor="#999"
+                  multiline={true}
+                  textAlignVertical="top"
+                  editable={!useShopAddress}
+                />
+              </View>
+              {errors.address && (
+                <Text style={styles.errorMsg}>{errors.address}</Text>
+              )}
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Expert Image</Text>
+              <TouchableOpacity
+                style={[
+                  styles.uploadContainer,
+                  errors.image && styles.uploadError,
+                ]}
+                onPress={selectImage}
+                activeOpacity={0.8}
+              >
+                {imageUri ? (
+                  <View style={styles.imagePreviewContainer}>
+                    <Image
+                      source={{ uri: imageUri }}
+                      style={styles.imagePreview}
+                    />
+                    <View style={styles.editImageOverlay}>
+                      <Icon name="camera" size={20} color="#fff" />
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.uploadPlaceholder}>
+                    <View style={styles.uploadIconCircle}>
+                      <Icon
+                        name="cloud-upload-outline"
+                        size={28}
+                        color={primaryColor}
+                      />
+                    </View>
+                    <Text style={styles.uploadText}>Click to upload image</Text>
+                    <Text style={styles.uploadSubText}>
+                      Size 90x90 recommended
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              {errors.image && (
+                <Text style={styles.errorMsg}>{errors.image}</Text>
+              )}
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.submitBtn, isLoading && styles.submitBtnDisabled]}
+            onPress={handleAddBeautyExpert}
+            disabled={isLoading}
+            activeOpacity={0.9}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
             ) : (
-              <Icon name="image-outline" size={40} color="#ccc" />
+              <>
+                <Text style={styles.submitBtnText}>ADD EXPERT</Text>
+                <Icon
+                  name="add-circle-outline"
+                  size={22}
+                  color="#fff"
+                  style={{ marginLeft: 10 }}
+                />
+              </>
             )}
           </TouchableOpacity>
-          {errors.image && <Text style={styles.errorText}>{errors.image}</Text>}
-        </View>
-        <TouchableOpacity
-          style={[styles.saveButton, isLoading && styles.disabledButton]}
-          onPress={handleAddBeautyExpert}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.saveButtonText}>ADD EXPERT +</Text>
-          )}
-        </TouchableOpacity>
-      </ScrollView>
+
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <Modal
         transparent={true}
-        visible={isModalVisible}
+        visible={isSuccessModalVisible}
         animationType="fade"
-        onRequestClose={handleCloseModal}
+        onRequestClose={handleCloseSuccessModal}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.successIconContainer}>
-              <Icon name="checkmark" size={40} color="#fff" />
+        <View style={styles.modalOverlay}>
+          <View style={styles.successCard}>
+            <View style={styles.successHeader}>
+              <Icon name="checkmark-circle" size={60} color="#2ecc71" />
             </View>
-            <Text style={styles.modalText}>
-              Successfully Added{'\n'}New Beauty Expert
+            <Text style={styles.successTitle}>Success!</Text>
+            <Text style={styles.successMessage}>
+              New Beauty Expert has been added successfully.
             </Text>
             <TouchableOpacity
-              style={styles.okButton}
-              onPress={handleCloseModal}
+              style={styles.successBtn}
+              onPress={handleCloseSuccessModal}
             >
-              <Text style={styles.okButtonText}>OK</Text>
+              <Text style={styles.successBtnText}>Continue</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -274,224 +394,288 @@ const AddExpertScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: primaryColor,
   },
-  header: {
-    height: 120,
-    justifyContent: 'center',
-    paddingTop: 20,
+  headerContainer: {
+    height: 180,
+    width: '100%',
+    position: 'relative',
+    justifyContent: 'flex-start',
   },
-  headerImage: {
-    ...StyleSheet.absoluteFillObject,
+  headerBg: {
     width: '100%',
     height: '100%',
+    position: 'absolute',
   },
-  overlay: {
+  headerOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(128, 0, 128, 0.6)',
+    backgroundColor: primaryColor,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 50,
+    paddingHorizontal: 20,
   },
   backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 15,
-    flexDirection: 'row',
+    zIndex: 10,
+  },
+  backBtnCircle: {
+    width: 40,
+    height: 40,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    justifyContent: 'center',
     alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
-  backButtonText: {
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
     color: '#fff',
-    fontSize: 16,
-    marginLeft: 5,
+    letterSpacing: 0.5,
   },
-  contentContainer: {
+  mainContent: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#fff',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    marginTop: -30,
-    paddingTop: 10,
+    marginTop: -40,
+    paddingTop: 25,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginVertical: 20,
-    color: '#333',
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 30,
   },
-  form: {
-    paddingHorizontal: 25,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    fontSize: 16,
+  formSection: {
     marginBottom: 20,
   },
-  textArea: {
+  inputGroup: {
+    marginBottom: 20,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingLeft: 4,
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  toggleText: {
+    fontSize: 12,
+    color: '#666',
+    marginRight: 4,
+    fontWeight: '500',
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#34495e',
+    marginLeft: 4,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: primaryColor,
+    height: 54,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  disabledInput: {
+    backgroundColor: '#F5F5F5',
+    borderColor: '#E0E0E0',
+  },
+  textAreaWrapper: {
     height: 100,
+    alignItems: 'flex-start',
+  },
+  inputError: {
+    borderColor: '#ff6b6b',
+    borderWidth: 1.5,
+  },
+  iconContainer: {
+    width: 50,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FBFBFB',
+    borderRightWidth: 1,
+    borderRightColor: '#F0F0F0',
+  },
+  textInput: {
+    flex: 1,
+    height: '100%',
+    paddingHorizontal: 15,
+    color: '#333',
+    fontSize: 16,
+  },
+  textAreaInput: {
+    paddingTop: 15,
     textAlignVertical: 'top',
   },
-  pickerStyle: {
+  dropdownStyle: {
     backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    minHeight: 50,
-    paddingHorizontal: 15,
-    marginBottom: 20,
+    borderColor: primaryColor,
+    borderRadius: 12,
+    height: 54,
+    paddingLeft: 15,
   },
-  pickerText: {
+  dropdownContainerStyle: {
+    borderColor: '#E0E0E0',
+    marginTop: 5,
+    borderRadius: 12,
+    elevation: 5,
+  },
+  dropdownText: {
     fontSize: 16,
     color: '#333',
   },
-  dropDownContainer: {
-    backgroundColor: '#f9f9f9',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    marginTop: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 8,
-  },
-  selectedItemLabel: {
-    fontWeight: 'bold',
-    color: '#8e44ad',
-  },
-  listItemLabel: {
-    color: '#555',
-  },
-  tickIcon: {
-    tintColor: '#8e44ad',
-  },
-  arrowIcon: {
-    tintColor: '#8e44ad',
-  },
-  searchContainer: {
-    borderBottomColor: '#ccc',
-    borderBottomWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: '#f0f0f0',
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-  },
-  searchTextInput: {
-    borderColor: '#bbb',
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    height: 40,
+  dropdownLabel: {
     fontSize: 16,
-    backgroundColor: '#fff',
+    color: '#333',
   },
-  uploadLabelContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 8,
-  },
-  subLabel: {
+  errorMsg: {
+    color: '#ff6b6b',
     fontSize: 12,
-    color: '#888',
-    marginLeft: 10,
+    marginTop: 5,
+    marginLeft: 5,
+    fontWeight: '500',
   },
-  uploadBox: {
-    height: 120,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+  uploadContainer: {
+    height: 140,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: primaryColor,
+    borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fafafa',
-    marginBottom: 5,
+    overflow: 'hidden',
   },
-  saveButton: {
-    backgroundColor: '#8e44ad',
-    paddingVertical: 15,
-    borderRadius: 10,
+  uploadError: {
+    borderColor: '#ff6b6b',
+  },
+  uploadPlaceholder: {
     alignItems: 'center',
-    marginHorizontal: 25,
-    marginBottom: 30,
-    marginTop: 25,
   },
-  disabledButton: {
-    backgroundColor: '#c7a4d6',
+  uploadIconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#F3E5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
   },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  uploadText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#666',
   },
-  uploadedImage: {
+  uploadSubText: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
+  },
+  imagePreviewContainer: {
     width: '100%',
     height: '100%',
-    borderRadius: 8,
+    position: 'relative',
   },
-  deleteIcon: {
-    position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderRadius: 12,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-  },
-  modalContent: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 20,
-    alignItems: 'center',
-  },
-  successIconContainer: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: '#8e44ad',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 25,
-  },
-  modalText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  okButton: {
-    backgroundColor: '#8e44ad',
-    paddingVertical: 15,
+  imagePreview: {
     width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  editImageOverlay: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 8,
+    borderRadius: 20,
+  },
+  submitBtn: {
+    backgroundColor: primaryColor,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 10,
+    paddingVertical: 16,
+    borderRadius: 14,
+    shadowColor: '#8e44ad',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
     marginTop: 10,
   },
-  okButtonText: {
+  submitBtnDisabled: {
+    backgroundColor: '#b39ddb',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  submitBtnText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  successCard: {
+    backgroundColor: '#fff',
+    width: '85%',
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    elevation: 10,
+  },
+  successHeader: {
+    marginBottom: 15,
+  },
+  successTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  successMessage: {
+    fontSize: 15,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 22,
+  },
+  successBtn: {
+    backgroundColor: primaryColor,
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 25,
+  },
+  successBtnText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: -15,
-    marginBottom: 10,
+    fontWeight: '600',
   },
 });
 
