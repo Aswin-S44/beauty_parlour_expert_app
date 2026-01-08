@@ -31,8 +31,8 @@ const GeneralInformationScreen = ({ navigation }) => {
       return;
     }
 
-    if (parlourName.trim().length > 50) {
-      Alert.alert('Error', 'Parlour Name cannot exceed 50 characters');
+    if (parlourName.trim().length > 100) {
+      Alert.alert('Error', 'Parlour Name cannot exceed 100 characters');
       return;
     }
 
@@ -122,7 +122,7 @@ const GeneralInformationScreen = ({ navigation }) => {
                 autoCapitalize="none"
                 value={parlourName}
                 onChangeText={setParlourName}
-                maxLength={50}
+                maxLength={100}
               />
             </View>
           </View>

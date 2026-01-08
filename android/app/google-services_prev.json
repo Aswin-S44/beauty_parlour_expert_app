@@ -14,43 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "297588641134-00a6lbomq82grocuu6qjm07s5j0gv53v.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.beauty.app1",
-            "certificate_hash": "fd025cef5d0d224e0701ca9ce478a7450fb4e0a5"
-          }
-        },
-        {
           "client_id": "297588641134-afa7umlfim2m8b5noqu0crfthj588g54.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.beauty.app1",
             "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
-          }
-        },
-        {
-          "client_id": "297588641134-c50rrltl2cun2ufi3e5r64b5rnp55mbc.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.beauty.app1",
-            "certificate_hash": "9204804fe4e4fd3a0fe5727e012b5cf0f540e592"
-          }
-        },
-        {
-          "client_id": "297588641134-p76rle3eb4fpah7mv4r0jk7e0dsb766o.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.beauty.app1",
-            "certificate_hash": "c09fc89f3b02e5e4171dde344ffbc03f4972312b"
-          }
-        },
-        {
-          "client_id": "297588641134-re9pm69nugv8bgjs52ivcpoceborh4ug.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.beauty.app1",
-            "certificate_hash": "5d32b5c7a442fa3d53362311e7f16e595d0efee7"
           }
         },
         {
@@ -79,10 +47,10 @@
               "client_type": 3
             },
             {
-              "client_id": "297588641134-1qu9gdcb5jpades23g1mnj4v5iiuf92m.apps.googleusercontent.com",
+              "client_id": "297588641134-aibapa7vk0qa7cjsc2611meo5j522akj.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.app.beautyApp"
+                "bundle_id": "com.beauty.app1"
               }
             }
           ]
@@ -114,14 +82,6 @@
           }
         },
         {
-          "client_id": "297588641134-pfkek12d2slrihhj7bo788d79m6dl0i6.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.customer.app2",
-            "certificate_hash": "c09fc89f3b02e5e4171dde344ffbc03f4972312b"
-          }
-        },
-        {
           "client_id": "297588641134-hi002t6fubg9iilqa4r2bjp9sdnasg3i.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -139,10 +99,10 @@
               "client_type": 3
             },
             {
-              "client_id": "297588641134-1qu9gdcb5jpades23g1mnj4v5iiuf92m.apps.googleusercontent.com",
+              "client_id": "297588641134-aibapa7vk0qa7cjsc2611meo5j522akj.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.app.beautyApp"
+                "bundle_id": "com.beauty.app1"
               }
             }
           ]
@@ -157,14 +117,6 @@
         }
       },
       "oauth_client": [
-        {
-          "client_id": "297588641134-0rt0rv9dms6p8dim5n1ikkmt06uj3gbv.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.expert.app",
-            "certificate_hash": "dd3845f30cf43f44b27b3273e06b1c0ec3b4621d"
-          }
-        },
         {
           "client_id": "297588641134-movov51t6jfgnor680geo3s9e7lcetas.apps.googleusercontent.com",
           "client_type": 1,
@@ -191,10 +143,10 @@
               "client_type": 3
             },
             {
-              "client_id": "297588641134-1qu9gdcb5jpades23g1mnj4v5iiuf92m.apps.googleusercontent.com",
+              "client_id": "297588641134-aibapa7vk0qa7cjsc2611meo5j522akj.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.app.beautyApp"
+                "bundle_id": "com.beauty.app1"
               }
             }
           ]

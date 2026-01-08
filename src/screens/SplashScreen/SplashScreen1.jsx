@@ -1,48 +1,71 @@
-import React from 'react';
-import { Text, StyleSheet, StatusBar, Image } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import { lightPurple, primaryColor } from '../../constants/colors';
+import React, { useEffect, useRef } from 'react';
+import { View, Animated, Easing, StyleSheet } from 'react-native';
+import LottieView from 'lottie-react-native';
 
 const SplashScreen = () => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.5)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
+
+    Animated.timing(scaleAnim, {
+      toValue: 1,
+      duration: 1000,
+      easing: Easing.elastic(1),
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim, scaleAnim]);
+
+  const onAnimationFinish = () => {
+    // navigation.replace('Login');
+  };
+
   return (
-    <LinearGradient
-      colors={[primaryColor, lightPurple]}
-      style={styles.container}
-    >
-      <StatusBar translucent backgroundColor="transparent" />
-      <Image
-        source={require('../../assets/images/splash_logo.png')}
-        style={styles.welcomeImage}
-      />
-      <Text style={styles.title}>Beautyon</Text>
-      <Text style={styles.loadingText}>Loading....</Text>
-    </LinearGradient>
+    <View style={styles.container}>
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <LottieView
+          source={require('../../assets/animations/brand.json')}
+          autoPlay
+          loop={false}
+          onAnimationFinish={onAnimationFinish}
+          style={styles.lottieIcon}
+        />
+      </Animated.View>
+
+      <Animated.Text style={[styles.text, { opacity: fadeAnim }]}>
+        Glamio
+      </Animated.Text>
+    </View>
   );
 };
- 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#E84470',
   },
-  title: {
-    fontSize: 32,
-    fontWeight: '600',
-    color: '#fff',
-    marginTop: 20,
+  lottieIcon: {
+    width: 200,
+    height: 200,
+    marginBottom: 20,
   },
-  loadingText: {
-    fontSize: 16,
-    color: '#fff',
-    marginTop: 150,
-  },
-  welcomeImage: {
-    width: 100,
-    height: 100,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    resizeMode: 'contain',
+  text: {
+    fontSize: 22,
+    fontWeight: '500',
+    color: '#FFF',
+    textAlign: 'center',
+    lineHeight: 30,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
 });
 

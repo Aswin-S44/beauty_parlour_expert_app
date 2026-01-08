@@ -9,18 +9,20 @@ import {
   Linking,
   Dimensions,
   Platform,
+  Modal,
 } from 'react-native';
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import { primaryColor } from '../../constants/colors';
 import { AuthContext } from '../../context/AuthContext';
 import { AVATAR_IMAGE } from '../../constants/images';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const ProfileScreen = ({ navigation }) => {
   const { userData } = useContext(AuthContext);
+  const [isImageModalVisible, setIsImageModalVisible] = useState(false);
 
   const handleOpenGoogleReview = () => {
     if (userData?.googleReviewUrl) {
@@ -30,16 +32,16 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
+  const profileImageUrl = userData?.profileImage ?? AVATAR_IMAGE;
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={primaryColor} />
 
-      {/* Decorative Background Circles for visual flair */}
       <View style={styles.bgCircle1} />
       <View style={styles.bgCircle2} />
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* HEADER SECTION */}
         <View style={styles.headerWrapper}>
           <View style={styles.headerCurve}>
             <View style={styles.headerContent}>
@@ -59,17 +61,20 @@ const ProfileScreen = ({ navigation }) => {
             </View>
           </View>
 
-          {/* FLOATING PROFILE IMAGE */}
           <View style={styles.profileContainer}>
-            <View style={styles.imageWrapper}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => setIsImageModalVisible(true)}
+              style={styles.imageWrapper}
+            >
               <Image
-                source={{ uri: userData?.profileImage ?? AVATAR_IMAGE }}
+                source={{ uri: profileImageUrl }}
                 style={styles.profileImage}
               />
               <View style={styles.verifiedBadge}>
                 <Icon name="checkmark" size={14} color="#fff" />
               </View>
-            </View>
+            </TouchableOpacity>
 
             <Text style={styles.parlourName}>
               {userData?.parlourName || 'Parlour Name'}
@@ -85,11 +90,7 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* STATS ROW */}
-
-        {/* CONTENT BODY */}
         <View style={styles.bodyContainer}>
-          {/* ABOUT SECTION */}
           <View style={styles.contentCard}>
             <View style={styles.cardHeader}>
               <View style={[styles.iconBox, { backgroundColor: '#E3F2FD' }]}>
@@ -104,7 +105,6 @@ const ProfileScreen = ({ navigation }) => {
             </Text>
           </View>
 
-          {/* HOURS SECTION */}
           <View style={styles.contentCard}>
             <View style={styles.cardHeader}>
               <View style={[styles.iconBox, { backgroundColor: '#E8F5E9' }]}>
@@ -129,7 +129,6 @@ const ProfileScreen = ({ navigation }) => {
             </View>
           </View>
 
-          {/* ADDRESS SECTION */}
           <View style={styles.contentCard}>
             <View style={styles.cardHeader}>
               <View style={[styles.iconBox, { backgroundColor: '#FFF3E0' }]}>
@@ -142,7 +141,6 @@ const ProfileScreen = ({ navigation }) => {
             </Text>
           </View>
 
-          {/* GOOGLE REVIEWS CALL TO ACTION */}
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={handleOpenGoogleReview}
@@ -171,6 +169,27 @@ const ProfileScreen = ({ navigation }) => {
           <View style={{ height: 40 }} />
         </View>
       </ScrollView>
+
+      <Modal
+        visible={isImageModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsImageModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalCloseButton}
+            onPress={() => setIsImageModalVisible(false)}
+          >
+            <Icon name="close" size={30} color="#fff" />
+          </TouchableOpacity>
+          <Image
+            source={{ uri: profileImageUrl }}
+            style={styles.fullImage}
+            resizeMode="contain"
+          />
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -178,9 +197,8 @@ const ProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FC', // Very light blue-grey
+    backgroundColor: '#F8F9FC',
   },
-  // Decorative Backgrounds
   bgCircle1: {
     position: 'absolute',
     top: -100,
@@ -201,9 +219,8 @@ const styles = StyleSheet.create({
     backgroundColor: primaryColor,
     opacity: 0.05,
   },
-  // Header
   headerWrapper: {
-    marginBottom: 60, // Space for the floating profile
+    marginBottom: 60,
   },
   headerCurve: {
     height: 180,
@@ -242,7 +259,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  // Profile Container
   profileContainer: {
     alignItems: 'center',
     position: 'absolute',
@@ -296,49 +312,6 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 4,
   },
-  // Stats Row
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    marginHorizontal: 20,
-    borderRadius: 15,
-    paddingVertical: 15,
-    paddingHorizontal: 10,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
-  },
-  statBox: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  verticalDivider: {
-    width: 1,
-    height: '70%',
-    backgroundColor: '#eee',
-    alignSelf: 'center',
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 2,
-    fontWeight: '500',
-  },
-  // Body
   bodyContainer: {
     paddingHorizontal: 20,
     marginTop: 55,
@@ -406,7 +379,6 @@ const styles = StyleSheet.create({
     color: '#444',
     lineHeight: 22,
   },
-  // Google Review Card
   reviewCard: {
     backgroundColor: '#333',
     borderRadius: 16,
@@ -445,6 +417,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 60 : 20,
+    right: 20,
+    zIndex: 10,
+    padding: 10,
+  },
+  fullImage: {
+    width: width,
+    height: height * 0.7,
   },
 });
 

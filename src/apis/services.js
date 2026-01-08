@@ -689,11 +689,33 @@ export const deleteSlot = async (slotId, shopId) => {
   }
 };
 
+// export const getNotificationsByShopId = async userId => {
+//   try {
+//     const querySnapshot = await firestore()
+//       .collection(COLLECTIONS.NOTIFICATIONS)
+//       .where('toId', '==', userId)
+//       .get();
+
+//     if (querySnapshot.empty) return [];
+
+//     const notifications = querySnapshot.docs.map(doc => ({
+//       id: doc.id,
+//       ...doc.data(),
+//     }));
+
+//     return notifications;
+//   } catch (error) {
+//     console.error('Error fetching notifications:', error);
+//     return [];
+//   }
+// };
+
 export const getNotificationsByShopId = async userId => {
   try {
     const querySnapshot = await firestore()
       .collection(COLLECTIONS.NOTIFICATIONS)
       .where('toId', '==', userId)
+      .orderBy('createdAt', 'desc')
       .get();
 
     if (querySnapshot.empty) return [];

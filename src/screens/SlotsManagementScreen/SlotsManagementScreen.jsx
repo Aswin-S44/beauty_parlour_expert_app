@@ -36,6 +36,7 @@ const SlotsManagementScreen = ({ navigation }) => {
   const [editingSlot, setEditingSlot] = useState(null);
   const [startTime, setStartTime] = useState(new Date());
   const [endTime, setEndTime] = useState(new Date());
+  const [isBooked, setIsBooked] = useState(false);
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -43,11 +44,19 @@ const SlotsManagementScreen = ({ navigation }) => {
   const [holidays, setHolidays] = useState({});
   const [repeatUntilDate, setRepeatUntilDate] = useState('');
   const [repeatUntilModalVisible, setRepeatUntilModalVisible] = useState(false);
+  const [maxCapacity, setMaxCapacity] = useState(1);
 
   useEffect(() => {
     if (!user?.uid) return;
 
     setLoading(true);
+
+    const unsubscribeExperts = firestore()
+      .collection(COLLECTIONS.BEAUTY_EXPERTS)
+      .where('shopId', '==', user.uid)
+      .onSnapshot(querySnapshot => {
+        setMaxCapacity(querySnapshot.size || 1);
+      });
 
     const unsubscribeSlots = firestore()
       .collection(COLLECTIONS.SLOTS)
@@ -91,6 +100,7 @@ const SlotsManagementScreen = ({ navigation }) => {
       );
 
     return () => {
+      unsubscribeExperts();
       unsubscribeSlots();
       unsubscribeHolidays();
     };
@@ -209,8 +219,18 @@ const SlotsManagementScreen = ({ navigation }) => {
     const baseSlotData = {
       startTime: newStartTimeFormatted,
       endTime: newEndTimeFormatted,
-      isAvailable: true,
-      isRecurring: false,
+      maxCapacity: maxCapacity,
+      bookedCount: editingSlot
+        ? editingSlot.bookedCount || 0
+        : isBooked
+        ? maxCapacity
+        : 0,
+      isAvailable: isBooked
+        ? false
+        : editingSlot
+        ? (editingSlot.bookedCount || 0) < maxCapacity
+        : true,
+      isRecurring: editingSlot ? editingSlot.isRecurring : false,
     };
 
     try {
@@ -227,6 +247,7 @@ const SlotsManagementScreen = ({ navigation }) => {
       setEditingSlot(null);
       setStartTime(new Date());
       setEndTime(new Date(new Date().setHours(new Date().getHours() + 1)));
+      setIsBooked(false);
     } catch (error) {
       Alert.alert('Error', 'Failed to save slot. Please try again.');
     }
@@ -236,6 +257,7 @@ const SlotsManagementScreen = ({ navigation }) => {
     setEditingSlot(null);
     setStartTime(new Date());
     setEndTime(new Date(new Date().setHours(new Date().getHours() + 1)));
+    setIsBooked(false);
     setModalVisible(true);
   };
 
@@ -243,6 +265,7 @@ const SlotsManagementScreen = ({ navigation }) => {
     setEditingSlot(slot);
     setStartTime(moment(slot.startTime, 'HH:mm').toDate());
     setEndTime(moment(slot.endTime, 'HH:mm').toDate());
+    setIsBooked(!slot.isAvailable);
     setModalVisible(true);
   };
 
@@ -395,7 +418,9 @@ const SlotsManagementScreen = ({ navigation }) => {
               batch.set(slotRef, {
                 startTime: slot.startTime,
                 endTime: slot.endTime,
-                isAvailable: true,
+                maxCapacity: maxCapacity,
+                bookedCount: 0,
+                isAvailable: slot.isAvailable,
                 isRecurring: true,
                 date: dateString,
                 shopId: user.uid,
@@ -431,16 +456,24 @@ const SlotsManagementScreen = ({ navigation }) => {
 
   const renderSlotItem = ({ item }) => {
     const isHoliday = holidays[selectedDate];
+    const capacity = item.maxCapacity || 1;
+    const booked = item.bookedCount || 0;
+    const availabilityRemaining = capacity - booked;
+    const isSlotFull = availabilityRemaining <= 0;
+
     const statusText = isHoliday
       ? 'Holiday'
-      : item.isAvailable
-      ? 'Available'
-      : 'Booked';
+      : !item.isAvailable
+      ? 'Booked'
+      : isSlotFull
+      ? 'Fully Booked'
+      : `Available`;
+
     const statusColor = isHoliday
       ? '#FF9800'
-      : item.isAvailable
-      ? '#4CAF50'
-      : '#F44336';
+      : !item.isAvailable || isSlotFull
+      ? '#F44336'
+      : '#4CAF50';
     const cardBg = isHoliday ? '#FFF3E0' : '#FFFFFF';
 
     return (
@@ -759,6 +792,21 @@ const SlotsManagementScreen = ({ navigation }) => {
                 onChange={onEndTimeChange}
               />
             )}
+
+            <View style={styles.bookingStatusContainer}>
+              <View>
+                <Text style={styles.label}>Slot Availability</Text>
+                <Text style={styles.bookingStatusDesc}>
+                  {isBooked ? 'Mark as Available' : 'Marked as Booked'}
+                </Text>
+              </View>
+              <Switch
+                trackColor={{ false: '#ECEFF1', true: '#FFCDD2' }}
+                thumbColor={isBooked ? '#F44336' : '#B0BEC5'}
+                onValueChange={value => setIsBooked(value)}
+                value={isBooked}
+              />
+            </View>
 
             <View style={styles.sheetActions}>
               <TouchableOpacity
@@ -1135,6 +1183,22 @@ const styles = StyleSheet.create({
   arrowDownContainer: {
     alignItems: 'center',
     marginVertical: 4,
+  },
+  bookingStatusContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FAFAFA',
+    padding: 16,
+    borderRadius: 16,
+    marginTop: 15,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+  },
+  bookingStatusDesc: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#37474F',
   },
   sheetActions: {
     flexDirection: 'row',

@@ -30,14 +30,6 @@
           }
         },
         {
-          "client_id": "297588641134-c50rrltl2cun2ufi3e5r64b5rnp55mbc.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.beauty.app1",
-            "certificate_hash": "9204804fe4e4fd3a0fe5727e012b5cf0f540e592"
-          }
-        },
-        {
           "client_id": "297588641134-p76rle3eb4fpah7mv4r0jk7e0dsb766o.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

@@ -23,10 +23,11 @@ import { GOOGLE_ICON, NO_IMAGE } from '../../constants/images';
 const WelcomeScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const lighterPrimaryColor = '#FBCDFF';
-
+  console.log('WEB_CLIENT_ID-------------', WEB_CLIENT_ID);
   useEffect(() => {
     GoogleSignin.configure({
-      webClientId: WEB_CLIENT_ID,
+      webClientId:
+        '297588641134-hi002t6fubg9iilqa4r2bjp9sdnasg3i.apps.googleusercontent.com',
       offlineAccess: false,
     });
   }, []);

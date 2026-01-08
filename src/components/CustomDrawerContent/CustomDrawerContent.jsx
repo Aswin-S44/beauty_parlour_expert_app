@@ -81,14 +81,14 @@ const CustomDrawerContent = props => {
             iconName="settings-outline"
             onPress={() => {}}
           /> */}
-          <DrawerItem
+          {/* <DrawerItem
             label="Help & Support"
             iconSet="MaterialCommunity"
             iconName="help-rhombus-outline"
             onPress={() => {
               props.navigation.navigate('HelpSupportScreen');
             }}
-          />
+          /> */}
           <DrawerItem
             label="Sign Out"
             iconSet="MaterialCommunity"

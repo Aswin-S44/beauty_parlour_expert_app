@@ -93,11 +93,17 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        // release {
+        //     storeFile file(MYAPP_UPLOAD_STORE_FILE)
+        //     storePassword MYAPP_UPLOAD_STORE_PASSWORD
+        //     keyAlias MYAPP_UPLOAD_KEY_ALIAS
+        //     keyPassword MYAPP_UPLOAD_KEY_PASSWORD
+        // }
         release {
-            storeFile file(MYAPP_UPLOAD_STORE_FILE)
-            storePassword MYAPP_UPLOAD_STORE_PASSWORD
-            keyAlias MYAPP_UPLOAD_KEY_ALIAS
-            keyPassword MYAPP_UPLOAD_KEY_PASSWORD
+            storeFile file('your_key_name.keystore')
+            storePassword '111111'
+            keyAlias 'your_key_alias'
+            keyPassword '111111'
         }
     }
     buildTypes {

@@ -149,6 +149,7 @@ export const getLatLngFromAddress = async (name, address) => {
     const apiUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
       address,
     )}&key=${apiKey}`;
+    console.log('APIURL************************,', apiUrl);
     const res = await fetch(apiUrl);
     const data = await res.json();
 
@@ -166,12 +167,19 @@ export const getLatLngFromAddress = async (name, address) => {
         totalRating = totalRating.rating;
       }
 
+      console.log('********************', {
+        coordinates: { latitude: lat, longitude: lng },
+        placeId,
+        totalRating,
+      });
+
       return {
         coordinates: { latitude: lat, longitude: lng },
         placeId,
         totalRating,
       };
     }
+
     return {
       coordinates: null,
       placeId: null,
