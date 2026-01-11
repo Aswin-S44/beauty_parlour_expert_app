@@ -36,10 +36,6 @@ const SplashScreen = () => {
           style={styles.lottieIcon}
         />
       </Animated.View>
-
-      <Animated.Text style={[styles.text, { opacity: fadeAnim }]}>
-        Glamio
-      </Animated.Text>
     </View>
   );
 };
